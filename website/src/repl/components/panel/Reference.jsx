@@ -39,9 +39,11 @@ const GROUP_DISPLAY_NAMES = {
   external_io: 'External I/O',
   effects: 'Effects',
   ungrouped: 'Ungrouped',
+  structure: 'Structure',
+  transforms: 'Transforms',
 };
 
-const GROUP_ORDER = ['effects', 'external_io', 'ungrouped'];
+const GROUP_ORDER = ['effects', 'transforms', 'structure', 'ungrouped', 'external_io'];
 
 export function Reference() {
   const [search, setSearch] = useState('');
@@ -93,7 +95,7 @@ export function Reference() {
           {sortedGroups.map(([groupId, groupEntries]) => (
             <>
               <h4 key={`group-${groupId}`} className="font-semibold text-foreground">
-                {GROUP_DISPLAY_NAMES[groupId] || groupId}
+                {GROUP_DISPLAY_NAMES[groupId] || groupId} ({groupEntries.length})
               </h4>
               {groupEntries.map((entry, i) => (
                 <a

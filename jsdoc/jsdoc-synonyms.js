@@ -17,7 +17,6 @@ function defineTags(dictionary) {
     mustHaveValue: true,
     onTagged: function (doclet, tag) {
       doclet.group = tag.value;
-      console.log('TAGGED GROUP:', doclet.group);
     },
   });
 }
