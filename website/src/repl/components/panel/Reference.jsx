@@ -17,13 +17,13 @@ const availableFunctions = (() => {
       seen.add(s);
       // Swap `doc.name` in for `s` in the list of synonyms
       const synonymsWithDoc = [doc.name, ...synonyms].filter((x) => x && x !== s);
-      functions.push({
-        ...doc,
-        name: s, // update names for the synonym
-        longname: s,
-        synonyms: synonymsWithDoc,
-        synonyms_text: synonymsWithDoc.join(', '),
-      });
+      // functions.push({
+      //   ...doc,
+      //   name: s, // update names for the synonym
+      //   longname: s,
+      //   synonyms: synonymsWithDoc,
+      //   synonyms_text: synonymsWithDoc.join(', '),
+      // });
     }
   }
   return functions.sort((a, b) => /* a.meta.filename.localeCompare(b.meta.filename) +  */ a.name.localeCompare(b.name));
@@ -52,6 +52,19 @@ export function Reference() {
     });
   }, [search]);
 
+  const visibleFunctionsByGroup = (() => {
+    const groups = {};
+    for (const doc of visibleFunctions) {
+      const group = doc.group || 'Ungrouped';
+      if (!groups[group]) {
+        groups[group] = [];
+      }
+      groups[group].push(doc);
+    }
+    return groups;
+  })();
+  console.log(visibleFunctionsByGroup);
+
   return (
     <div className="flex h-full w-full p-2 overflow-hidden">
       <div className="h-full  flex flex-col gap-2 w-1/3 max-w-72 ">
@@ -59,18 +72,25 @@ export function Reference() {
           <Textbox className="w-full" placeholder="Search" value={search} onChange={setSearch} />
         </div>
         <div className="flex flex-col h-full overflow-y-auto  gap-1.5 bg-background bg-opacity-50  rounded-md">
-          {visibleFunctions.map((entry, i) => (
-            <a
-              key={i}
-              className="cursor-pointer text-foreground flex-none hover:bg-lineHighlight overflow-x-hidden  px-1 text-ellipsis"
-              onClick={() => {
-                const el = document.getElementById(`doc-${i}`);
-                const container = document.getElementById('reference-container');
-                container.scrollTo(0, el.offsetTop);
-              }}
-            >
-              {entry.name} {/* <span className="text-gray-600">{entry.meta.filename}</span> */}
-            </a>
+          {Object.entries(visibleFunctionsByGroup).map(([groupName, groupEntries]) => (
+            <>
+              <h4 key={`group-${groupName}`} className="font-semibold text-foreground">
+                {groupName}
+              </h4>
+              {groupEntries.map((entry, i) => (
+                <a
+                  key={`group-${groupName}-entry-${i}`}
+                  className="cursor-pointer text-foreground flex-none hover:bg-lineHighlight overflow-x-hidden  px-1 text-ellipsis"
+                  onClick={() => {
+                    const el = document.getElementById(`doc-${entry.name}`);
+                    const container = document.getElementById('reference-container');
+                    container.scrollTo(0, el.offsetTop);
+                  }}
+                >
+                  {entry.name} {/* <span className="text-gray-600">{entry.meta.filename}</span> */}
+                </a>
+              ))}
+            </>
           ))}
         </div>
       </div>
@@ -86,7 +106,7 @@ export function Reference() {
           </p>
           {visibleFunctions.map((entry, i) => (
             <section key={i}>
-              <h3 id={`doc-${i}`}>{entry.name}</h3>
+              <h3 id={`doc-${entry.name}`}>{entry.name}</h3>
               {!!entry.synonyms_text && (
                 <p>
                   Synonyms: <code>{entry.synonyms_text}</code>

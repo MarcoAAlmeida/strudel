@@ -12,6 +12,14 @@ function defineTags(dictionary) {
       doclet.synonyms = doclet.synonyms_text.split(/[ ,]+/);
     },
   });
+
+  dictionary.defineTag('group', {
+    mustHaveValue: true,
+    onTagged: function (doclet, tag) {
+      doclet.group = tag.value;
+      console.log('TAGGED GROUP:', doclet.group);
+    },
+  });
 }
 
 module.exports = { defineTags: defineTags };
