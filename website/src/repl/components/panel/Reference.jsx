@@ -35,6 +35,14 @@ const getInnerText = (html) => {
   return div.textContent || div.innerText || '';
 };
 
+const GROUP_DISPLAY_NAMES = {
+  external_io: 'External I/O',
+  effects: 'Effects',
+  ungrouped: 'Ungrouped',
+};
+
+const GROUP_ORDER = ['effects', 'external_io', 'ungrouped'];
+
 export function Reference() {
   const [search, setSearch] = useState('');
 
@@ -55,7 +63,7 @@ export function Reference() {
   const visibleFunctionsByGroup = (() => {
     const groups = {};
     for (const doc of visibleFunctions) {
-      const group = doc.group || 'Ungrouped';
+      const group = doc.group || 'ungrouped';
       if (!groups[group]) {
         groups[group] = [];
       }
@@ -63,7 +71,17 @@ export function Reference() {
     }
     return groups;
   })();
-  console.log(visibleFunctionsByGroup);
+  // console.log(visibleFunctionsByGroup);
+
+  // Sort and map group entries
+  const sortedGroups = Object.entries(visibleFunctionsByGroup).sort(([a], [b]) => {
+    const ai = GROUP_ORDER.indexOf(a);
+    const bi = GROUP_ORDER.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
 
   return (
     <div className="flex h-full w-full p-2 overflow-hidden">
@@ -72,14 +90,14 @@ export function Reference() {
           <Textbox className="w-full" placeholder="Search" value={search} onChange={setSearch} />
         </div>
         <div className="flex flex-col h-full overflow-y-auto  gap-1.5 bg-background bg-opacity-50  rounded-md">
-          {Object.entries(visibleFunctionsByGroup).map(([groupName, groupEntries]) => (
+          {sortedGroups.map(([groupId, groupEntries]) => (
             <>
-              <h4 key={`group-${groupName}`} className="font-semibold text-foreground">
-                {groupName}
+              <h4 key={`group-${groupId}`} className="font-semibold text-foreground">
+                {GROUP_DISPLAY_NAMES[groupId] || groupId}
               </h4>
               {groupEntries.map((entry, i) => (
                 <a
-                  key={`group-${groupName}-entry-${i}`}
+                  key={`group-${groupId}-entry-${i}`}
                   className="cursor-pointer text-foreground flex-none hover:bg-lineHighlight overflow-x-hidden  px-1 text-ellipsis"
                   onClick={() => {
                     const el = document.getElementById(`doc-${entry.name}`);
