@@ -79,7 +79,9 @@ reverbGen.generateGraph = function (data, width, height, min, max) {
  @param {number} lpFreqEnd
  @param {number} lpFreqEndAt
  @param {!function(!AudioBuffer)} callback May be called
-  immediately within the current execution context, or later.*/
+  immediately within the current execution context, or later.
+ @group effects
+  */
 var applyGradualLowpass = function (input, lpFreqStart, lpFreqEnd, lpFreqEndAt, callback) {
   if (lpFreqStart == 0) {
     callback(input);
