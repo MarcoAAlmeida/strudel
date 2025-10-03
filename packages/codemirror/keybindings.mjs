@@ -4,9 +4,9 @@ import { keymap, ViewPlugin } from '@codemirror/view';
 // import { searchKeymap } from '@codemirror/search';
 import { emacs } from '@replit/codemirror-emacs';
 import { vim, Vim } from '@replit/codemirror-vim';
-import { logger } from '@strudel/core';
 // import { vim } from './vim_test.mjs';
 import { vscodeKeymap } from '@replit/codemirror-vscode-keymap';
+import { logger } from '@strudel/core';
 
 const vscodePlugin = ViewPlugin.fromClass(
   class {
@@ -26,9 +26,9 @@ const vscodeExtension = (options) => [vscodePlugin].concat(options ?? []);
 // appears in the Console panel.
 try {
   if (Vim && typeof Vim.defineEx === 'function') {
-    // Map gc/gcc to toggle line comments by dispatching a custom event that our
-    // CodeMirror integration listens to. This avoids depending on Vim's internal
-    // actions and works with current selections/visual mode.
+    // Map gc to toggle line comments by dispatching a custom event that our
+    // CodeMirror integration listens to. This avoids depending on Vim's
+    // internal actions and works with current selections/visual mode.
     try {
       Vim.defineAction('strudelToggleComment', (cm) => {
         const view = cm?.view || cm;
@@ -41,9 +41,8 @@ try {
       });
       Vim.mapCommand('gc', 'action', 'strudelToggleComment', {}, { context: 'normal' });
       Vim.mapCommand('gc', 'action', 'strudelToggleComment', {}, { context: 'visual' });
-      Vim.mapCommand('gcc', 'action', 'strudelToggleComment', {}, { context: 'normal' });
     } catch (e) {
-      console.error('Vim gc/gcc mapping failed', e);
+      console.error('Vim gc mapping failed', e);
     }
 
     // :q to pause/stop
