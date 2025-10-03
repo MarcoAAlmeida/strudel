@@ -309,7 +309,7 @@ export function webAudioTimeout(audioContext, onComplete, startTime, stopTime) {
   constantNode.stop(stopTime);
   return constantNode;
 }
-const mod = (freq, range = 1, type = 'sine') => {
+const mod = (freq, type = 'sine') => {
   const ctx = getAudioContext();
   let osc;
   if (noises.includes(type)) {
@@ -321,99 +321,83 @@ const mod = (freq, range = 1, type = 'sine') => {
     osc.type = type;
     osc.frequency.value = freq;
   }
-
   osc.start();
-  const g = new GainNode(ctx, { gain: range });
-  osc.connect(g); // -range, range
-  return { fm: osc, scaled: g, stop: (t) => osc.stop(t) };
+  return { osc, stop: (t) => osc.stop(t), freq };
 };
+
 const fm = (frequencyparam, harmonicityRatio, modulationIndex, wave = 'sine') => {
   const carrfreq = frequencyparam.value;
   const modfreq = carrfreq * harmonicityRatio;
-  const modgain = modfreq * modulationIndex;
-  return mod(modfreq, modgain, wave);
+  return mod(modfreq, wave)
 };
+
 export function applyFM(param, value, begin) {
   const ac = getAudioContext();
-  let target = param;
   let stop = (t) => {};
-  const targets = [param];
-  const modulators = [];
-  for (let i = 0; i < 8; i++) {
-    const iS = `${i === 0 ? '' : i}`;
-    let modulator;
-    const fmModulationIndex = value[`fmi${iS}`];
-    if (fmModulationIndex) {
-      const fmmod = fm(target, value[`fmh${iS}`] ?? 1, fmModulationIndex, value[`fmwave${iS}`] ?? 'sine');
-      modulator = fmmod.scaled;
-      const currStop = stop;
-      stop = (t) => {
-        currStop(t);
-        fmmod.stop(t);
-      };
-      const adsr = ['attack', 'decay', 'sustain', 'release'].map((s) => value[`fm${s}${iS}`]);
-      if (!adsr.some((v) => v !== undefined)) {
-        // no envelope by default
-        modulator.connect(target);
-        modulators.push(modulator);
-      } else {
-        const envGain = ac.createGain();
-        const [attack, decay, sustain, release] = getADSRValues(adsr);
-        const holdEnd = begin + value.duration;
-        const fmEnvelopeType = value[`fmenv${iS}`] ?? 'exp';
-        getParamADSR(
-          envGain.gain,
-          attack,
-          decay,
-          sustain,
-          release,
-          0,
-          1,
-          begin,
-          holdEnd,
-          fmEnvelopeType === 'exp' ? 'exponential' : 'linear',
-        );
-        modulator.connect(envGain);
-        envGain.connect(target);
-        modulators.push(envGain);
-      }
-      targets.push(fmmod.fm?.frequency);
-      if (targets[i]) {
-        // Cannot connect to noises, for example
-        target = targets[i];
-      }
-    }
-  }
+  const fms = {};
   // Matrix
   for (let i = 1; i <= 8; i++) {
     for (let j = 0; j <= 8; j++) {
       let control;
       if (i === j + 1) {
         // Standard fm3 -> fm2 -> fm1 -> param usage
-        control = `fm${i}`;
+        const iS = i === 1 ? '' : i;
+        control = `fmi${iS}`;
       } else {
-        control = `fm${i}${j}`;
+        control = `fmi${i}${j}`;
       }
       const amt = value[control];
       if (!amt) continue;
-      const source = modulators[i - 1];
-      const target = targets[j];
-      if (!source) {
-        const iS = `${i === 1 ? '' : i}`;
+      let io = [];
+      for (let [isMod, idx] of [[true, i], [false, j]]) {
+        debugger;
+        if (idx === 0) {
+          io.push(param);
+          continue;
+        }
+        if (!fms[idx]) {
+          const idxS = idx === 1 ? '' : idx;
+          const { osc, freq } = fm(param, value[`fmh${idxS}`] ?? 1, value[`fmwave${idxS}`] ?? 'sine');
+          const currStop = stop;
+          stop = (t) => {
+            currStop(t);
+            osc.stop(t);
+          };
+          const adsr = ['attack', 'decay', 'sustain', 'release'].map((s) => value[`fm${s}${idxS}`]);
+          if (!adsr.some((v) => v !== undefined)) {
+            fms[idx] = { input: osc.frequency, output: osc, freq};
+          } else {
+            const envGain = ac.createGain();
+            const [attack, decay, sustain, release] = getADSRValues(adsr);
+            const holdEnd = begin + value.duration;
+            const fmEnvelopeType = value[`fmenv${idxS}`] ?? 'exp';
+            getParamADSR(
+              envGain.gain,
+              attack,
+              decay,
+              sustain,
+              release,
+              0,
+              1,
+              begin,
+              holdEnd,
+              fmEnvelopeType === 'exp' ? 'exponential' : 'linear',
+            );
+            fms[idx] = { input: osc.frequency, output: osc.connect(envGain), freq};
+          }
+        }
+        const { input, output, freq } = fms[idx];
+        const g = gainNode(amt * freq);
+        io.push(isMod ? output.connect(g) : input);
+      }
+      if (!io[1]) {
         logger(
-          `[superdough] failed to connect FM from source ${i} (due to control ${control}): source ${i} does not exist. Please use control fm${iS} to set it up`,
+          `[superdough] control ${control} failed to connect FM ${i} to target ${j} due to missing frequency parameter (likely because fm${j} is noise)`,
           'warning',
         );
         continue;
       }
-      if (!target) {
-        logger(
-          `[superdough] failed to connect FM to target ${j} (due to control ${control}): target ${j} does not exist. Please use control fm${j} to set it up`,
-          'warning',
-        );
-        continue;
-      }
-      source.connect(target);
+      io[0].connect(io[1]);
     }
   }
   return { stop };
