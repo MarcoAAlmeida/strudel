@@ -298,7 +298,7 @@ export class StrudelMirror {
   async stop() {
     this.repl.scheduler.stop();
   }
-  
+
   // Listen for global stop requests (e.g., from Vim :q)
   onStopRequest = (e) => {
     try {

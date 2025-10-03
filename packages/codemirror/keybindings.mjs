@@ -1,20 +1,22 @@
-import {defaultKeymap} from '@codemirror/commands';
-import {Prec} from '@codemirror/state';
-import {keymap, ViewPlugin} from '@codemirror/view';
+import { defaultKeymap } from '@codemirror/commands';
+import { Prec } from '@codemirror/state';
+import { keymap, ViewPlugin } from '@codemirror/view';
 // import { searchKeymap } from '@codemirror/search';
-import {emacs} from '@replit/codemirror-emacs';
-import {vim, Vim} from '@replit/codemirror-vim';
+import { emacs } from '@replit/codemirror-emacs';
+import { vim, Vim } from '@replit/codemirror-vim';
 import { logger } from '@strudel/core';
 // import { vim } from './vim_test.mjs';
-import {vscodeKeymap} from '@replit/codemirror-vscode-keymap';
+import { vscodeKeymap } from '@replit/codemirror-vscode-keymap';
 
 const vscodePlugin = ViewPlugin.fromClass(
-    class {
-      constructor() {}
+  class {
+    constructor() {}
+  },
+  {
+    provide: () => {
+      return Prec.highest(keymap.of([...vscodeKeymap]));
     },
-    {
-      provide : () => { return Prec.highest(keymap.of([...vscodeKeymap ])); },
-    },
+  },
 );
 const vscodeExtension = (options) => [vscodePlugin].concat(options ?? []);
 
@@ -73,9 +75,7 @@ try {
     // :w to evaluate
     // :w to evaluate
     Vim.defineEx('write', 'w', (cm) => {
-      const view =
-          cm?.view ||
-          cm; // CM6 Vim passes either an object with view or the view itself
+      const view = cm?.view || cm; // CM6 Vim passes either an object with view or the view itself
       try {
         view?.focus?.();
         // Let the app know this came from Vim :w
@@ -93,22 +93,22 @@ try {
         }
         // Try Ctrl+Enter first if not handled by custom event
         const ctrlEnter = new KeyboardEvent('keydown', {
-          key : 'Enter',
-          code : 'Enter',
-          ctrlKey : true,
-          bubbles : true,
-          cancelable : true,
+          key: 'Enter',
+          code: 'Enter',
+          ctrlKey: true,
+          bubbles: true,
+          cancelable: true,
         });
         view?.dom?.dispatchEvent?.(ctrlEnter);
         // If not handled (no handler called preventDefault), try Alt+Enter as
         // fallback
         if (!ctrlEnter.defaultPrevented) {
           const altEnter = new KeyboardEvent('keydown', {
-            key : 'Enter',
-            code : 'Enter',
-            altKey : true,
-            bubbles : true,
-            cancelable : true,
+            key: 'Enter',
+            code: 'Enter',
+            altKey: true,
+            bubbles: true,
+            cancelable: true,
           });
           view?.dom?.dispatchEvent?.(altEnter);
         }
@@ -122,16 +122,16 @@ try {
 }
 
 const keymaps = {
-  vim, 
+  vim,
   // Add extra Vim keymap for gc to toggle line comment
   // We will include a Vim-specific keymap that calls the CM command
   // respecting the current selection.
   emacs,
-  codemirror : () => keymap.of(defaultKeymap),
-  vscode : vscodeExtension,
+  codemirror: () => keymap.of(defaultKeymap),
+  vscode: vscodeExtension,
 };
 
 export function keybindings(name) {
   const active = keymaps[name];
-  return [ active ? Prec.high(active()) : [] ];
+  return [active ? Prec.high(active()) : []];
 }
