@@ -1,6 +1,7 @@
+import { logger } from './logger.mjs';
+import { getNoiseBuffer } from './noise.mjs';
 import { getAudioContext } from './superdough.mjs';
 import { clamp, nanFallback, midiToFreq, noteToMidi } from './util.mjs';
-import { getNoiseBuffer } from './noise.mjs';
 
 export const noises = ['pink', 'white', 'brown', 'crackle'];
 
@@ -328,7 +329,7 @@ const mod = (freq, type = 'sine') => {
 const fm = (frequencyparam, harmonicityRatio, modulationIndex, wave = 'sine') => {
   const carrfreq = frequencyparam.value;
   const modfreq = carrfreq * harmonicityRatio;
-  return mod(modfreq, wave)
+  return mod(modfreq, wave);
 };
 
 export function applyFM(param, value, begin) {
@@ -349,8 +350,10 @@ export function applyFM(param, value, begin) {
       const amt = value[control];
       if (!amt) continue;
       let io = [];
-      for (let [isMod, idx] of [[true, i], [false, j]]) {
-        debugger;
+      for (let [isMod, idx] of [
+        [true, i],
+        [false, j],
+      ]) {
         if (idx === 0) {
           io.push(param);
           continue;
@@ -365,7 +368,7 @@ export function applyFM(param, value, begin) {
           };
           const adsr = ['attack', 'decay', 'sustain', 'release'].map((s) => value[`fm${s}${idxS}`]);
           if (!adsr.some((v) => v !== undefined)) {
-            fms[idx] = { input: osc.frequency, output: osc, freq};
+            fms[idx] = { input: osc.frequency, output: osc, freq };
           } else {
             const envGain = ac.createGain();
             const [attack, decay, sustain, release] = getADSRValues(adsr);
@@ -383,7 +386,7 @@ export function applyFM(param, value, begin) {
               holdEnd,
               fmEnvelopeType === 'exp' ? 'exponential' : 'linear',
             );
-            fms[idx] = { input: osc.frequency, output: osc.connect(envGain), freq};
+            fms[idx] = { input: osc.frequency, output: osc.connect(envGain), freq };
           }
         }
         const { input, output, freq } = fms[idx];
