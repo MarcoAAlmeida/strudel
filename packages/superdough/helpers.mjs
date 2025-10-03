@@ -325,7 +325,7 @@ const mod = (freq, range = 1, type = 'sine') => {
   osc.start();
   const g = new GainNode(ctx, { gain: range });
   osc.connect(g); // -range, range
-  return { node: g, stop: (t) => osc.stop(t) };
+  return { fm: osc, scaled: g, stop: (t) => osc.stop(t) };
 };
 const fm = (frequencyparam, harmonicityRatio, modulationIndex, wave = 'sine') => {
   const carrfreq = frequencyparam.value;
@@ -334,48 +334,86 @@ const fm = (frequencyparam, harmonicityRatio, modulationIndex, wave = 'sine') =>
   return mod(modfreq, modgain, wave);
 };
 export function applyFM(param, value, begin) {
-  const {
-    fmh: fmHarmonicity = 1,
-    fmi: fmModulationIndex,
-    fmenv: fmEnvelopeType = 'exp',
-    fmattack: fmAttack,
-    fmdecay: fmDecay,
-    fmsustain: fmSustain,
-    fmrelease: fmRelease,
-    fmvelocity: fmVelocity,
-    fmwave: fmWaveform = 'sine',
-    duration,
-  } = value;
-  let modulator;
-  let stop = () => {};
-
-  if (fmModulationIndex) {
-    const ac = getAudioContext();
-    const envGain = ac.createGain();
-    const fmmod = fm(param, fmHarmonicity, fmModulationIndex, fmWaveform);
-
-    modulator = fmmod.node;
-    stop = fmmod.stop;
-    if (![fmAttack, fmDecay, fmSustain, fmRelease, fmVelocity].some((v) => v !== undefined)) {
-      // no envelope by default
-      modulator.connect(param);
-    } else {
-      const [attack, decay, sustain, release] = getADSRValues([fmAttack, fmDecay, fmSustain, fmRelease]);
-      const holdEnd = begin + duration;
-      getParamADSR(
-        envGain.gain,
-        attack,
-        decay,
-        sustain,
-        release,
-        0,
-        1,
-        begin,
-        holdEnd,
-        fmEnvelopeType === 'exp' ? 'exponential' : 'linear',
-      );
-      modulator.connect(envGain);
-      envGain.connect(param);
+  const ac = getAudioContext();
+  let target = param;
+  let stop = (t) => {};
+  const targets = [param];
+  const modulators = [];
+  for (let i = 0; i < 8; i++) {
+    const iS = `${i === 0 ? '' : i}`;
+    let modulator;
+    const fmModulationIndex = value[`fmi${iS}`];
+    if (fmModulationIndex) {
+      const fmmod = fm(target, value[`fmh${iS}`] ?? 1, fmModulationIndex, value[`fmwave${iS}`] ?? 'sine');
+      modulator = fmmod.scaled;
+      const currStop = stop;
+      stop = (t) => {
+        currStop(t);
+        fmmod.stop(t);
+      };
+      const adsr = ['attack', 'decay', 'sustain', 'release'].map((s) => value[`fm${s}${iS}`]);
+      if (!adsr.some((v) => v !== undefined)) {
+        // no envelope by default
+        modulator.connect(target);
+        modulators.push(modulator);
+      } else {
+        const envGain = ac.createGain();
+        const [attack, decay, sustain, release] = getADSRValues(adsr);
+        const holdEnd = begin + value.duration;
+        const fmEnvelopeType = value[`fmenv${iS}`] ?? 'exp';
+        getParamADSR(
+          envGain.gain,
+          attack,
+          decay,
+          sustain,
+          release,
+          0,
+          1,
+          begin,
+          holdEnd,
+          fmEnvelopeType === 'exp' ? 'exponential' : 'linear',
+        );
+        modulator.connect(envGain);
+        envGain.connect(target);
+        modulators.push(envGain);
+      }
+      targets.push(fmmod.fm?.frequency);
+      if (targets[i]) {
+        // Cannot connect to noises, for example
+        target = targets[i];
+      }
+    }
+  }
+  // Matrix
+  for (let i = 1; i <= 8; i++) {
+    for (let j = 0; j <= 8; j++) {
+      let control;
+      if (i === j + 1) {
+        // Standard fm3 -> fm2 -> fm1 -> param usage
+        control = `fm${i}`;
+      } else {
+        control = `fm${i}${j}`;
+      }
+      const amt = value[control];
+      if (!amt) continue;
+      const source = modulators[i - 1];
+      const target = targets[j];
+      if (!source) {
+        const iS = `${i === 1 ? '' : i}`;
+        logger(
+          `[superdough] failed to connect FM from source ${i} (due to control ${control}): source ${i} does not exist. Please use control fm${iS} to set it up`,
+          'warning',
+        );
+        continue;
+      }
+      if (!target) {
+        logger(
+          `[superdough] failed to connect FM to target ${j} (due to control ${control}): target ${j} does not exist. Please use control fm${j} to set it up`,
+          'warning',
+        );
+        continue;
+      }
+      source.connect(target);
     }
   }
   return { stop };
