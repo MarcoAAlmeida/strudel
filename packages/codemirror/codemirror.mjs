@@ -1,4 +1,5 @@
 import { closeBrackets } from '@codemirror/autocomplete';
+import { toggleLineComment } from '@codemirror/commands';
 export { toggleComment, toggleBlockComment, toggleLineComment, toggleBlockCommentByLine } from '@codemirror/commands';
 // import { search, highlightSelectionMatches } from '@codemirror/search';
 import { indentWithTab } from '@codemirror/commands';
@@ -13,7 +14,7 @@ import {
   lineNumbers,
   drawSelection,
 } from '@codemirror/view';
-import { repl, registerControl } from '@strudel/core';
+import { repl, registerControl, logger } from '@strudel/core';
 import { Drawer, cleanupDraw } from '@strudel/draw';
 import { isAutoCompletionEnabled } from './autocomplete.mjs';
 import { isTooltipEnabled } from './tooltip.mjs';
@@ -245,6 +246,32 @@ export class StrudelMirror {
       }
     };
     document.addEventListener('start-repl', this.onStartRepl);
+
+    // Handle global evaluation requests (e.g., from Vim :w)
+    this.onEvaluateRequest = (e) => {
+      try {
+        // Evaluate current editor on repl-evaluate
+        logger('[repl] evaluate via event');
+        this.evaluate();
+        e?.cancelable && e.preventDefault?.();
+      } catch (err) {
+        console.error('Error handling repl-evaluate event', err);
+      }
+    };
+    document.addEventListener('repl-evaluate', this.onEvaluateRequest);
+    document.addEventListener('repl-stop', this.onStopRequest);
+
+    // Toggle comments requested from Vim (gc/gcc)
+    this.onToggleComment = (e) => {
+      try {
+        // Honor selections; toggleLineComment handles both selections and single line
+        toggleLineComment(this.editor);
+        e?.cancelable && e.preventDefault?.();
+      } catch (err) {
+        console.error('Error handling repl-toggle-comment event', err);
+      }
+    };
+    document.addEventListener('repl-toggle-comment', this.onToggleComment);
   }
   draw(haps, time, painters) {
     painters?.forEach((painter) => painter(this.drawContext, time, haps, this.drawTime));
@@ -271,6 +298,16 @@ export class StrudelMirror {
   async stop() {
     this.repl.scheduler.stop();
   }
+  
+  // Listen for global stop requests (e.g., from Vim :q)
+  onStopRequest = (e) => {
+    try {
+      this.stop();
+      e?.cancelable && e.preventDefault?.();
+    } catch (err) {
+      console.error('Error handling repl-stop event', err);
+    }
+  };
   async toggle() {
     if (this.repl.scheduler.started) {
       this.repl.stop();
@@ -351,6 +388,9 @@ export class StrudelMirror {
   }
   clear() {
     this.onStartRepl && document.removeEventListener('start-repl', this.onStartRepl);
+    this.onEvaluateRequest && document.removeEventListener('repl-evaluate', this.onEvaluateRequest);
+    this.onStopRequest && document.removeEventListener('repl-stop', this.onStopRequest);
+    this.onToggleComment && document.removeEventListener('repl-toggle-comment', this.onToggleComment);
   }
   getCursorLocation() {
     return this.editor.state.selection.main.head;
