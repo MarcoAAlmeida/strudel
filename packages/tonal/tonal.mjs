@@ -266,9 +266,14 @@ export const scale = register(
       pat
         .fmap((value) => {
           const isObject = typeof value === 'object';
-          // The case where the note has been defined via `n` or `pure`
-          if (!isObject || (isObject && ('n' in value || 'value' in value))) {
-            const step = isObject ? (value.n ?? value.value) : value;
+          // If value is a pure value, place it on `n` so that we interpret it as a scale
+          // degree
+          value = typeof value !== 'object' ? { n: value } : value;
+          if ('note' in value) {
+            const note = _getNearestScaleNote(scale, value.note);
+            return pure({ ...value, note });
+          } else if ('n' in value || 'value' in value) {
+            const step = value.n ?? value.value;
             delete value.n; // remove n so it won't cause trouble
             if (isNote(step)) {
               // legacy..
@@ -277,7 +282,7 @@ export const scale = register(
             try {
               const [number, offset] = _convertStepToNumberAndOffset(step);
               let note;
-              if (isObject && value.anchor) {
+              if (value.anchor) {
                 note = stepInNamedScale(number, scale, value.anchor);
               } else {
                 note = scaleStep(number, scale);
@@ -290,11 +295,9 @@ export const scale = register(
             }
             return value;
           }
-          // The case where the note has been defined via `note`
-          else {
-            const note = _getNearestScaleNote(scale, value.note);
-            return pure(isObject ? { ...value, note } : note);
-          }
+          throw new Error(
+            `Invalid value format for 'scale'. Value must contain 'n' or 'note' but received ${Object.keys(value)}`,
+          );
         })
         .outerJoin()
         // legacy:
