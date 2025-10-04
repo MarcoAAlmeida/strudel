@@ -268,7 +268,7 @@ export const scale = register(
           const isObject = typeof value === 'object';
           // If value is a pure value, place it on `n` so that we interpret it as a scale
           // degree
-          value = typeof value !== 'object' ? { n: value } : value;
+          value = isObject ? value : { n: value };
           if ('note' in value) {
             const note = _getNearestScaleNote(scale, value.note);
             return pure({ ...value, note });
