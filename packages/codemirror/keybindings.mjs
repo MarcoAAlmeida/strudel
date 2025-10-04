@@ -46,7 +46,6 @@ try {
     }
 
     // :q to pause/stop
-    // :q to pause/stop
     Vim.defineEx('quit', 'q', (cm) => {
       try {
         const view = cm?.view || cm;
@@ -71,7 +70,6 @@ try {
       }
     });
 
-    // :w to evaluate
     // :w to evaluate
     Vim.defineEx('write', 'w', (cm) => {
       const view = cm?.view || cm; // CM6 Vim passes either an object with view or the view itself
@@ -122,9 +120,6 @@ try {
 
 const keymaps = {
   vim,
-  // Add extra Vim keymap for gc to toggle line comment
-  // We will include a Vim-specific keymap that calls the CM command
-  // respecting the current selection.
   emacs,
   codemirror: () => keymap.of(defaultKeymap),
   vscode: vscodeExtension,
