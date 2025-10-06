@@ -54,7 +54,9 @@ try {
         try {
           const ev = new CustomEvent('repl-stop', { detail: { source: 'vim', view }, cancelable: true });
           handled = document.dispatchEvent(ev) === false;
-        } catch {}
+        } catch (e) {
+          console.error('Error dispatching repl-stop event', e);
+        }
         if (!handled) {
           const altDot = new KeyboardEvent('keydown', {
             key: '.',
@@ -78,13 +80,17 @@ try {
         // Let the app know this came from Vim :w
         try {
           logger('[vim] :w — evaluating code');
-        } catch {}
+        } catch (e) {
+          console.error('Error logging Vim :w evaluation', e);
+        }
         // Dispatch a dedicated evaluate event first
         let handled = false;
         try {
           const ev = new CustomEvent('repl-evaluate', { detail: { source: 'vim', view }, cancelable: true });
           handled = document.dispatchEvent(ev) === false; // false means preventDefault was called
-        } catch {}
+        } catch (e) {
+          console.error('Error dispatching repl-evaluate event', e);
+        }
         if (handled) {
           return;
         }
