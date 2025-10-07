@@ -21,7 +21,7 @@ export class MondoParser {
     close_curly: /^\}/,
     number: /^-?[0-9]*\.?[0-9]+/, // before pipe!
     // TODO: better error handling when "-" is used as rest, e.g "s [- bd]"
-    op: /^[*\/:!@%?+\-&]|^\.{2}/, // * / : ! @ % ? ..
+    op: /^[*/:!@%?+\-&]|^\.{2}/, // * / : ! @ % ? ..
     // dollar: /^\$/,
     pipe: /^#/,
     stack: /^[,$]/,
