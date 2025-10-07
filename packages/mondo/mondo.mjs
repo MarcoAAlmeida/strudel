@@ -165,7 +165,7 @@ export class MondoParser {
       const op = { type: 'plain', value: children[opIndex].value };
       const left = children[opIndex - 1];
       const right = children[opIndex + 1];
-      const call = { type: 'list', children: [op, left, right] };
+      const call = { type: 'list', children: [op, right, left] };
       // insert call while keeping other siblings
       children = [...children.slice(0, opIndex - 1), call, ...children.slice(opIndex + 2)];
       children = this.unwrap_children(children);
