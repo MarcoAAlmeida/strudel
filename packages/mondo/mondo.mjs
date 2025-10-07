@@ -22,6 +22,7 @@ export class MondoParser {
     number: /^-?[0-9]*\.?[0-9]+/, // before pipe!
     // TODO: better error handling when "-" is used as rest, e.g "s [- bd]"
     op: /^[*/:!@%?+-]|^\.{2}/, // * / : ! @ % ? ..
+    and: /^&/,
     // dollar: /^\$/,
     pipe: /^#/,
     stack: /^[,$]/,
@@ -150,6 +151,27 @@ export class MondoParser {
     }
     return children;
   }
+  desugar_ands(children) {
+    while (true) {
+      let opIndex = children.findIndex((child) => child.type === 'and');
+      if (opIndex === -1) break;
+      if (opIndex === children.length - 1) {
+        throw new Error(`cannot use & as last child.`);
+      }
+      if (opIndex === 0) {
+        throw new Error(`cannot use & as first child.`);
+      }
+      // convert infix to prefix notation
+      const op = { type: 'plain', value: children[opIndex].value };
+      const left = children[opIndex - 1];
+      const right = children[opIndex + 1];
+      const call = { type: 'list', children: [op, left, right] };
+      // insert call while keeping other siblings
+      children = [...children.slice(0, opIndex - 1), call, ...children.slice(opIndex + 2)];
+      children = this.unwrap_children(children);
+    }
+    return children;
+  }
   desugar_ops(children) {
     while (true) {
       let opIndex = children.findIndex((child) => child.type === 'op');
@@ -264,6 +286,7 @@ export class MondoParser {
           children = [{ type: 'plain', value: type }, ...children];
         }
         children = this.desugar_ops(children);
+        children = this.desugar_ands(children);
         // children = this.desugar_pipes(children, (children) => this.desugar_dollars(children));
         children = this.desugar_pipes(children);
         return children;
