@@ -153,6 +153,24 @@ export const getADSRValues = (params, curve = 'linear', defaultValues) => {
   return [Math.max(a ?? 0, envmin), Math.max(d ?? 0, envmin), Math.min(sustain, envmax), Math.max(r ?? 0, releaseMin)];
 };
 
+export function getParamLfo(audioContext, param, start, end, lfoValues) {
+  let { defaultDepth = 1, depth, dcoffset, ...getLfoInputs } = lfoValues;
+  if (depth == null) {
+    const hasLFOParams = Object.values(getLfoInputs).some((v) => v != null);
+    depth = hasLFOParams ? defaultDepth : 0;
+  }
+  let lfo;
+  if (depth) {
+    lfo = getLfo(audioContext, start, end, {
+      depth,
+      dcoffset,
+      ...getLfoInputs,
+    });
+    lfo.connect(param);
+  }
+  return lfo;
+}
+
 // helper utility for applying standard modulators to a parameter
 export function applyParameterModulators(audioContext, param, start, end, envelopeValues, lfoValues) {
   let { amount, offset, defaultAmount = 1, curve = 'linear', values, holdEnd, defaultValues } = envelopeValues;
@@ -169,41 +187,39 @@ export function applyParameterModulators(audioContext, param, start, end, envelo
     const [attack, decay, sustain, release] = getADSRValues(values, curve, defaultValues);
     getParamADSR(param, attack, decay, sustain, release, min, max, start, holdEnd, curve);
   }
-  let lfo;
-  let { defaultDepth = 1, depth, dcoffset, ...getLfoInputs } = lfoValues;
-
-  if (depth == null) {
-    const hasLFOParams = Object.values(getLfoInputs).some((v) => v != null);
-    depth = hasLFOParams ? defaultDepth : 0;
-  }
-  if (depth) {
-    lfo = getLfo(audioContext, start, end, {
-      depth,
-      dcoffset,
-      ...getLfoInputs,
-    });
-    lfo.connect(param);
-  }
-
+  const lfo = getParamLfo(audioContext, param, start, end, lfoValues);
   return { lfo, disconnect: () => lfo?.disconnect() };
 }
 
-export function createFilter(context, type, frequency, Q, att, dec, sus, rel, fenv, start, end, fanchor, model, drive) {
-  const curve = 'exponential';
-  const [attack, decay, sustain, release] = getADSRValues([att, dec, sus, rel], curve, [0.005, 0.14, 0, 0.1]);
-  let filter;
+export function createFilter(context, start, end, params, cps) {
+  let {
+    frequency,
+    fanchor,
+    fenv,
+    type,
+    model,
+    q = 1,
+    drive = 0.69,
+    depth,
+    dcoffset = -0.5,
+    skew,
+    shape,
+    rate,
+    sync,
+  } = params;
   let frequencyParam;
   if (model === 'ladder') {
-    filter = getWorklet(context, 'ladder-processor', { frequency, q: Q, drive });
+    filter = getWorklet(context, 'ladder-processor', { frequency, q, drive });
     frequencyParam = filter.parameters.get('frequency');
   } else {
     filter = context.createBiquadFilter();
     filter.type = type;
-    filter.Q.value = Q;
+    filter.Q.value = q;
     filter.frequency.value = frequency;
     frequencyParam = filter.frequency;
   }
-
+  const envelopeValues = [params.attack, params.decay, params.sustain, params.release];
+  const [attack, decay, sustain, release] = getADSRValues(envelopeValues, 'exponential', [0.005, 0.14, 0, 0.1]);
   // envelope is active when any of these values is set
   const hasEnvelope = att ?? dec ?? sus ?? rel ?? fenv;
   // Apply ADSR to filter frequency
@@ -216,8 +232,15 @@ export function createFilter(context, type, frequency, Q, att, dec, sus, rel, fe
     let max = clamp(2 ** (fenvAbs - offset) * frequency, 0, 20000);
     if (fenv < 0) [min, max] = [max, min];
     getParamADSR(frequencyParam, attack, decay, sustain, release, min, max, start, end, curve);
-    return filter;
   }
+
+  if (sync != null) {
+    rate = cps * sync;
+  }
+  const lfoValues = { depth, dcoffset, skew, shape, frequency: rate };
+  getParamLfo(context, frequencyParam, start, end, lfoValues);
+  // TODO: remember to disconnect LFO
+  // lfo?.disconnect()
   return filter;
 }
 

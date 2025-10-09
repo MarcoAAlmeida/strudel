@@ -1288,6 +1288,151 @@ export const { fanchor } = registerControl('fanchor');
  */
 // currently an alias of 'hcutoff' https://codeberg.org/uzu/strudel/issues/496
 // ['hpf'],
+
+/**
+ * Rate of the LFO for the lowpass filter
+ *
+ * @name lprate
+ * @param {number | Pattern} rate rate in hertz
+ */
+export const { lprate } = registerControl('lprate');
+
+/**
+ * Cycle-synced rate of the LFO for the lowpass filter
+ *
+ * @name lpsync
+ * @param {number | Pattern} rate rate in cycles
+ */
+export const { lpsync } = registerControl('lpsync');
+
+/**
+ * Depth of the LFO for the lowpass filter
+ *
+ * @name lpdepth
+ * @param {number | Pattern} depth depth of modulation
+ */
+export const { lpdepth } = registerControl('lpdepth');
+
+/**
+ * Shape of the LFO for the lowpass filter
+ *
+ * @name lpshape
+ * @param {number | Pattern} shape Shape of the lfo (0, 1, 2, ..)
+ */
+export const { lpshape } = registerControl('lpshape');
+
+/**
+ * DC offset of the LFO for the lowpass filter
+ *
+ * @name lpdc
+ * @param {number | Pattern} dcoffset dc offset. set to 0 for unipolar
+ */
+export const { lpdc } = registerControl('lpdc');
+
+/**
+ * Skew of the LFO for the lowpass filter
+ *
+ * @name lpskew
+ * @param {number | Pattern} skew How much to bend the LFO shape
+ */
+export const { lpskew } = registerControl('lpskew');
+
+/**
+ * Rate of the LFO for the bandpass filter
+ *
+ * @name bprate
+ * @param {number | Pattern} rate rate in hertz
+ */
+export const { bprate } = registerControl('bprate');
+
+/**
+ * Cycle-synced rate of the LFO for the bandpass filter
+ *
+ * @name bpsync
+ * @param {number | Pattern} rate rate in cycles
+ */
+export const { bpsync } = registerControl('bpsync');
+
+/**
+ * Depth of the LFO for the bandpass filter
+ *
+ * @name bpdepth
+ * @param {number | Pattern} depth depth of modulation
+ */
+export const { bpdepth } = registerControl('bpdepth');
+
+/**
+ * Shape of the LFO for the bandpass filter
+ *
+ * @name bpshape
+ * @param {number | Pattern} shape Shape of the lfo (0, 1, 2, ..)
+ */
+export const { bpshape } = registerControl('bpshape');
+
+/**
+ * DC offset of the LFO for the bandpass filter
+ *
+ * @name bpdc
+ * @param {number | Pattern} dcoffset dc offset. set to 0 for unipolar
+ */
+export const { bpdc } = registerControl('bpdc');
+
+/**
+ * Skew of the LFO for the bandpass filter
+ *
+ * @name bpskew
+ * @param {number | Pattern} skew How much to bend the LFO shape
+ */
+export const { bpskew } = registerControl('bpskew');
+
+/**
+ * Rate of the LFO for the highpass filter
+ *
+ * @name hprate
+ * @param {number | Pattern} rate rate in hertz
+ */
+export const { hprate } = registerControl('hprate');
+
+/**
+ * Cycle-synced rate of the LFO for the highpass filter
+ *
+ * @name hpsync
+ * @param {number | Pattern} rate rate in cycles
+ */
+export const { hpsync } = registerControl('hpsync');
+
+/**
+ * Depth of the LFO for the highpass filter
+ *
+ * @name hpdepth
+ * @param {number | Pattern} depth depth of modulation
+ */
+export const { hpdepth } = registerControl('hpdepth');
+
+/**
+ * Shape of the LFO for the highpass filter
+ *
+ * @name hpshape
+ * @param {number | Pattern} shape Shape of the lfo (0, 1, 2, ..)
+ */
+export const { hpshape } = registerControl('hpshape');
+
+/**
+ * DC offset of the LFO for the highpass filter
+ *
+ * @name hpdc
+ * @param {number | Pattern} dcoffset dc offset. set to 0 for unipolar
+ */
+export const { hpdc } = registerControl('hpdc');
+
+/**
+ * Skew of the LFO for the highpass filter
+ *
+ * @name hpskew
+ * @param {number | Pattern} skew How much to bend the LFO shape
+ */
+export const { hpskew } = registerControl('hpskew');
+
 /**
  * Applies a vibrato to the frequency of the oscillator.
  *
