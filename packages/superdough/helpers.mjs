@@ -239,8 +239,6 @@ export function createFilter(context, start, end, params, cps) {
   }
   const lfoValues = { depth, dcoffset, skew, shape, frequency: rate };
   getParamLfo(context, frequencyParam, start, end, lfoValues);
-  // TODO: remember to disconnect LFO
-  // lfo?.disconnect()
   return filter;
 }
 
