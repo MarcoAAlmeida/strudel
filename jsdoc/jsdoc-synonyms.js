@@ -13,10 +13,10 @@ function defineTags(dictionary) {
     },
   });
 
-  dictionary.defineTag('group', {
+  dictionary.defineTag('tags', {
     mustHaveValue: true,
     onTagged: function (doclet, tag) {
-      doclet.group = tag.value;
+      doclet.tags = tag.value.split(/[ ,]+/);
     },
   });
 }

@@ -7,7 +7,7 @@ import { signal } from '../core/signal.mjs';
  * @name accelerationX
  * @return {Pattern}
  * @synonyms accX
- * @group external_io
+ * @tags external_io
  * @example
  * n(accelerationX.segment(4).range(0,7)).scale("C:minor")
  *
@@ -18,7 +18,7 @@ import { signal } from '../core/signal.mjs';
  * @name accelerationY
  * @return {Pattern}
  * @synonyms accY
- * @group external_io
+ * @tags external_io
  * @example
  * n(accelerationY.segment(4).range(0,7)).scale("C:minor")
  *
@@ -29,7 +29,7 @@ import { signal } from '../core/signal.mjs';
  * @name accelerationZ
  * @return {Pattern}
  * @synonyms accZ
- * @group external_io
+ * @tags external_io
  * @example
  * n(accelerationZ.segment(4).range(0,7)).scale("C:minor")
  *
@@ -40,7 +40,7 @@ import { signal } from '../core/signal.mjs';
  * @name gravityX
  * @return {Pattern}
  * @synonyms gravX
- * @group external_io
+ * @tags external_io
  * @example
  * n(gravityX.segment(4).range(0,7)).scale("C:minor")
  *
@@ -51,7 +51,7 @@ import { signal } from '../core/signal.mjs';
  * @name gravityY
  * @return {Pattern}
  * @synonyms gravY
- * @group external_io
+ * @tags external_io
  * @example
  * n(gravityY.segment(4).range(0,7)).scale("C:minor")
  *
@@ -62,7 +62,7 @@ import { signal } from '../core/signal.mjs';
  * @name gravityZ
  * @return {Pattern}
  * @synonyms gravZ
- * @group external_io
+ * @tags external_io
  * @example
  * n(gravityZ.segment(4).range(0,7)).scale("C:minor")
  *
@@ -73,7 +73,7 @@ import { signal } from '../core/signal.mjs';
  * @name rotationAlpha
  * @return {Pattern}
  * @synonyms rotA, rotZ, rotationZ
- * @group external_io
+ * @tags external_io
  * @example
  * n(rotationAlpha.segment(4).range(0,7)).scale("C:minor")
  *
@@ -84,7 +84,7 @@ import { signal } from '../core/signal.mjs';
  * @name rotationBeta
  * @return {Pattern}
  * @synonyms rotB, rotX, rotationX
- * @group external_io
+ * @tags external_io
  * @example
  * n(rotationBeta.segment(4).range(0,7)).scale("C:minor")
  *
@@ -95,7 +95,7 @@ import { signal } from '../core/signal.mjs';
  * @name rotationGamma
  * @return {Pattern}
  * @synonyms rotG, rotY, rotationY
- * @group external_io
+ * @tags external_io
  * @example
  * n(rotationGamma.segment(4).range(0,7)).scale("C:minor")
  *
@@ -106,7 +106,7 @@ import { signal } from '../core/signal.mjs';
  * @name orientationAlpha
  * @return {Pattern}
  * @synonyms oriA, oriZ, orientationZ
- * @group external_io
+ * @tags external_io
  * @example
  * n(orientationAlpha.segment(4).range(0,7)).scale("C:minor")
  *
@@ -117,7 +117,7 @@ import { signal } from '../core/signal.mjs';
  * @name orientationBeta
  * @return {Pattern}
  * @synonyms oriB, oriX, orientationX
- * @group external_io
+ * @tags external_io
  * @example
  * n(orientationBeta.segment(4).range(0,7)).scale("C:minor")
  *
@@ -128,7 +128,7 @@ import { signal } from '../core/signal.mjs';
  * @name orientationGamma
  * @return {Pattern}
  * @synonyms oriG, oriY, orientationY
- * @group external_io
+ * @tags external_io
  * @example
  * n(orientationGamma.segment(4).range(0,7)).scale("C:minor")
  *
@@ -139,7 +139,7 @@ import { signal } from '../core/signal.mjs';
  * @name absoluteOrientationAlpha
  * @return {Pattern}
  * @synonyms absOriA, absOriZ, absoluteOrientationZ
- * @group external_io
+ * @tags external_io
  * @example
  * n(absoluteOrientationAlpha.segment(4).range(0,7)).scale("C:minor")
  *
@@ -150,7 +150,7 @@ import { signal } from '../core/signal.mjs';
  * @name absoluteOrientationBeta
  * @return {Pattern}
  * @synonyms absOriB, absOriX, absoluteOrientationX
- * @group external_io
+ * @tags external_io
  * @example
  * n(absoluteOrientationBeta.segment(4).range(0,7)).scale("C:minor")
  *
@@ -161,7 +161,7 @@ import { signal } from '../core/signal.mjs';
  * @name absoluteOrientationGamma
  * @return {Pattern}
  * @synonyms absOriG, absOriY, absoluteOrientationY
- * @group external_io
+ * @tags external_io
  * @example
  * n(absoluteOrientationGamma.segment(4).range(0,7)).scale("C:minor")
  *
