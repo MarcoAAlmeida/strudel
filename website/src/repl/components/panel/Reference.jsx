@@ -10,8 +10,10 @@ const availableFunctions = (() => {
   const functions = [];
   for (const doc of jsdocJson.docs) {
     if (!isValid(doc)) continue;
+    if (seen.has(doc.name)) continue;
     functions.push(doc);
     const synonyms = doc.synonyms || [];
+    seen.add(doc.name);
     for (const s of synonyms) {
       if (!s || seen.has(s)) continue;
       seen.add(s);
@@ -38,18 +40,33 @@ const getInnerText = (html) => {
 const GROUP_DISPLAY_NAMES = {
   external_io: 'External I/O',
   effects: 'Effects',
-  ungrouped: 'Ungrouped',
+  untagged: 'Untagged',
   structure: 'Structure',
   transforms: 'Transforms',
 };
 
-const GROUP_ORDER = ['effects', 'transforms', 'structure', 'ungrouped', 'external_io'];
+const GROUP_ORDER = ['effects', 'transforms', 'structure', 'untagged', 'external_io'];
 
 export function Reference() {
   const [search, setSearch] = useState('');
+  const [selectedTag, setSelectedTag] = useState(null);
+
+  const toggleTag = (tag) => {
+    if (selectedTag === tag) {
+      setSelectedTag(null);
+    } else {
+      setSelectedTag(tag);
+    }
+  };
 
   const visibleFunctions = useMemo(() => {
     return availableFunctions.filter((entry) => {
+      if (selectedTag) {
+        if (!(entry.tags || ['untagged']).includes(selectedTag)) {
+          return false;
+        }
+      }
+
       if (!search) {
         return true;
       }
@@ -60,12 +77,12 @@ export function Reference() {
         (entry.synonyms?.some((s) => s.includes(lowCaseSearch)) ?? false)
       );
     });
-  }, [search]);
+  }, [search, selectedTag]);
 
   const visibleFunctionsByGroup = (() => {
     const groups = {};
     for (const doc of visibleFunctions) {
-      const group = doc.group || 'ungrouped';
+      const group = (doc.tags || ['untagged'])[0];
       if (!groups[group]) {
         groups[group] = [];
       }
@@ -85,37 +102,56 @@ export function Reference() {
     return ai - bi;
   });
 
+  const tagCounts = {};
+  for (const doc of availableFunctions) {
+    (doc.tags || ['untagged']).forEach((t) => {
+      if (typeof t === 'string' && t) {
+        tagCounts[t] = (tagCounts[t] || 0) + 1;
+      }
+    });
+  }
+
   return (
-    <div className="flex h-full w-full p-2 overflow-hidden">
-      <div className="h-full  flex flex-col gap-2 w-1/3 max-w-72 ">
-        <div class="w-full flex">
+    <div className="flex flex-col h-full w-full p-2">
+      <div className="w-full  flex flex-col gap-2 h-1/2">
+        <div className="w-full flex flex-col gap-2">
           <Textbox className="w-full" placeholder="Search" value={search} onChange={setSearch} />
-        </div>
-        <div className="flex flex-col h-full overflow-y-auto  gap-1.5 bg-background bg-opacity-50  rounded-md">
-          {sortedGroups.map(([groupId, groupEntries]) => (
-            <>
-              <h4 key={`group-${groupId}`} className="font-semibold text-foreground">
-                {GROUP_DISPLAY_NAMES[groupId] || groupId} ({groupEntries.length})
-              </h4>
-              {groupEntries.map((entry, i) => (
-                <a
-                  key={`group-${groupId}-entry-${i}`}
-                  className="cursor-pointer text-foreground flex-none hover:bg-lineHighlight overflow-x-hidden  px-1 text-ellipsis"
-                  onClick={() => {
-                    const el = document.getElementById(`doc-${entry.name}`);
-                    const container = document.getElementById('reference-container');
-                    container.scrollTo(0, el.offsetTop);
-                  }}
-                >
-                  {entry.name} {/* <span className="text-gray-600">{entry.meta.filename}</span> */}
-                </a>
+          <div>
+            {Object.entries(tagCounts)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([t, count]) => (
+                <span key={t}>
+                  <a
+                    className={[
+                      'select-none text-white border-2 border-gray-500 px-1 py-0.5 my-2 cursor-pointer text-sm/8 rounded-md ',
+                      `${selectedTag === t ? 'bg-gray-500 text-black' : ''}`,
+                    ].join(' ')}
+                    onClick={() => toggleTag(t)}
+                  >
+                    {t}&nbsp;({count})
+                  </a>{' '}
+                </span>
               ))}
-            </>
+          </div>
+        </div>
+        <div className="flex flex-col h-full overflow-y-auto gap-1.5 bg-background bg-opacity-50 rounded-md">
+          {visibleFunctions.map((entry, i) => (
+            <a
+              key={`entry-${entry.name}`}
+              className="cursor-pointer text-foreground flex-none hover:bg-lineHighlight overflow-x-hidden  px-1 text-ellipsis"
+              onClick={() => {
+                const el = document.getElementById(`doc-${entry.name}`);
+                const container = document.getElementById('reference-container');
+                container.scrollTo(0, el.offsetTop);
+              }}
+            >
+              {entry.name}
+            </a>
           ))}
         </div>
       </div>
       <div
-        className="break-normal flex-grow flex-col overflow-y-auto overflow-x-hidden   px-2 flex relative"
+        className="break-normal flex-col overflow-y-auto overflow-x-hidden p-2 flex relative"
         id="reference-container"
       >
         <div className="prose dark:prose-invert min-w-full px-1 ">
