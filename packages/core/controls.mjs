@@ -1621,7 +1621,7 @@ export const { fadeInTime } = registerControl('fadeInTime');
  * Set frequency of sound.
  *
  * @name freq
- * @tags transforms
+ * @tags temporal
  * @param {number | Pattern} frequency in Hz. the audible range is between 20 and 20000 Hz
  * @example
  * freq("220 110 440 110").s("superzow").osc()
@@ -2205,7 +2205,7 @@ export const { cps } = registerControl('cps');
  * Multiplies the duration with the given number. Also cuts samples off at the end if they exceed the duration.
  *
  * @name clip
- * @tags transforms
+ * @tags temporal
  * @synonyms legato
  * @param {number | Pattern} factor >= 0
  * @example
@@ -2218,7 +2218,7 @@ export const { clip, legato } = registerControl('clip', 'legato');
  * Sets the duration of the event in cycles. Similar to clip / legato, it also cuts samples off at the end if they exceed the duration.
  *
  * @name duration
- * @tags transforms
+ * @tags temporal
  * @synonyms dur
  * @param {number | Pattern} seconds >= 0
  * @example
@@ -2297,7 +2297,7 @@ export const ar = register('ar', (t, pat) => {
  * MIDI channel: Sets the MIDI channel for the event.
  *
  * @name midichan
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern} channel MIDI channel number (0-15)
  * @example
  * note("c4").midichan(1).midi()
@@ -2310,7 +2310,7 @@ export const { midimap } = registerControl('midimap');
  * MIDI port: Sets the MIDI port for the event.
  *
  * @name midiport
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern} port MIDI port
  * @example
  * note("c a f e").midiport("<0 1 2 3>").midi()
@@ -2321,7 +2321,7 @@ export const { midiport } = registerControl('midiport');
  * MIDI command: Sends a MIDI command message.
  *
  * @name midicmd
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern} command MIDI command
  * @example
  * midicmd("clock*48,<start stop>/2").midi()
@@ -2332,7 +2332,7 @@ export const { midicmd } = registerControl('midicmd');
  * MIDI control: Sends a MIDI control change message.
  *
  * @name control
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern}  MIDI control number (0-127)
  * @param {number | Pattern}  MIDI controller value (0-127)
  */
@@ -2348,7 +2348,7 @@ export const control = register('control', (args, pat) => {
  * MIDI control number: Sends a MIDI control change message.
  *
  * @name ccn
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern}  MIDI control number (0-127)
  */
 export const { ccn } = registerControl('ccn');
@@ -2356,7 +2356,7 @@ export const { ccn } = registerControl('ccn');
  * MIDI control value: Sends a MIDI control change message.
  *
  * @name ccv
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern}  MIDI control value (0-127)
  */
 export const { ccv } = registerControl('ccv');
@@ -2366,7 +2366,7 @@ export const { ctlNum } = registerControl('ctlNum');
 /**
  * MIDI NRPN non-registered parameter number: Sends a MIDI NRPN non-registered parameter number message.
  * @name nrpnn
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern} nrpnn MIDI NRPN non-registered parameter number (0-127)
  * @example
  * note("c4").nrpnn("1:8").nrpv("123").midichan(1).midi()
@@ -2375,7 +2375,7 @@ export const { nrpnn } = registerControl('nrpnn');
 /**
  * MIDI NRPN non-registered parameter value: Sends a MIDI NRPN non-registered parameter value message.
  * @name nrpv
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern} nrpv MIDI NRPN non-registered parameter value (0-127)
  * @example
  * note("c4").nrpnn("1:8").nrpv("123").midichan(1).midi()
@@ -2386,7 +2386,7 @@ export const { nrpv } = registerControl('nrpv');
  * MIDI program number: Sends a MIDI program change message.
  *
  * @name progNum
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern} program MIDI program number (0-127)
  * @example
  * note("c4").progNum(10).midichan(1).midi()
@@ -2396,7 +2396,7 @@ export const { progNum } = registerControl('progNum');
 /**
  * MIDI sysex: Sends a MIDI sysex message.
  * @name sysex
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern} id Sysex ID
  * @param {number | Pattern} data Sysex data
  * @example
@@ -2412,7 +2412,7 @@ export const sysex = register('sysex', (args, pat) => {
 /**
  * MIDI sysex ID: Sends a MIDI sysex identifier message.
  * @name sysexid
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern} id Sysex ID
  * @example
  * note("c4").sysexid("0x77").sysexdata("0x01:0x02:0x03:0x04").midichan(1).midi()
@@ -2421,7 +2421,7 @@ export const { sysexid } = registerControl('sysexid');
 /**
  * MIDI sysex data: Sends a MIDI sysex message.
  * @name sysexdata
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern} data Sysex data
  * @example
  * note("c4").sysexid("0x77").sysexdata("0x01:0x02:0x03:0x04").midichan(1).midi()
@@ -2431,7 +2431,7 @@ export const { sysexdata } = registerControl('sysexdata');
 /**
  * MIDI pitch bend: Sends a MIDI pitch bend message.
  * @name midibend
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern} midibend MIDI pitch bend (-1 - 1)
  * @example
  * note("c4").midibend(sine.slow(4).range(-0.4,0.4)).midi()
@@ -2440,7 +2440,7 @@ export const { midibend } = registerControl('midibend');
 /**
  * MIDI key after touch: Sends a MIDI key after touch message.
  * @name miditouch
- * @tags examples
+ * @tags external_io
  * @param {number | Pattern} miditouch MIDI key after touch (0-1)
  * @example
  * note("c4").miditouch(sine.slow(4).range(0,1)).midi()
@@ -2461,7 +2461,7 @@ export const getControlName = (alias) => {
  * Sets properties in a batch.
  *
  * @name as
- * @tags transforms
+ * @tags temporal
  * @param {String | Array} mapping the control names that are set
  * @example
  * "c:.5 a:1 f:.25 e:.8".as("note:clip")

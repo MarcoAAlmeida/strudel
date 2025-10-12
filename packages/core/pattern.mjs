@@ -978,7 +978,7 @@ Pattern.prototype.collect = function () {
 
 /**
  * Selects indices in in stacked notes.
- * @tags transforms
+ * @tags temporal
  * @example
  * note("<[c,eb,g]!2 [c,f,ab] [d,f,ab]>")
  * .arpWith(haps => haps[2])
@@ -993,7 +993,7 @@ export const arpWith = register('arpWith', (func, pat) => {
 
 /**
  * Selects indices in in stacked notes.
- * @tags transforms
+ * @tags temporal
  * @example
  * note("<[c,eb,g]!2 [c,f,ab] [d,f,ab]>")
  * .arp("0 [0,2] 1 [0,2]")
@@ -1342,7 +1342,7 @@ export function reify(thing) {
 /**
  * Takes a list of patterns, and returns a pattern of lists.
  *
- * @tags transforms
+ * @tags temporal
  */
 export function sequenceP(pats) {
   let result = pure([]);
@@ -3354,7 +3354,7 @@ Pattern.prototype.steps = Pattern.prototype.pace;
  * Cuts each sample into the given number of parts, allowing you to explore a technique known as 'granular synthesis'.
  * It turns a pattern of samples into a pattern of parts of samples.
  * @name chop
- * @tags transforms
+ * @tags temporal
  * @memberof Pattern
  * @returns Pattern
  * @example
@@ -3385,7 +3385,7 @@ export const chop = register('chop', function (n, pat) {
 /**
  * Cuts each sample into the given number of parts, triggering progressive portions of each sample at each loop.
  * @name striate
- * @tags transforms
+ * @tags temporal
  * @memberof Pattern
  * @returns Pattern
  * @example
@@ -3404,7 +3404,7 @@ export const striate = register('striate', function (n, pat) {
 /**
  * Makes the sample fit the given number of cycles by changing the speed.
  * @name loopAt
- * @tags transforms
+ * @tags temporal
  * @memberof Pattern
  * @returns Pattern
  * @example
@@ -3423,7 +3423,7 @@ const _loopAt = function (factor, pat, cps = 0.5) {
  * Chops samples into the given number of slices, triggering those slices with a given pattern of slice numbers.
  * Instead of a number, it also accepts a list of numbers from 0 to 1 to slice at specific points.
  * @name slice
- * @tags transforms
+ * @tags temporal
  * @memberof Pattern
  * @returns Pattern
  * @example
@@ -3477,7 +3477,7 @@ Pattern.prototype.onTriggerTime = function (func) {
 /**
  * Works the same as slice, but changes the playback speed of each slice to match the duration of its step.
  * @name splice
- * @tags transforms
+ * @tags temporal
  * @example
  * samples('github:tidalcycles/dirt-samples')
  * s("breaks165")
@@ -3515,7 +3515,7 @@ export const { loopAt, loopat } = register(['loopAt', 'loopat'], function (facto
  * Makes the sample fit its event duration. Good for rhythmical loops like drum breaks.
  * Similar to `loopAt`.
  * @name fit
- * @tags transforms
+ * @tags temporal
  * @example
  * samples({ rhodes: 'https://cdn.freesound.org/previews/132/132051_316502-lq.mp3' })
  * s("rhodes/2").fit()
@@ -3541,7 +3541,7 @@ export const fit = register('fit', (pat) =>
  * given by a global clock and this function will be
  * deprecated/removed.
  * @name loopAtCps
- * @tags transforms
+ * @tags temporal
  * @memberof Pattern
  * @returns Pattern
  * @example

@@ -300,7 +300,7 @@ const _rearrangeWith = (ipat, n, pat) => {
  * Slices a pattern into the given number of parts, then plays those parts in random order.
  * Each part will be played exactly once per cycle.
  * @name shuffle
- * @tags transforms
+ * @tags temporal
  * @example
  * note("c d e f").sound("piano").shuffle(4)
  * @example
@@ -314,7 +314,7 @@ export const shuffle = register('shuffle', (n, pat) => {
  * Slices a pattern into the given number of parts, then plays those parts at random. Similar to `shuffle`,
  * but parts might be played more than once, or not at all, per cycle.
  * @name scramble
- * @tags transforms
+ * @tags temporal
  * @example
  * note("c d e f").sound("piano").scramble(4)
  * @example
@@ -393,7 +393,7 @@ export const __chooseWith = (pat, xs) => {
 /**
  * Choose from the list of values (or patterns of values) using the given
  * pattern of numbers, which should be in the range of 0..1
- * @tags transforms
+ * @tags temporal
  * @param {Pattern} pat
  * @param {*} xs
  * @returns {Pattern}
@@ -407,7 +407,7 @@ export const chooseWith = (pat, xs) => {
 /**
  * As with {chooseWith}, but the structure comes from the chosen values, rather
  * than the pattern you're using to choose with.
- * @tags transforms
+ * @tags temporal
  * @param {Pattern} pat
  * @param {*} xs
  * @returns {Pattern}
@@ -418,7 +418,7 @@ export const chooseInWith = (pat, xs) => {
 
 /**
  * Chooses randomly from the given list of elements.
- * @tags transforms
+ * @tags temporal
  * @param  {...any} xs values / patterns to choose from.
  * @returns {Pattern} - a continuous pattern.
  * @example
@@ -434,7 +434,7 @@ export const chooseOut = choose;
  * Chooses from the given list of values (or patterns of values), according
  * to the pattern that the method is called on. The pattern should be in
  * the range 0 .. 1.
- * @tags transforms
+ * @tags temporal
  * @param  {...any} xs
  * @returns {Pattern}
  */
@@ -445,7 +445,7 @@ Pattern.prototype.choose = function (...xs) {
 /**
  * As with choose, but the pattern that this method is called on should be
  * in the range -1 .. 1
- * @tags transforms
+ * @tags temporal
  * @param  {...any} xs
  * @returns {Pattern}
  */
@@ -455,7 +455,7 @@ Pattern.prototype.choose2 = function (...xs) {
 
 /**
  * Picks one of the elements at random each cycle.
- * @tags transforms
+ * @tags temporal
  * @synonyms randcat
  * @returns {Pattern}
  * @example
@@ -498,7 +498,7 @@ const wchooseWith = (...args) => _wchooseWith(...args).outerJoin();
 
 /**
  * Chooses randomly from the given list of elements by giving a probability to each element
- * @tags transforms
+ * @tags temporal
  * @param {...any} pairs arrays of value and weight
  * @returns {Pattern} - a continuous pattern.
  * @example
@@ -508,7 +508,7 @@ export const wchoose = (...pairs) => wchooseWith(rand, ...pairs);
 
 /**
  * Picks one of the elements at random each cycle by giving a probability to each element
- * @tags transforms
+ * @tags temporal
  * @synonyms wrandcat
  * @returns {Pattern}
  * @example
@@ -590,7 +590,7 @@ export const degradeByWith = register(
  * 0 = 0% chance of removal
  * 1 = 100% chance of removal
  *
- * @tags transforms
+ * @tags temporal
  * @name degradeBy
  * @memberof Pattern
  * @param {number} amount - a number between 0 and 1
@@ -616,7 +616,7 @@ export const degradeBy = register(
  *
  * Randomly removes 50% of events from the pattern. Shorthand for `.degradeBy(0.5)`
  *
- * @tags transforms
+ * @tags temporal
  * @name degrade
  * @memberof Pattern
  * @returns Pattern
@@ -633,7 +633,7 @@ export const degrade = register('degrade', (pat) => pat._degradeBy(0.5), true, t
  * 1 = 0% chance of removal
  * Events that would be removed by degradeBy are let through by undegradeBy and vice versa (see second example).
  *
- * @tags transforms
+ * @tags temporal
  * @name undegradeBy
  * @memberof Pattern
  * @param {number} amount - a number between 0 and 1
@@ -662,7 +662,7 @@ export const undegradeBy = register(
  * Inverse of `degrade`: Randomly removes 50% of events from the pattern. Shorthand for `.undegradeBy(0.5)`
  * Events that would be removed by degrade are let through by undegrade and vice versa (see second example).
  *
- * @tags transforms
+ * @tags temporal
  * @name undegrade
  * @memberof Pattern
  * @returns Pattern
@@ -681,7 +681,7 @@ export const undegrade = register('undegrade', (pat) => pat._undegradeBy(0.5), t
  * Randomly applies the given function by the given probability.
  * Similar to `someCyclesBy`
  *
- * @tags transforms
+ * @tags temporal
  * @name sometimesBy
  * @memberof Pattern
  * @param {number | Pattern} probability - a number between 0 and 1
@@ -701,7 +701,7 @@ export const sometimesBy = register('sometimesBy', function (patx, func, pat) {
  *
  * Applies the given function with a 50% chance
  *
- * @tags transforms
+ * @tags temporal
  * @name sometimes
  * @memberof Pattern
  * @param {function} function - the transformation to apply
@@ -723,7 +723,7 @@ export const sometimes = register('sometimes', function (func, pat) {
  * @param {number | Pattern} probability - a number between 0 and 1
  * @param {function} function - the transformation to apply
  * @returns Pattern
- * @tags transforms
+ * @tags temporal
  * @example
  * s("bd,hh*8").someCyclesBy(.3, x=>x.speed("0.5"))
  */
@@ -746,7 +746,7 @@ export const someCyclesBy = register('someCyclesBy', function (patx, func, pat) 
  * @name someCycles
  * @memberof Pattern
  * @returns Pattern
- * @tags transforms
+ * @tags temporal
  * @example
  * s("bd,hh*8").someCycles(x=>x.speed("0.5"))
  */
@@ -761,7 +761,7 @@ export const someCycles = register('someCycles', function (func, pat) {
  * @name often
  * @memberof Pattern
  * @returns Pattern
- * @tags transforms
+ * @tags temporal
  * @example
  * s("hh*8").often(x=>x.speed("0.5"))
  */
@@ -776,7 +776,7 @@ export const often = register('often', function (func, pat) {
  * @name rarely
  * @memberof Pattern
  * @returns Pattern
- * @tags transforms
+ * @tags temporal
  * @example
  * s("hh*8").rarely(x=>x.speed("0.5"))
  */
@@ -788,7 +788,7 @@ export const rarely = register('rarely', function (func, pat) {
  *
  * Shorthand for `.sometimesBy(0.1, fn)`
  *
- * @tags transforms
+ * @tags temporal
  * @name almostNever
  * @memberof Pattern
  * @returns Pattern
@@ -803,7 +803,7 @@ export const almostNever = register('almostNever', function (func, pat) {
  *
  * Shorthand for `.sometimesBy(0.9, fn)`
  *
- * @tags transforms
+ * @tags temporal
  * @name almostAlways
  * @memberof Pattern
  * @returns Pattern
@@ -818,7 +818,7 @@ export const almostAlways = register('almostAlways', function (func, pat) {
  *
  * Shorthand for `.sometimesBy(0, fn)` (never calls fn)
  *
- * @tags transforms
+ * @tags temporal
  * @name never
  * @memberof Pattern
  * @returns Pattern
@@ -833,7 +833,7 @@ export const never = register('never', function (_, pat) {
  *
  * Shorthand for `.sometimesBy(1, fn)` (always calls fn)
  *
- * @tags transforms
+ * @tags temporal
  * @name always
  * @memberof Pattern
  * @returns Pattern
