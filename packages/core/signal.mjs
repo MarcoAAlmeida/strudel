@@ -337,6 +337,7 @@ export const scramble = register('scramble', (n, pat) => {
 export const rand = signal(timeToRand);
 /**
  * A continuous pattern of random numbers, between -1 and 1
+ * @tags generators
  */
 export const rand2 = rand.toBipolar();
 

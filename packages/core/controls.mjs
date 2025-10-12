@@ -949,6 +949,7 @@ export const { duckattack } = registerControl('duckattack', 'duckatt');
  *
  * @name byteBeatExpression
  * @synonyms bbexpr
+ * @tags effects
  *
  * @param {number | Pattern} byteBeatExpression bitwise expression for creating bytebeat
  * @example
@@ -962,6 +963,7 @@ export const { byteBeatExpression, bbexpr } = registerControl('byteBeatExpressio
  *
  * @name byteBeatStartTime
  * @synonyms bbst
+ * @tags effects
  *
  * @param {number | Pattern} byteBeatStartTime in samples (t)
  * @example
@@ -1518,7 +1520,7 @@ export const { delayspeed } = registerControl('delayspeed');
  * Sets the time of the delay effect.
  *
  * @name delayspeed
- * @tags effects, foo
+ * @tags effects
  * @param {number | Pattern} delayspeed controls the pitch of the delay feedback
  * @synonyms delayt, dt
  * @example
@@ -1544,7 +1546,7 @@ export const { delaysync } = registerControl('delaysync');
  * Specifies whether delaytime is calculated relative to cps.
  *
  * @name lock
- * @tags effects, foo
+ * @tags effects
  * @param {number | Pattern} enable When set to 1, delaytime is a direct multiple of a cycle.
  * @superdirtOnly
  * @example
@@ -1812,6 +1814,7 @@ export const { octave } = registerControl('octave');
  * An `orbit` is a global parameter context for patterns. Patterns with the same orbit will share the same global effects.
  *
  * @name orbit
+ * @tags effects
  * @param {number | Pattern} number
  * @example
  * stack(

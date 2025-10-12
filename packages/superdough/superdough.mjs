@@ -91,6 +91,8 @@ async function aliasBankPath(path) {
  * Optionally accepts a single argument string of a path to a JSON file containing bank aliases.
  * @param {string} bank - The bank to alias
  * @param {string} alias - The alias to use for the bank
+ *
+ * @tags samples
  */
 export async function aliasBank(...args) {
   switch (args.length) {
@@ -109,6 +111,7 @@ export async function aliasBank(...args) {
 
 /**
  * Register an alias for a sound.
+ * @tags samples
  * @param {string} original - The original sound name
  * @param {string} alias - The alias to use for the sound
  */
