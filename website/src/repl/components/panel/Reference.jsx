@@ -11,6 +11,7 @@ const availableFunctions = (() => {
   for (const doc of jsdocJson.docs) {
     if (!isValid(doc)) continue;
     if (seen.has(doc.name)) continue;
+    doc.tags = doc.tags?.filter((t) => t && typeof t === 'string') || [];
     functions.push(doc);
     const synonyms = doc.synonyms || [];
     seen.add(doc.name);
@@ -113,7 +114,7 @@ export function Reference() {
 
   return (
     <div className="flex flex-col h-full w-full p-2">
-      <div className="w-full  flex flex-col gap-2 h-1/2">
+      <div className="w-full  flex flex-col gap-2 h-1/3 mb-2">
         <div className="w-full flex flex-col gap-2">
           <Textbox className="w-full" placeholder="Search" value={search} onChange={setSearch} />
           <div>
@@ -134,19 +135,21 @@ export function Reference() {
               ))}
           </div>
         </div>
-        <div className="flex flex-col h-full overflow-y-auto gap-1.5 bg-background bg-opacity-50 rounded-md">
+        <div className="h-full gap-1.5 bg-background bg-opacity-50 rounded-md overflow-y-auto">
           {visibleFunctions.map((entry, i) => (
-            <a
-              key={`entry-${entry.name}`}
-              className="cursor-pointer text-foreground flex-none hover:bg-lineHighlight overflow-x-hidden  px-1 text-ellipsis"
-              onClick={() => {
-                const el = document.getElementById(`doc-${entry.name}`);
-                const container = document.getElementById('reference-container');
-                container.scrollTo(0, el.offsetTop);
-              }}
-            >
-              {entry.name}
-            </a>
+            <>
+              <a
+                key={`entry-${entry.name}`}
+                className="cursor-pointer text-foreground flex-none hover:bg-lineHighlight overflow-x-hidden px-1 text-ellipsis"
+                onClick={() => {
+                  const el = document.getElementById(`doc-${entry.name}`);
+                  const container = document.getElementById('reference-container');
+                  container.scrollTo(0, el.offsetTop);
+                }}
+              >
+                {entry.name}
+              </a>{' '}
+            </>
           ))}
         </div>
       </div>
@@ -161,8 +164,17 @@ export function Reference() {
             that you can already make music with a small set of functions!
           </p>
           {visibleFunctions.map((entry, i) => (
-            <section key={i}>
-              <h3 id={`doc-${entry.name}`}>{entry.name}</h3>
+            <section key={i} className="font-sans">
+              <div className="flex flex-row items-center mt-8 justify-between">
+                <h3 className="font-mono my-0" id={`doc-${entry.name}`}>
+                  {entry.name}
+                </h3>
+                {entry.tags && (
+                  <span className="ml-2 text-xs text-gray-400 border-2 border-gray-500 rounded-md px-1 py-0.5">
+                    {entry.tags.join(', ')}
+                  </span>
+                )}
+              </div>
               {!!entry.synonyms_text && (
                 <p>
                   Synonyms: <code>{entry.synonyms_text}</code>
