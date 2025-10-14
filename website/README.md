@@ -19,6 +19,12 @@ npm run build # <- builds repl + tutorial to ../docs
 npm run preview # <- test static build
 ```
 
+## Deploy
+
+For deploying to GitHub Pages, see the [GitHub Pages Deployment Guide](../DEPLOYMENT_GITHUB_PAGES.md) in the repository root.
+
+For deploying to other platforms, check out the [Astro deployment guide](https://docs.astro.build/guides/deploy).
+
 ## Generate PWA icons
 
 ```sh

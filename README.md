@@ -24,6 +24,10 @@ After cloning the project, you can run the REPL locally:
    pnpm dev
    ```
 
+## Deploying to GitHub Pages
+
+If you want to deploy your own instance of the Strudel website to GitHub Pages, see the [GitHub Pages Deployment Guide](./DEPLOYMENT_GITHUB_PAGES.md) for detailed instructions and multiple deployment options.
+
 ## Using Strudel In Your Project
 
 This project is organized into many [packages](./packages), which are also available on [npm](https://www.npmjs.com/search?q=%40strudel).
