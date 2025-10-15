@@ -2380,7 +2380,7 @@ export const scrub = register(
  * Can also be used to create a new synth via `s('user').partials(...)`
  *
  * @name partials
- * @param {number[] | Pattern} partials List of magnitudes for partials. 0th entry is the first harmonic (i.e. DC offset is skipped)
+ * @param {number[] | Pattern} partials List of [0, 1] magnitudes for partials. 0th entry is the first harmonic (i.e. DC offset is skipped)
  * @example
  * s("user").seg(16).n(irand(8)).scale("A:major")
  *   .partials([1, 0, 1, 0, 0, 1])
@@ -2394,7 +2394,7 @@ export const { partials } = registerControl('partials');
  * Rotates the harmonics of one of the core synths ('sine', 'tri', 'saw', 'user', ..) by a list of phases
  *
  * @name phases
- * @param {number[] | Pattern} phases List of phases for partials. 0th entry is the first phase (i.e. DC offset is skipped)
+ * @param {number[] | Pattern} phases List of [0, 1) phases for partials. 0th entry is the first phase (i.e. DC offset is skipped)
  * @example
  * s("saw").seg(8).n(irand(12)).scale("G#:minor")
  *   .partials(binaryL(256))
