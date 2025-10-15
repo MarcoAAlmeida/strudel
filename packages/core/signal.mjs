@@ -263,6 +263,8 @@ export const binaryN = (n, nBits = 16) => {
  *
  * @name binaryL
  * @param {number} n - input number to convert to binary
+ * s("saw").seg(8)
+ *   .partials(binaryL(irand(4096).add(1)))
  */
 export const binaryL = (n) => {
   const nBits = reify(n).log2(0).floor().add(1);
@@ -288,6 +290,15 @@ export const binaryNL = (n, nBits = 16) => {
     .appLeft(reify(nBits));
 };
 
+/**
+ * Creates a list of random numbers of the given length
+ *
+ * @name randL
+ * @param {number} n Number of random numbers to sample
+ * @example
+ * s("saw").seg(16).n(irand(12)).scale("F1:minor")
+ *   .partials(randL(8))
+ */
 export const randL = (n) => {
   return signal((t) => (nVal) => timeToRands(t, nVal).map(Math.abs)).appLeft(reify(n));
 };
