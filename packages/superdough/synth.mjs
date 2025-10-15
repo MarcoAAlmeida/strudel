@@ -472,7 +472,7 @@ export function getOscillator(s, t, value) {
   }
   s = s === 'user' && !partials ? 'triangle' : s;
   // If no partials are given, use stock waveforms
-  if (!partials || !partials?.length || s === 'sine') {
+  if (!partials || partials?.length === 0 || s === 'sine') {
     o = getAudioContext().createOscillator();
     o.type = s || 'triangle';
   }
