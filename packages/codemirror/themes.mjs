@@ -163,7 +163,7 @@ function stringifySafe(json) {
   return JSON.stringify(json, getCircularReplacer());
 }
 
-export const theme = (theme) => themes[theme] || themes.strudelTheme;
+export const theme = (theme) => themes[theme] || themes.CutiePi;
 
 // css style injection helpers
 export function injectStyle(rule) {
@@ -178,7 +178,8 @@ let currentTheme,
   resetThemeStyle,
   themeStyle,
   styleID = 'strudel-theme-vars';
-export function initTheme(theme) {
+
+  export function initTheme(theme) {
   if (!document.getElementById(styleID)) {
     themeStyle = document.createElement('style');
     themeStyle.id = styleID;
@@ -193,9 +194,9 @@ export function activateTheme(name) {
   }
   currentTheme = name;
   if (!settings[name]) {
-    console.warn('theme', name, 'has no settings.. defaulting to strudelTheme settings');
+    console.warn('theme', name, 'has no settings.. defaulting to CutiePi settings');
   }
-  const themeSettings = settings[name] || settings.strudelTheme;
+  const themeSettings = settings[name] || settings.CutiePi;
   // set css variables
   themeStyle.innerHTML = `:root {
       ${Object.entries(themeSettings)

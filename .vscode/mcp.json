@@ -1,0 +1,17 @@
+{
+  "inputs": [
+    {
+      "id": "userInput",
+      "description": "User input for MCP server",
+      "type": "promptString"
+    }
+  ],
+  "servers": {
+     "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
+}

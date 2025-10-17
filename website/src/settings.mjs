@@ -32,7 +32,7 @@ export const defaultSettings = {
   isPatternHighlightingEnabled: true,
   isTabIndentationEnabled: false,
   isMultiCursorEnabled: false,
-  theme: 'strudelTheme',
+  theme: 'CutiePi',
   fontFamily: 'monospace',
   fontSize: 18,
   latestCode: '',

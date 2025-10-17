@@ -1,4 +1,6 @@
-# strudel
+# my strudel
+
+slightly tweaked version of awesome strudel
 
 Live coding patterns on the web
 https://strudel.cc/
@@ -8,6 +10,19 @@ https://strudel.cc/
 - Technical Blog Post: <https://loophole-letters.vercel.app/strudel>
 - 1 Year of Strudel Blog Post: <https://loophole-letters.vercel.app/strudel1year>
 - 2 Years of Strudel Blog Post: <https://strudel.cc/blog/#year-2>
+
+## to pull updates from Codeberg
+
+```bash
+git fetch upstream
+
+### Merge upstream changes into your main branch
+git checkout main
+git merge upstream/main
+
+### Push the updates to your GitHub fork
+git push origin main
+```
 
 ## Running Locally
 
