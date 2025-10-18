@@ -456,6 +456,9 @@ export const { attack, att } = registerControl('attack', 'att');
  * Whole numbers and simple ratios sound more natural,
  * while decimal numbers and complex ratios sound metallic.
  *
+ * A number may be added afterwards to control the harmonicity of
+ * any of the 8 individual FMs (e.g. `fmh2`)
+ *
  * @name fmh
  * @param {number | Pattern} harmonicity
  * @example
@@ -470,6 +473,11 @@ export const { fmh, fmh1, fmh2, fmh3, fmh4, fmh5, fmh6, fmh7, fmh8 } = registerM
  * Sets the Frequency Modulation of the synth.
  * Controls the modulation index, which defines the brightness of the sound.
  *
+ * A number may be added afterwards to control the modulation index of
+ * any of the 8 individual FMs (e.g. `fm3`). Also, FMs may be routed into
+ * each other with matrix commands like `fm13`, which would send `fm1` back into
+ * `fm3`
+ *
  * @name fmi
  * @param {number | Pattern} brightness modulation index
  * @synonyms fm
@@ -477,6 +485,10 @@ export const { fmh, fmh1, fmh2, fmh3, fmh4, fmh5, fmh6, fmh7, fmh8 } = registerM
  * note("c e g b g e")
  * .fm("<0 1 2 8 32>")
  * ._scope()
+ * @example
+ * s("sine").note("F1").seg(8)
+ *  .fm(4).fm2(rand.mul(4)).fm3(saw.mul(8).slow(8))
+ *  .fmh(1.06).fmh2(10).fmh3(0.1)
  *
  */
 export const { fmi, fmi1, fmi2, fmi3, fmi4, fmi5, fmi6, fmi7, fmi8, fm, fm1, fm2, fm3, fm4, fm5, fm6, fm7, fm8 } =
@@ -484,6 +496,9 @@ export const { fmi, fmi1, fmi2, fmi3, fmi4, fmi5, fmi6, fmi7, fmi8, fm, fm1, fm2
 // fm envelope
 /**
  * Ramp type of fm envelope. Exp might be a bit broken..
+ *
+ * A number may be added afterwards to control the envelope of
+ * any of the 8 individual FMs (e.g. `fmenv4`)
  *
  * @name fmenv
  * @param {number | Pattern} type lin | exp
@@ -502,6 +517,9 @@ export const { fmenv, fmenv1, fmenv2, fmenv3, fmenv4, fmenv5, fmenv6, fmenv7, fm
 );
 /**
  * Attack time for the FM envelope: time it takes to reach maximum modulation
+ *
+ * A number may be added afterwards to control the attack of the envelope of
+ * any of the 8 individual FMs (e.g. `fmatt5`)
  *
  * @name fmattack
  * @synonyms fmatt
@@ -537,6 +555,9 @@ export const {
 /**
  * Waveform of the fm modulator
  *
+ * A number may be added afterwards to control the waveform
+ * any of the 8 individual FMs (e.g. `fmwave6`)
+ *
  * @name fmwave
  * @param {number | Pattern} wave waveform
  * @example
@@ -552,6 +573,9 @@ export const { fmwave, fmwave1, fmwave2, fmwave3, fmwave4, fmwave5, fmwave6, fmw
 
 /**
  * Decay time for the FM envelope: seconds until the sustain level is reached after the attack phase.
+ *
+ * A number may be added afterwards to control the decay of the envelope of
+ * any of the 8 individual FMs (e.g. `fmdec6`)
  *
  * @name fmdecay
  * @synonyms fmdec
@@ -587,6 +611,9 @@ export const {
 /**
  * Sustain level for the FM envelope: how much modulation is applied after the decay phase
  *
+ * A number may be added afterwards to control the sustain of the envelope of
+ * any of the 8 individual FMs (e.g. `fmsus7`)
+ *
  * @name fmsustain
  * @synonyms fmsus
  * @param {number | Pattern} level sustain level
@@ -620,6 +647,9 @@ export const {
 } = registerMultiControl('fmsustain', 8, 'fmsus');
 /**
  * Release time for the FM envelope: how much modulation is applied after the note is released
+ *
+ * A number may be added afterwards to control the release of the envelope of
+ * any of the 8 individual FMs (e.g. `fmrel8`)
  *
  * @name fmrelease
  * @synonyms fmrel
