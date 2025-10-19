@@ -51,7 +51,7 @@ export default function ExportModal(Props) {
                         onBlur={(e) => {
                             let v = parseInt(e.target.value);
                             console.log(v)
-                            v = isNaN(v) ? 0 : Math.max(1, v);
+                            v = isNaN(v) ? 0 : Math.max(0, v);
                             setStartCycle(v);
                         }}
                         onChange={v => {
@@ -111,7 +111,7 @@ export default function ExportModal(Props) {
                         value={multiChannelOrbits}
                     />
                 </div>
-                <button onClick={async () => {
+                <button disabled={exporting} onClick={async () => {
                     setStrudelMaxPolyphony(maxPolyphony)
                     setStrudelMultiChannelOrbits(multiChannelOrbits)
                     setExporting(true)
