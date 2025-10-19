@@ -1409,7 +1409,7 @@ export const { vib, vibrato, v } = registerControl(['vib', 'vibmod'], 'vibrato',
  * Adds pink noise to the mix
  *
  * @name noise
- * @tags generators
+ * @tags generators, superdough, supradough
  * @param {number | Pattern} wet wet amount
  * @example
  * sound("<white pink brown>/2")
