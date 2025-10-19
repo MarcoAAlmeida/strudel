@@ -351,7 +351,7 @@ export const { warpsync } = registerControl('warpsync');
  * Define a custom webaudio node to use as a sound source.
  *
  * @name source
- * @tags external_io
+ * @tags external_io, superdough
  * @synonyms src
  * @param {function} getSource
  * @synonyms src
@@ -411,7 +411,7 @@ export const { accelerate } = registerControl('accelerate');
  * Sets the velocity from 0 to 1. Is multiplied together with gain.
  *
  * @name velocity
- * @tags effects
+ * @tags effects, superdough
  * @example
  * s("hh*8")
  * .gain(".4!2 1 .4!2 1 .4 1")
@@ -422,7 +422,7 @@ export const { velocity } = registerControl('velocity');
  * Controls the gain by an exponential amount.
  *
  * @name gain
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} amount gain.
  * @example
  * s("hh*8").gain(".4!2 1 .4!2 1 .4 1").fast(2)
@@ -433,7 +433,7 @@ export const { gain } = registerControl('gain');
  * Gain applied after all effects have been processed.
  *
  * @name postgain
- * @tags effects
+ * @tags effects, superdough
  * @example
  * s("bd sd [~ bd] sd,hh*8")
  * .compressor("-20:20:10:.002:.02").postgain(1.5)
@@ -581,7 +581,7 @@ export const { fmvelocity } = registerControl('fmvelocity');
  * Select the sound bank to use. To be used together with `s`. The bank name (+ "_") will be prepended to the value of `s`.
  *
  * @name bank
- * @tags samples
+ * @tags samples, superdough
  * @param {string | Pattern} bank the name of the bank
  * @example
  * s("bd sd [~ bd] sd").bank('RolandTR909') // = s("RolandTR909_bd RolandTR909_sd")
@@ -635,7 +635,7 @@ export const { sustain, sus } = registerControl('sustain', 'sus');
  * Amplitude envelope release time: The time it takes after the offset to go from sustain level to zero.
  *
  * @name release
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} time release time in seconds
  * @synonyms rel
  * @example
@@ -650,7 +650,7 @@ export const { hold } = registerControl('hold');
  * can also optionally supply the 'bpq' parameter separated by ':'.
  *
  * @name bpf
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} frequency center frequency
  * @synonyms bandf, bp
  * @example
@@ -663,7 +663,7 @@ export const { bandf, bpf, bp } = registerControl(['bandf', 'bandq', 'bpenv'], '
  * Sets the **b**and-**p**ass **q**-factor (resonance).
  *
  * @name bpq
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} q q factor
  * @synonyms bandq
  * @example
@@ -743,7 +743,7 @@ export const { loopEnd, loope } = registerControl('loopEnd', 'loope');
  * Bit crusher effect.
  *
  * @name crush
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} depth between 1 (for drastic reduction in bit-depth) to 16 (for barely no reduction).
  * @example
  * s("<bd sd>,hh*3").fast(2).crush("<16 8 7 6 5 4 3 2>")
@@ -755,7 +755,7 @@ export const { crush } = registerControl('crush');
  * Fake-resampling for lowering the sample rate. Caution: This effect seems to only work in chromium based browsers
  *
  * @name coarse
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} factor 1 for original 2 for half, 3 for a third and so on.
  * @example
  * s("bd sd [~ bd] sd,hh*8").coarse("<1 4 8 16 32>")
@@ -767,7 +767,7 @@ export const { coarse } = registerControl('coarse');
  * Modulate the amplitude of a sound with a continuous waveform
  *
  * @name tremolo
- * @tags effects
+ * @tags effects, superdough
  * @synonyms trem
  * @param {number | Pattern} speed modulation speed in HZ
  * @example
@@ -780,7 +780,7 @@ export const { tremolo } = registerControl(['tremolo', 'tremolodepth', 'tremolos
  * Modulate the amplitude of a sound with a continuous waveform
  *
  * @name tremolosync
- * @tags effects
+ * @tags effects, superdough
  * @synonyms tremsync
  * @param {number | Pattern} cycles modulation speed in cycles
  * @example
@@ -796,7 +796,7 @@ export const { tremolosync } = registerControl(
  * Depth of amplitude modulation
  *
  * @name tremolodepth
- * @tags effects
+ * @tags effects, superdough
  * @synonyms tremdepth
  * @param {number | Pattern} depth
  * @example
@@ -808,7 +808,7 @@ export const { tremolodepth } = registerControl('tremolodepth', 'tremdepth');
  * Alter the shape of the modulation waveform
  *
  * @name tremoloskew
- * @tags effects
+ * @tags effects, superdough
  * @synonyms tremskew
  * @param {number | Pattern} amount between 0 & 1, the shape of the waveform
  * @example
@@ -821,7 +821,7 @@ export const { tremoloskew } = registerControl('tremoloskew', 'tremskew');
  * Alter the phase of the modulation waveform
  *
  * @name tremolophase
- * @tags effects
+ * @tags effects, superdough
  * @synonyms tremphase
  * @param {number | Pattern} offset the offset in cycles of the modulation
  * @example
@@ -834,7 +834,7 @@ export const { tremolophase } = registerControl('tremolophase', 'tremphase');
  * Shape of amplitude modulation
  *
  * @name tremoloshape
- * @tags effects
+ * @tags effects, superdough
  * @synonyms tremshape
  * @param {number | Pattern} shape tri | square | sine | saw | ramp
  * @example
@@ -846,7 +846,7 @@ export const { tremoloshape } = registerControl('tremoloshape', 'tremshape');
  * Filter overdrive for supported filter types
  *
  * @name drive
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} amount
  * @example
  * note("{f g g c d a a#}%16".sub(17)).s("supersaw").lpenv(8).lpf(150).lpq(.8).ftype('ladder').drive("<.5 4>")
@@ -860,7 +860,7 @@ export const { drive } = registerControl('drive');
  * Can be applied to multiple orbits with the ':' mininotation, e.g. `duckorbit("2:3")`
  *
  * @name duckorbit
- * @tags effects
+ * @tags effects, superdough
  * @synonyms duck
  * @param {number | Pattern} orbit target orbit
  * @example
@@ -881,7 +881,7 @@ export const { duck } = registerControl('duckorbit', 'duck');
  * Note: this requires first applying the effect to multiple orbits with e.g. `duckorbit("2:3")`.
  *
  * @name duckdepth
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} depth depth of modulation from 0 to 1
  * @example
  * stack( n(run(8)).scale("c:minor").s("sawtooth").delay(.7).orbit(2), s("bd:4!4").beat("0,4,8,11,14",16).duckorbit(2).duckattack(0.2).duckdepth("<1 .9 .6 0>"))
@@ -901,7 +901,7 @@ export const { duckdepth } = registerControl('duckdepth');
  * Note: this requires first applying the effect to multiple orbits with e.g. `duckorbit("2:3")`.
  *
  * @name duckonset
- * @tags effects
+ * @tags effects, superdough
  * @synonyms duckons
  *
  * @param {number | Pattern} time The onset time in seconds
@@ -929,7 +929,7 @@ export const { duckonset } = registerControl('duckonset', 'duckons');
  * Note: this requires first applying the effect to multiple orbits with e.g. `duckorbit("2:3")`.
  *
  * @name duckattack
- * @tags effects
+ * @tags effects, superdough
  * @synonyms duckatt
  *
  * @param {number | Pattern} time The attack time in seconds
@@ -1028,7 +1028,7 @@ export const { pwsweep } = registerControl('pwsweep');
  * Phaser audio effect that approximates popular guitar pedals.
  *
  * @name phaser
- * @tags effects
+ * @tags effects, superdough
  * @synonyms ph
  * @param {number | Pattern} speed speed of modulation
  * @example
@@ -1046,7 +1046,7 @@ export const { phaserrate, ph, phaser } = registerControl(
  * The frequency sweep range of the lfo for the phaser effect. Defaults to 2000
  *
  * @name phasersweep
- * @tags effects
+ * @tags effects, superdough
  * @synonyms phs
  * @param {number | Pattern} phasersweep most useful values are between 0 and 4000
  * @example
@@ -1060,7 +1060,7 @@ export const { phasersweep, phs } = registerControl('phasersweep', 'phs');
  * The center frequency of the phaser in HZ. Defaults to 1000
  *
  * @name phasercenter
- * @tags effects
+ * @tags effects, superdough
  * @synonyms phc
  * @param {number | Pattern} centerfrequency in HZ
  * @example
@@ -1075,7 +1075,7 @@ export const { phasercenter, phc } = registerControl('phasercenter', 'phc');
  * The amount the signal is affected by the phaser effect. Defaults to 0.75
  *
  * @name phaserdepth
- * @tags effects
+ * @tags effects, superdough
  * @synonyms phd, phasdp
  * @param {number | Pattern} depth number between 0 and 1
  * @example
@@ -1112,7 +1112,7 @@ export const { cut } = registerControl('cut');
  * When using mininotation, you can also optionally add the 'lpq' parameter, separated by ':'.
  *
  * @name lpf
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} frequency audible between 0 and 20000
  * @synonyms cutoff, ctf, lp
  * @example
@@ -1126,7 +1126,7 @@ export const { cutoff, ctf, lpf, lp } = registerControl(['cutoff', 'resonance', 
 /**
  * Sets the lowpass filter envelope modulation depth.
  * @name lpenv
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} modulation depth of the lowpass filter envelope between 0 and _n_
  * @synonyms lpe
  * @example
@@ -1140,7 +1140,7 @@ export const { lpenv, lpe } = registerControl('lpenv', 'lpe');
 /**
  * Sets the highpass filter envelope modulation depth.
  * @name hpenv
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} modulation depth of the highpass filter envelope between 0 and _n_
  * @synonyms hpe
  * @example
@@ -1154,7 +1154,7 @@ export const { hpenv, hpe } = registerControl('hpenv', 'hpe');
 /**
  * Sets the bandpass filter envelope modulation depth.
  * @name bpenv
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} modulation depth of the bandpass filter envelope between 0 and _n_
  * @synonyms bpe
  * @example
@@ -1168,7 +1168,7 @@ export const { bpenv, bpe } = registerControl('bpenv', 'bpe');
 /**
  * Sets the attack duration for the lowpass filter envelope.
  * @name lpattack
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} attack time of the filter envelope
  * @synonyms lpa
  * @example
@@ -1182,7 +1182,7 @@ export const { lpattack, lpa } = registerControl('lpattack', 'lpa');
 /**
  * Sets the attack duration for the highpass filter envelope.
  * @name hpattack
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} attack time of the highpass filter envelope
  * @synonyms hpa
  * @example
@@ -1196,7 +1196,7 @@ export const { hpattack, hpa } = registerControl('hpattack', 'hpa');
 /**
  * Sets the attack duration for the bandpass filter envelope.
  * @name bpattack
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} attack time of the bandpass filter envelope
  * @synonyms bpa
  * @example
@@ -1210,7 +1210,7 @@ export const { bpattack, bpa } = registerControl('bpattack', 'bpa');
 /**
  * Sets the decay duration for the lowpass filter envelope.
  * @name lpdecay
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} decay time of the filter envelope
  * @synonyms lpd
  * @example
@@ -1224,7 +1224,7 @@ export const { lpdecay, lpd } = registerControl('lpdecay', 'lpd');
 /**
  * Sets the decay duration for the highpass filter envelope.
  * @name hpdecay
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} decay time of the highpass filter envelope
  * @synonyms hpd
  * @example
@@ -1239,7 +1239,7 @@ export const { hpdecay, hpd } = registerControl('hpdecay', 'hpd');
 /**
  * Sets the decay duration for the bandpass filter envelope.
  * @name bpdecay
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} decay time of the bandpass filter envelope
  * @synonyms bpd
  * @example
@@ -1254,7 +1254,7 @@ export const { bpdecay, bpd } = registerControl('bpdecay', 'bpd');
 /**
  * Sets the sustain amplitude for the lowpass filter envelope.
  * @name lpsustain
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} sustain amplitude of the lowpass filter envelope
  * @synonyms lps
  * @example
@@ -1269,7 +1269,7 @@ export const { lpsustain, lps } = registerControl('lpsustain', 'lps');
 /**
  * Sets the sustain amplitude for the highpass filter envelope.
  * @name hpsustain
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} sustain amplitude of the highpass filter envelope
  * @synonyms hps
  * @example
@@ -1284,7 +1284,7 @@ export const { hpsustain, hps } = registerControl('hpsustain', 'hps');
 /**
  * Sets the sustain amplitude for the bandpass filter envelope.
  * @name bpsustain
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} sustain amplitude of the bandpass filter envelope
  * @synonyms bps
  * @example
@@ -1299,7 +1299,7 @@ export const { bpsustain, bps } = registerControl('bpsustain', 'bps');
 /**
  * Sets the release time for the lowpass filter envelope.
  * @name lprelease
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} release time of the filter envelope
  * @synonyms lpr
  * @example
@@ -1315,7 +1315,7 @@ export const { lprelease, lpr } = registerControl('lprelease', 'lpr');
 /**
  * Sets the release time for the highpass filter envelope.
  * @name hprelease
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} release time of the highpass filter envelope
  * @synonyms hpr
  * @example
@@ -1331,7 +1331,7 @@ export const { hprelease, hpr } = registerControl('hprelease', 'hpr');
 /**
  * Sets the release time for the bandpass filter envelope.
  * @name bprelease
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} release time of the bandpass filter envelope
  * @synonyms bpr
  * @example
@@ -1363,7 +1363,7 @@ export const { ftype } = registerControl('ftype');
 /**
  * controls the center of the filter envelope. 0 is unipolar positive, .5 is bipolar, 1 is unipolar negative
  * @name fanchor
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} center 0 to 1
  * @example
  * note("{f g g c d a a#}%8").s("sawtooth").lpf("{1000}%2")
@@ -1376,7 +1376,7 @@ export const { fanchor } = registerControl('fanchor');
  * When using mininotation, you can also optionally add the 'hpq' parameter, separated by ':'.
  *
  * @name hpf
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} frequency audible between 0 and 20000
  * @synonyms hp, hcutoff
  * @example
@@ -1438,7 +1438,7 @@ export const { hcutoff, hpf, hp } = registerControl(['hcutoff', 'hresonance', 'h
  * Controls the **h**igh-**p**ass **q**-value.
  *
  * @name hpq
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} q resonance factor between 0 and 50
  * @synonyms hresonance
  * @example
@@ -1450,7 +1450,7 @@ export const { hresonance, hpq } = registerControl('hresonance', 'hpq');
  * Controls the **l**ow-**p**ass **q**-value.
  *
  * @name lpq
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} q resonance factor between 0 and 50
  * @synonyms resonance
  * @example
@@ -1463,7 +1463,7 @@ export const { resonance, lpq } = registerControl('resonance', 'lpq');
  * DJ filter, below 0.5 is low pass filter, above is high pass filter.
  *
  * @name djf
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} cutoff below 0.5 is low pass filter, above is high pass filter
  * @example
  * n(irand(16).seg(8)).scale("d:phrygian").s("supersaw").djf("<.5 .3 .2 .75>")
@@ -1480,7 +1480,7 @@ export const { djf } = registerControl('djf');
  *
  *
  * @name delay
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} level between 0 and 1
  * @example
  * s("bd bd").delay("<0 .25 .5 1>")
@@ -1494,7 +1494,7 @@ export const { delay } = registerControl(['delay', 'delaytime', 'delayfeedback']
  * Caution: Values >= 1 will result in a signal that gets louder and louder! Don't do it
  *
  * @name delayfeedback
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} feedback between 0 and 1
  * @synonyms delayfb, dfb
  * @example
@@ -1508,7 +1508,7 @@ export const { delayfeedback, delayfb, dfb } = registerControl('delayfeedback', 
  * Caution: Values >= 1 will result in a signal that gets louder and louder! Don't do it
  *
  * @name delayfeedback
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} feedback between 0 and 1
  * @synonyms delayfb, dfb
  * @example
@@ -1533,7 +1533,7 @@ export const { delaytime, delayt, dt } = registerControl('delaytime', 'delayt', 
  * Sets the time of the delay effect in cycles.
  *
  * @name delaysync
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} cycles delay length in cycles
  * @synonyms delayt, dt
  * @example
@@ -1595,7 +1595,7 @@ export const { spread } = registerControl('spread');
  * Set dryness of reverb. See `room` and `size` for more information about reverb.
  *
  * @name dry
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} dry 0 = wet, 1 = dry
  * @example
  * n("[0,3,7](3,8)").s("superpiano").room(.7).dry("<0 .5 .75 1>").osc()
@@ -1814,7 +1814,7 @@ export const { octave } = registerControl('octave');
  * An `orbit` is a global parameter context for patterns. Patterns with the same orbit will share the same global effects.
  *
  * @name orbit
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} number
  * @example
  * stack(
@@ -1831,7 +1831,7 @@ export const { overshape } = registerControl('overshape');
  * Sets position in stereo.
  *
  * @name pan
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} pan between 0 and 1, from left to right (assuming stereo), once round a circle (assuming multichannel)
  * @example
  * s("[bd hh]*2").pan("<.5 1 .5 0>")
@@ -1897,7 +1897,7 @@ export const { mode } = registerControl(['mode', 'anchor']);
  * When using mininotation, you can also optionally add the 'size' parameter, separated by ':'.
  *
  * @name room
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} level between 0 and 1
  * @example
  * s("bd sd [~ bd] sd").room("<0 .2 .4 .6 .8 1>")
@@ -1911,7 +1911,7 @@ export const { room } = registerControl(['room', 'size']);
  * When this property is changed, the reverb will be recaculated, so only change this sparsely..
  *
  * @name roomlp
- * @tags effects
+ * @tags effects, superdough
  * @synonyms rlp
  * @param {number} frequency between 0 and 20000hz
  * @example
@@ -1925,7 +1925,7 @@ export const { roomlp, rlp } = registerControl('roomlp', 'rlp');
  * When this property is changed, the reverb will be recaculated, so only change this sparsely..
  *
  * @name roomdim
- * @tags effects
+ * @tags effects, superdough
  * @synonyms rdim
  * @param {number} frequency between 0 and 20000hz
  * @example
@@ -1940,7 +1940,7 @@ export const { roomdim, rdim } = registerControl('roomdim', 'rdim');
  * When this property is changed, the reverb will be recaculated, so only change this sparsely..
  *
  * @name roomfade
- * @tags effects
+ * @tags effects, superdough
  * @synonyms rfade
  * @param {number} seconds for the reverb to fade
  * @example
@@ -1953,7 +1953,7 @@ export const { roomfade, rfade } = registerControl('roomfade', 'rfade');
 /**
  * Sets the sample to use as an impulse response for the reverb.
  * @name iresponse
- * @tags effects
+ * @tags effects, superdough
  * @param {string | Pattern} sample to use as an impulse response
  * @synonyms ir
  * @example
@@ -1965,7 +1965,7 @@ export const { ir, iresponse } = registerControl(['ir', 'i'], 'iresponse');
 /**
  * Sets speed of the sample for the impulse response.
  * @name irspeed
- * @tags effects
+ * @tags effects, superdough
  * @param {string | Pattern} speed
  * @example
  * samples('github:switchangel/pad')
@@ -1977,7 +1977,7 @@ export const { irspeed } = registerControl('irspeed');
 /**
  * Sets the beginning of the IR response sample
  * @name irbegin
- * @tags effects
+ * @tags effects, superdough
  * @param {string | Pattern} begin between 0 and 1
  * @synonyms ir
  * @example
@@ -1991,7 +1991,7 @@ export const { irbegin } = registerControl('irbegin');
  * When this property is changed, the reverb will be recaculated, so only change this sparsely..
  *
  * @name roomsize
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} size between 0 and 10
  * @synonyms rsize, sz, size
  * @example
@@ -2015,7 +2015,7 @@ export const { roomsize, size, sz, rsize } = registerControl('roomsize', 'size',
  *
  *
  * @name shape
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} distortion between 0 and 1
  * @example
  * s("bd sd [~ bd] sd,hh*8").shape("<0 .2 .4 .6 .8>")
@@ -2028,7 +2028,7 @@ export const { shape } = registerControl(['shape', 'shapevol']);
  * Most useful values are usually between 0 and 10 (depending on source gain). If you are feeling adventurous, you can turn it up to 11 and beyond ;)
  *
  * @name distort
- * @tags effects
+ * @tags effects, superdough
  * @synonyms dist
  * @param {number | Pattern} distortion
  * @example
@@ -2043,7 +2043,7 @@ export const { distort, dist } = registerControl(['distort', 'distortvol'], 'dis
  * More info [here](https://developer.mozilla.org/en-US/docs/Web/API/DynamicsCompressorNode?retiredLocale=de#instance_properties)
  *
  * @name compressor
- * @tags effects
+ * @tags effects, superdough
  * @example
  * s("bd sd [~ bd] sd,hh*8")
  * .compressor("-20:20:10:.002:.02")
@@ -2129,7 +2129,7 @@ export const { squiz } = registerControl('squiz');
  * Formant filter to make things sound like vowels.
  *
  * @name vowel
- * @tags effects
+ * @tags effects, superdough
  * @param {string | Pattern} vowel You can use a e i o u ae aa oe ue y uh un en an on, corresponding to [a] [e] [i] [o] [u] [æ] [ɑ] [ø] [y] [ɯ] [ʌ] [œ̃] [ɛ̃] [ɑ̃] [ɔ̃]. Aliases: aa = å = ɑ, oe = ø = ö, y = ı, ae = æ.
  * @example
  * note("[c2 <eb2 <g2 g1>>]*2").s('sawtooth')
@@ -2154,7 +2154,7 @@ export const { waveloss } = registerControl('waveloss');
  * Noise crackle density
  *
  * @name density
- * @tags effects
+ * @tags effects, superdough
  * @param {number | Pattern} density between 0 and x
  * @example
  * s("crackle*4").density("<0.01 0.04 0.2 0.5>".slow(4))
