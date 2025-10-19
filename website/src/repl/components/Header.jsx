@@ -8,7 +8,7 @@ const { BASE_URL } = import.meta.env;
 const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
 
 export function Header({ context, embedded = false }) {
-  const { started, pending, isDirty, activeCode, handleTogglePlay, handleEvaluate, handleShuffle, handleShare } =
+  const { started, pending, isDirty, activeCode, handleTogglePlay, handleEvaluate, handleShuffle, handleShare, handleExport } =
     context;
   const isEmbedded = typeof window !== 'undefined' && (embedded || window.location !== window.parent.location);
   const { isZen, isButtonRowHidden, isCSSAnimationDisabled, fontFamily } = useSettings();
@@ -92,6 +92,16 @@ export function Header({ context, embedded = false }) {
             )}
           >
             {!isEmbedded && <span>update</span>}
+          </button>
+          <button
+            onClick={() => handleExport(1, 16)}
+            title="export"
+            className={cx(
+              'flex items-center space-x-1',
+              !isEmbedded ? 'p-2' : 'px-2',
+            )}
+          >
+            {!isEmbedded && <span>export</span>}
           </button>
           {/* !isEmbedded && (
             <button

@@ -13,7 +13,7 @@ import { createFilter, gainNode, getCompressor, getDistortion, getLfo, getWorkle
 import { map } from 'nanostores';
 import { logger } from './logger.mjs';
 import { loadBuffer } from './sampler.mjs';
-import { getAudioContext } from './audioContext.mjs';
+import { getAudioContext, setAudioContext } from './audioContext.mjs';
 import { SuperdoughAudioController } from './superdoughoutput.mjs';
 
 export const DEFAULT_MAX_POLYPHONY = 128;
@@ -367,6 +367,7 @@ function mapChannelNumbers(channels) {
 }
 
 export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) => {
+  controller = null;
   // new: t is always expected to be the absolute target onset time
   const ac = getAudioContext();
   const audioController = getSuperdoughAudioController();
@@ -387,14 +388,13 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   // duration is passed as value too..
   value.duration = hapDuration;
   // calculate absolute time
-
-  if (t < ac.currentTime) {
+  if (t < ac.currentTime && !(ac instanceof OfflineAudioContext)) {
     console.warn(
       `[superdough]: cannot schedule sounds in the past (target: ${t.toFixed(2)}, now: ${ac.currentTime.toFixed(2)})`,
     );
     return;
-  }
-  // destructure
+  } // FIXME: fix
+  // destructure 
   let {
     tremolo,
     tremolosync,
