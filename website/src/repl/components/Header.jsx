@@ -94,11 +94,13 @@ export function Header({ context, embedded = false }) {
             {!isEmbedded && <span>update</span>}
           </button>
           <button
-            onClick={() => handleExport(1, 16)}
+            onClick={() => !started && handleExport(0, 16)}
             title="export"
             className={cx(
               'flex items-center space-x-1',
               !isEmbedded ? 'p-2' : 'px-2',
+              started ? 'opacity-50' : 'hover:opacity-50',
+
             )}
           >
             {!isEmbedded && <span>export</span>}

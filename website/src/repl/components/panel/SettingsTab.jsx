@@ -114,7 +114,7 @@ export function SettingsTab({ started }) {
     isMultiCursorEnabled,
   } = useSettings();
   const shouldAlwaysSync = isUdels();
-  const canChangeAudioDevice = BaseAudioContext.prototype.setSinkId != null;
+  const canChangeAudioDevice = AudioContext.prototype.setSinkId != null;
   return (
     <div className="text-foreground p-4 space-y-4 w-full" style={{ fontFamily }}>
       {canChangeAudioDevice && (

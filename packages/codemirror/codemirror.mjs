@@ -269,8 +269,10 @@ export class StrudelMirror {
     await this.repl.evaluate(this.code);
   }
   async exportAudio(begin, end) {
-    // await this.repl.evaluate(this.code, false)
+    await this.repl.evaluate(this.code, false)
     this.repl.exportAudio(begin, end);
+    this.repl.scheduler.stop();
+
   }
   async stop() {
     this.repl.scheduler.stop();

@@ -5,9 +5,10 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 import * as strudel from '@strudel/core';
-import { superdough, getAudioContext, setLogger, doughTrigger, registerWorklet, setAudioContext, getSampleBufferSource, loadBuffer, getSampleInfo, getSound, initAudio, setSuperdoughAudioController } from 'superdough';
+import { superdough, getAudioContext, setLogger, doughTrigger, registerWorklet, setAudioContext, getSampleBufferSource, loadBuffer, getSampleInfo, getSound, initAudio, setSuperdoughAudioController, loadWorklets, setMaxPolyphony, setMultiChannelOrbits } from 'superdough';
 import './supradough.mjs';
 import { workletUrl } from 'supradough';
+import { SuperdoughAudioController } from 'superdough/superdoughoutput.mjs';
 
 registerWorklet(workletUrl);
 
@@ -27,16 +28,16 @@ export const webaudioOutput = (hap, _deadline, hapDuration, cps, t) => {
 };
 
 export async function renderPatternAudio(pattern, cps, begin, end) {
+  const oldAudioCtx = getAudioContext()
+  await oldAudioCtx.close()
   let audioContext = new OfflineAudioContext(2, (end - begin) / cps * 48000, 48000);
   setAudioContext(audioContext)
-  setSuperdoughAudioController(null)
-  await initAudio({
-    maxPolyphony: 1024,
-    multiChannelOrbits: true
-
-  })
+  let context = getAudioContext()
+  setSuperdoughAudioController(new SuperdoughAudioController(context))
+  setMaxPolyphony(1024)
+  setMultiChannelOrbits(true)
+  await loadWorklets()
   logger('[webaudio] start rendering');
-  console.log(audioContext)
 
   let haps = pattern.queryArc(begin, end, { _cps: cps })
   Promise.all(haps.map(async h => {
@@ -48,11 +49,11 @@ export async function renderPatternAudio(pattern, cps, begin, end) {
       else {
         s = h.value.s
       }
-    }
-    let bank = getSound(s).data.samples
-    if (bank) {
-      let { url: sampleUrl, label } = getSampleInfo(h.value, bank);
-      await loadBuffer(sampleUrl, audioContext, label)
+      let bank = getSound(s).data.samples
+      if (bank) {
+        let { url: sampleUrl, label } = getSampleInfo(h.value, bank);
+        await loadBuffer(sampleUrl, context, label)
+      }
     }
   }))
   haps.forEach(async (hap) => {
@@ -62,9 +63,8 @@ export async function renderPatternAudio(pattern, cps, begin, end) {
     }
   })
 
-  let context = getAudioContext()
-  context.startRendering().then((renderedBuffer) => {
-    // console.log(renderedBuffer)
+  context.startRendering().then(async (renderedBuffer) => {
+    console.log(renderedBuffer)
     const wavBuffer = audioBufferToWav(renderedBuffer);
     const blob = new Blob([wavBuffer], { type: 'audio/wav' });
     let downloadName = ''
@@ -82,9 +82,10 @@ export async function renderPatternAudio(pattern, cps, begin, end) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    await context.close()
     setAudioContext(null)
     setSuperdoughAudioController(null)
-    initAudio()
+    await initAudio()
   });
 }
 

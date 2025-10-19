@@ -208,11 +208,11 @@ export function registerWorklet(url) {
 }
 
 let workletsLoading;
-function loadWorklets() {
+export function loadWorklets() {
   if (!workletsLoading) {
     const audioCtx = getAudioContext();
     const allWorkletURLs = externalWorklets.concat([workletsUrl]);
-    workletsLoading = Promise.all(allWorkletURLs.map((workletURL) => audioCtx.audioWorklet.addModule(workletURL)));
+    workletsLoading = Promise.all(allWorkletURLs.map((workletURL) => audioCtx.audioWorklet.addModule(workletURL))).then(() => workletsLoading = undefined);
   }
 
   return workletsLoading;
