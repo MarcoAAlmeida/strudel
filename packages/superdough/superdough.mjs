@@ -250,8 +250,9 @@ export async function initAudio(options = {}) {
       logger('[superdough] failed to set audio interface', 'warning');
     }
   }
-
-  await audioCtx.resume();
+  if (!audioCtx instanceof OfflineAudioContext) {
+    await audioCtx.resume();
+  }
   if (disableWorklets) {
     logger('[superdough]: AudioWorklets disabled with disableWorklets');
     return;
@@ -285,6 +286,12 @@ function getSuperdoughAudioController() {
   }
   return controller;
 }
+
+export function setSuperdoughAudioController(newController) {
+  controller = newController
+  return controller;
+}
+
 export function connectToDestination(input, channels) {
   const controller = getSuperdoughAudioController();
   controller.output.connectToDestination(input, channels);
@@ -367,7 +374,7 @@ function mapChannelNumbers(channels) {
 }
 
 export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) => {
-  controller = null;
+  // controller = null;
   // new: t is always expected to be the absolute target onset time
   const ac = getAudioContext();
   const audioController = getSuperdoughAudioController();

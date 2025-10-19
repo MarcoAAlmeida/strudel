@@ -5,7 +5,7 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 import * as strudel from '@strudel/core';
-import { superdough, getAudioContext, setLogger, doughTrigger, registerWorklet, setAudioContext, getSampleBufferSource, loadBuffer, getSampleInfo, getSound } from 'superdough';
+import { superdough, getAudioContext, setLogger, doughTrigger, registerWorklet, setAudioContext, getSampleBufferSource, loadBuffer, getSampleInfo, getSound, initAudio, setSuperdoughAudioController } from 'superdough';
 import './supradough.mjs';
 import { workletUrl } from 'supradough';
 
@@ -29,6 +29,12 @@ export const webaudioOutput = (hap, _deadline, hapDuration, cps, t) => {
 export async function renderPatternAudio(pattern, cps, begin, end) {
   let audioContext = new OfflineAudioContext(2, (end - begin) / cps * 48000, 48000);
   setAudioContext(audioContext)
+  setSuperdoughAudioController(null)
+  await initAudio({
+    maxPolyphony: 1024,
+    multiChannelOrbits: true
+
+  })
   logger('[webaudio] start rendering');
   console.log(audioContext)
 
@@ -77,6 +83,8 @@ export async function renderPatternAudio(pattern, cps, begin, end) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     setAudioContext(null)
+    setSuperdoughAudioController(null)
+    initAudio()
   });
 }
 
