@@ -82,7 +82,6 @@ export async function renderPatternAudio(pattern, cps, begin, end) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    await context.close()
     setAudioContext(null)
     setSuperdoughAudioController(null)
     await initAudio()
