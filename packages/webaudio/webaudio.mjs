@@ -63,7 +63,7 @@ export async function renderPatternAudio(pattern, cps, begin, end) {
     }
   })
 
-  context.startRendering().then(async (renderedBuffer) => {
+  return context.startRendering().then(async (renderedBuffer) => {
     console.log(renderedBuffer)
     const wavBuffer = audioBufferToWav(renderedBuffer);
     const blob = new Blob([wavBuffer], { type: 'audio/wav' });

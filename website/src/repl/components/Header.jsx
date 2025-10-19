@@ -3,6 +3,7 @@ import StopCircleIcon from '@heroicons/react/20/solid/StopCircleIcon';
 import cx from '@src/cx.mjs';
 import { useSettings, setIsZen } from '../../settings.mjs';
 import '../Repl.css';
+import ExportModal from './ExportModal';
 
 const { BASE_URL } = import.meta.env;
 const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
@@ -93,18 +94,7 @@ export function Header({ context, embedded = false }) {
           >
             {!isEmbedded && <span>update</span>}
           </button>
-          <button
-            onClick={() => !started && handleExport(0, 16)}
-            title="export"
-            className={cx(
-              'flex items-center space-x-1',
-              !isEmbedded ? 'p-2' : 'px-2',
-              started ? 'opacity-50' : 'hover:opacity-50',
-
-            )}
-          >
-            {!isEmbedded && <span>export</span>}
-          </button>
+          <ExportModal isEmbedded={isEmbedded} started={started} handleExport={handleExport} />
           {/* !isEmbedded && (
             <button
               title="shuffle"
