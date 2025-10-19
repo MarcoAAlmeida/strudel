@@ -852,7 +852,7 @@ class PulseOscillatorProcessor extends AudioWorkletProcessor {
 registerProcessor('pulse-oscillator', PulseOscillatorProcessor);
 
 /**  BYTE BEATS
- * @tags internals 
+ * @tags internals
  */
 const chyx = {
   /*bit*/ bitC: function (x, y, z) {
