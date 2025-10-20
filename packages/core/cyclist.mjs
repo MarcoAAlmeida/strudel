@@ -6,7 +6,7 @@ This program is free software: you can redistribute it and/or modify it under th
 
 import createClock from './zyklus.mjs';
 import { errorLogger, logger } from './logger.mjs';
-import { renderPatternAudio } from '@strudel/webaudio';
+import { loadBuffer, renderPatternAudio, setAudioContext, superdough } from '@strudel/webaudio';
 
 export class Cyclist {
   constructor({
