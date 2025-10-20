@@ -21,6 +21,7 @@ import {
   loadWorklets,
   setMaxPolyphony,
   setMultiChannelOrbits,
+  resetGlobalEffects,
 } from 'superdough';
 import './supradough.mjs';
 import { workletUrl } from 'supradough';
@@ -99,6 +100,7 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
     .finally(async () => {
       setAudioContext(null);
       setSuperdoughAudioController(null);
+      resetGlobalEffects()
       await initAudio();
     });
 }
