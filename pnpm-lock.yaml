@@ -225,6 +225,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@strudel/webaudio':
+        specifier: ^1.2.5
+        version: 1.2.5
       fraction.js:
         specifier: ^5.2.1
         version: 5.2.1
@@ -2467,6 +2470,15 @@ packages:
 
   '@sinclair/typebox@0.27.8':
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
+
+  '@strudel/core@1.2.4':
+    resolution: {integrity: sha512-sUm9/zjEEQuWfW3hNOCcfNbn8jq2G+Ye+mvpLUgcGyLfI5XPlPTn/PBIkv2hFjNs/basnMyrOUvg0Z85AA6+OA==}
+
+  '@strudel/draw@1.2.4':
+    resolution: {integrity: sha512-9ui5+ZQQB+EEgwJQueGVMgpnPSHnFgRgivlAZbdjEoMdSm5vULWvKK3Psml8WKtOBNiuL+5Bci7a0INRTRusOA==}
+
+  '@strudel/webaudio@1.2.5':
+    resolution: {integrity: sha512-ilcyBsuwkH6Ghz0egaqIJ5DZi0xFBZwVWvZb0vnfU7kVESroD2j6yptyFMysJFZhQ5pfRiZs2ZeF6yTsviUjng==}
 
   '@supabase/auth-js@2.67.3':
     resolution: {integrity: sha512-NJDaW8yXs49xMvWVOkSIr8j46jf+tYHV0wHhrwOaLLMZSFO4g6kKAf+MfzQ2RaD06OCUkUHIzctLAxjTgEVpzw==}
@@ -6989,6 +7001,9 @@ packages:
     engines: {node: '>=16 || 14 >=14.17'}
     hasBin: true
 
+  superdough@1.2.5:
+    resolution: {integrity: sha512-QVkMGGZjWzaRxYKXoZYMfsRHVk5vwNiqAaDOseccSTgqPPwFRTY2fmHAm5OmwwS8XqFOenZjn+XU3LEaCZMdJw==}
+
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
@@ -9828,6 +9843,20 @@ snapshots:
       '@sigstore/protobuf-specs': 0.3.3
 
   '@sinclair/typebox@0.27.8': {}
+
+  '@strudel/core@1.2.4':
+    dependencies:
+      fraction.js: 5.2.1
+
+  '@strudel/draw@1.2.4':
+    dependencies:
+      '@strudel/core': 1.2.4
+
+  '@strudel/webaudio@1.2.5':
+    dependencies:
+      '@strudel/core': 1.2.4
+      '@strudel/draw': 1.2.4
+      superdough: 1.2.5
 
   '@supabase/auth-js@2.67.3':
     dependencies:
@@ -15430,6 +15459,10 @@ snapshots:
       mz: 2.7.0
       pirates: 4.0.6
       ts-interface-checker: 0.1.13
+
+  superdough@1.2.5:
+    dependencies:
+      nanostores: 0.11.3
 
   supports-color@7.2.0:
     dependencies:
