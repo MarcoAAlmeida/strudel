@@ -9,6 +9,7 @@ import { getDrawContext } from '@strudel/draw';
 import { transpiler } from '@strudel/transpiler';
 import {
   getAudioContextCurrentTime,
+  renderPatternAudio,
   webaudioOutput,
   resetGlobalEffects,
   resetLoadedSounds,
@@ -203,8 +204,11 @@ export function useReplContext() {
   const handleEvaluate = () => {
     editorRef.current.evaluate();
   };
+
   const handleExport = async (begin, end, sampleRate, downloadName = undefined) => {
-    await editorRef.current.exportAudio(begin, end, sampleRate, downloadName);
+    await editorRef.current.evaluate();
+    await renderPatternAudio(editorRef.current.repl.state.pattern, editorRef.current.repl.scheduler.cps, begin, end, sampleRate, downloadName)
+    editorRef.current.repl.scheduler.stop();
   };
   const handleShuffle = async () => {
     const patternData = await getRandomTune();

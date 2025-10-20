@@ -6,7 +6,6 @@ This program is free software: you can redistribute it and/or modify it under th
 
 import createClock from './zyklus.mjs';
 import { errorLogger, logger } from './logger.mjs';
-import { loadBuffer, renderPatternAudio, setAudioContext, superdough } from '@strudel/webaudio';
 
 export class Cyclist {
   constructor({
@@ -111,15 +110,6 @@ export class Cyclist {
     this.clock.start();
     this.setStarted(true);
   }
-
-  async exportAudio(begin, end, sampleRate, downloadName = undefined) {
-    if (!this.pattern) {
-      throw new Error('Scheduler: no pattern set! call .setPattern first.');
-    }
-    logger('[cyclist] exporting');
-    await renderPatternAudio(this.pattern, this.cps, begin, end, sampleRate, downloadName);
-  }
-
   pause() {
     logger('[cyclist] pause');
     this.clock.pause();
