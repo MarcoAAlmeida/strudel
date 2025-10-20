@@ -100,7 +100,7 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
     .finally(async () => {
       setAudioContext(null);
       setSuperdoughAudioController(null);
-      resetGlobalEffects()
+      resetGlobalEffects();
       await initAudio();
     });
 }
