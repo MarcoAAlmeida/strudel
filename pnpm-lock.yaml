@@ -225,9 +225,6 @@ importers:
 
   packages/core:
     dependencies:
-      '@strudel/webaudio':
-        specifier: workspace:*
-        version: link:../webaudio
       fraction.js:
         specifier: ^5.2.1
         version: 5.2.1
