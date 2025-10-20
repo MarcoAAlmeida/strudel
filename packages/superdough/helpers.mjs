@@ -348,7 +348,7 @@ export function applyFM(param, value, begin) {
     duration,
   } = value;
   let modulator;
-  let stop = () => { };
+  let stop = () => {};
 
   if (fmModulationIndex) {
     const ac = getAudioContext();

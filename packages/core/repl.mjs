@@ -91,7 +91,8 @@ export function repl({
 
   const stop = () => scheduler.stop();
   const start = () => scheduler.start();
-  const exportAudio = async (begin, end, sampleRate, downloadName = undefined) => await scheduler.exportAudio(begin, end, sampleRate, downloadName);
+  const exportAudio = async (begin, end, sampleRate, downloadName = undefined) =>
+    await scheduler.exportAudio(begin, end, sampleRate, downloadName);
   const pause = () => scheduler.pause();
   const toggle = () => scheduler.toggle();
   const setCps = (cps) => {
@@ -263,18 +264,18 @@ export function repl({
 
 export const getTrigger =
   ({ getTime, defaultOutput }) =>
-    async (hap, deadline, duration, cps, t) => {
-      //   ^ this signature is different from hap.context.onTrigger, as set by Pattern.onTrigger(onTrigger)
-      // TODO: get rid of deadline after https://codeberg.org/uzu/strudel/pulls/1004
-      try {
-        if (!hap.context.onTrigger || !hap.context.dominantTrigger) {
-          await defaultOutput(hap, deadline, duration, cps, t);
-        }
-        if (hap.context.onTrigger) {
-          // call signature of output / onTrigger is different...
-          await hap.context.onTrigger(hap, getTime(), cps, t);
-        }
-      } catch (err) {
-        errorLogger(err, 'getTrigger');
+  async (hap, deadline, duration, cps, t) => {
+    //   ^ this signature is different from hap.context.onTrigger, as set by Pattern.onTrigger(onTrigger)
+    // TODO: get rid of deadline after https://codeberg.org/uzu/strudel/pulls/1004
+    try {
+      if (!hap.context.onTrigger || !hap.context.dominantTrigger) {
+        await defaultOutput(hap, deadline, duration, cps, t);
       }
-    };
+      if (hap.context.onTrigger) {
+        // call signature of output / onTrigger is different...
+        await hap.context.onTrigger(hap, getTime(), cps, t);
+      }
+    } catch (err) {
+      errorLogger(err, 'getTrigger');
+    }
+  };

@@ -42,9 +42,9 @@ const extensions = {
   isMultiCursorEnabled: (on) =>
     on
       ? [
-        EditorState.allowMultipleSelections.of(true),
-        EditorView.clickAddsSelectionRange.of((ev) => ev.metaKey || ev.ctrlKey),
-      ]
+          EditorState.allowMultipleSelections.of(true),
+          EditorView.clickAddsSelectionRange.of((ev) => ev.metaKey || ev.ctrlKey),
+        ]
       : [],
 };
 const compartments = Object.fromEntries(Object.keys(extensions).map((key) => [key, new Compartment()]));
@@ -269,10 +269,9 @@ export class StrudelMirror {
     await this.repl.evaluate(this.code);
   }
   async exportAudio(begin, end, sampleRate, downloadName = undefined) {
-    await this.repl.evaluate(this.code, false)
+    await this.repl.evaluate(this.code, false);
     await this.repl.exportAudio(begin, end, sampleRate, downloadName);
     this.repl.scheduler.stop();
-
   }
   async stop() {
     this.repl.scheduler.stop();

@@ -117,7 +117,7 @@ export class Cyclist {
       throw new Error('Scheduler: no pattern set! call .setPattern first.');
     }
     logger('[cyclist] exporting');
-    await renderPatternAudio(this.pattern, this.cps, begin, end, sampleRate, downloadName)
+    await renderPatternAudio(this.pattern, this.cps, begin, end, sampleRate, downloadName);
   }
 
   pause() {

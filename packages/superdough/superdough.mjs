@@ -212,7 +212,9 @@ export function loadWorklets() {
   if (!workletsLoading) {
     const audioCtx = getAudioContext();
     const allWorkletURLs = externalWorklets.concat([workletsUrl]);
-    workletsLoading = Promise.all(allWorkletURLs.map((workletURL) => audioCtx.audioWorklet.addModule(workletURL))).then(() => workletsLoading = undefined);
+    workletsLoading = Promise.all(allWorkletURLs.map((workletURL) => audioCtx.audioWorklet.addModule(workletURL))).then(
+      () => (workletsLoading = undefined),
+    );
   }
 
   return workletsLoading;
@@ -250,7 +252,7 @@ export async function initAudio(options = {}) {
       logger('[superdough] failed to set audio interface', 'warning');
     }
   }
-  if (!audioCtx instanceof OfflineAudioContext) {
+  if ((!audioCtx) instanceof OfflineAudioContext) {
     await audioCtx.resume();
   }
   if (disableWorklets) {
@@ -288,7 +290,7 @@ function getSuperdoughAudioController() {
 }
 
 export function setSuperdoughAudioController(newController) {
-  controller = newController
+  controller = newController;
   return controller;
 }
 
@@ -401,7 +403,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     );
     return;
   } // FIXME: fix
-  // destructure 
+  // destructure
   let {
     tremolo,
     tremolosync,
