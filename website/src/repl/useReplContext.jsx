@@ -207,7 +207,14 @@ export function useReplContext() {
 
   const handleExport = async (begin, end, sampleRate, downloadName = undefined) => {
     await editorRef.current.evaluate();
-    await renderPatternAudio(editorRef.current.repl.state.pattern, editorRef.current.repl.scheduler.cps, begin, end, sampleRate, downloadName)
+    await renderPatternAudio(
+      editorRef.current.repl.state.pattern,
+      editorRef.current.repl.scheduler.cps,
+      begin,
+      end,
+      sampleRate,
+      downloadName,
+    );
     editorRef.current.repl.scheduler.stop();
   };
   const handleShuffle = async () => {
