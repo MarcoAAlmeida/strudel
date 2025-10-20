@@ -8,7 +8,7 @@ import './feedbackdelay.mjs';
 import './reverb.mjs';
 import './vowel.mjs';
 import { nanFallback, _mod, cycleToSeconds } from './util.mjs';
-import workletsUrl from './worklets.mjs?audioworklet';
+import workletsUrl from './worklets.mjs?url';
 import { createFilter, gainNode, getCompressor, getDistortion, getLfo, getWorklet, effectSend } from './helpers.mjs';
 import { map } from 'nanostores';
 import { logger } from './logger.mjs';
@@ -332,7 +332,7 @@ export let analysers = {},
   analysersData = {};
 
 export function getAnalyserById(id, fftSize = 1024, smoothingTimeConstant = 0.5) {
-  if (!analysers[id]) {
+  if (!analysers[id] || analysers[id].audioContext != getAudioContext()) {
     // make sure this doesn't happen too often as it piles up garbage
     const analyserNode = getAudioContext().createAnalyser();
     analyserNode.fftSize = fftSize;
@@ -722,7 +722,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   }
 
   // analyser
-  if (analyze) {
+  if (analyze && !(ac instanceof OfflineAudioContext)) {
     const analyserNode = getAnalyserById(analyze, 2 ** (fft + 5));
     const analyserSend = effectSend(post, analyserNode, 1);
     audioNodes.push(analyserSend);

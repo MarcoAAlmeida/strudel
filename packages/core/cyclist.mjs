@@ -112,14 +112,12 @@ export class Cyclist {
     this.setStarted(true);
   }
 
-  async exportAudio(begin, end) {
+  async exportAudio(begin, end, sampleRate, downloadName = undefined) {
     if (!this.pattern) {
       throw new Error('Scheduler: no pattern set! call .setPattern first.');
     }
     logger('[cyclist] exporting');
-    // this.clock.start();
-    // this.setStarted(true);
-    await renderPatternAudio(this.pattern, this.cps, begin, end)
+    await renderPatternAudio(this.pattern, this.cps, begin, end, sampleRate, downloadName)
   }
 
   pause() {

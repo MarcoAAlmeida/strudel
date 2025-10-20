@@ -203,8 +203,8 @@ export function useReplContext() {
   const handleEvaluate = () => {
     editorRef.current.evaluate();
   };
-  const handleExport = async (begin, end) => {
-    await editorRef.current.exportAudio(begin, end);
+  const handleExport = async (begin, end, sampleRate, downloadName = undefined) => {
+    await editorRef.current.exportAudio(begin, end, sampleRate, downloadName);
   };
   const handleShuffle = async () => {
     const patternData = await getRandomTune();

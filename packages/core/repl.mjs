@@ -91,7 +91,7 @@ export function repl({
 
   const stop = () => scheduler.stop();
   const start = () => scheduler.start();
-  const exportAudio = async (begin, end) => await scheduler.exportAudio(begin, end);
+  const exportAudio = async (begin, end, sampleRate, downloadName = undefined) => await scheduler.exportAudio(begin, end, sampleRate, downloadName);
   const pause = () => scheduler.pause();
   const toggle = () => scheduler.toggle();
   const setCps = (cps) => {

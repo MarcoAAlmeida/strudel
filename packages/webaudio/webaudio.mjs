@@ -27,10 +27,10 @@ export const webaudioOutput = (hap, _deadline, hapDuration, cps, t) => {
   return superdough(hap2value(hap), t, hapDuration, cps, hap.whole?.begin.valueOf());
 };
 
-export async function renderPatternAudio(pattern, cps, begin, end) {
+export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, downloadName = undefined) {
   const oldAudioCtx = getAudioContext()
   await oldAudioCtx.close()
-  let audioContext = new OfflineAudioContext(2, (end - begin) / cps * 48000, 48000);
+  let audioContext = new OfflineAudioContext(2, (end - begin) / cps * sampleRate, sampleRate);
   setAudioContext(audioContext)
   let context = getAudioContext()
   setSuperdoughAudioController(new SuperdoughAudioController(context))
@@ -63,25 +63,20 @@ export async function renderPatternAudio(pattern, cps, begin, end) {
     }
   })
 
-  return context.startRendering().then(async (renderedBuffer) => {
+  return context.startRendering().then((renderedBuffer) => {
     console.log(renderedBuffer)
     const wavBuffer = audioBufferToWav(renderedBuffer);
     const blob = new Blob([wavBuffer], { type: 'audio/wav' });
-    let downloadName = ''
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    // remove leading dash if they want an empty download name
-    if (downloadName == '') {
-      downloadName = `${new Date().toISOString()}.wav`;
-    } else {
-      downloadName = downloadName + `-${new Date().toISOString()}.wav`;
-    }
+    downloadName = downloadName ? `${downloadName}.wav` : `${new Date().toISOString()}.wav`;
     a.download = `${downloadName}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }).finally(async () => {
     setAudioContext(null)
     setSuperdoughAudioController(null)
     await initAudio()

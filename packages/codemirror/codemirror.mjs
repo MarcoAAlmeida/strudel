@@ -268,9 +268,9 @@ export class StrudelMirror {
     this.flash();
     await this.repl.evaluate(this.code);
   }
-  async exportAudio(begin, end) {
+  async exportAudio(begin, end, sampleRate, downloadName = undefined) {
     await this.repl.evaluate(this.code, false)
-    await this.repl.exportAudio(begin, end);
+    await this.repl.exportAudio(begin, end, sampleRate, downloadName);
     this.repl.scheduler.stop();
 
   }

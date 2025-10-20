@@ -1,7 +1,10 @@
+import { analysers, resetGlobalEffects } from "./superdough.mjs";
+
 let audioContext;
 
 export const setDefaultAudioContext = () => {
   audioContext = new AudioContext();
+  resetGlobalEffects()
   return audioContext;
 };
 
