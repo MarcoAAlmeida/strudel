@@ -264,9 +264,9 @@ export class StrudelMirror {
       console.warn('first frame could not be painted');
     }
   }
-  async evaluate() {
+  async evaluate(autoplay = true) {
     this.flash();
-    await this.repl.evaluate(this.code);
+    await this.repl.evaluate(this.code, autoplay);
   }
   async stop() {
     this.repl.scheduler.stop();

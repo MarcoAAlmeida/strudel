@@ -206,7 +206,8 @@ export function useReplContext() {
   };
 
   const handleExport = async (begin, end, sampleRate, downloadName = undefined) => {
-    await editorRef.current.evaluate();
+    await editorRef.current.evaluate(true);
+    editorRef.current.repl.scheduler.stop();
     await renderPatternAudio(
       editorRef.current.repl.state.pattern,
       editorRef.current.repl.scheduler.cps,
@@ -214,8 +215,9 @@ export function useReplContext() {
       end,
       sampleRate,
       downloadName,
-    );
-    editorRef.current.repl.scheduler.stop();
+    ).finally(() => {
+      editorRef.current.repl.scheduler.stop();
+    });
   };
   const handleShuffle = async () => {
     const patternData = await getRandomTune();

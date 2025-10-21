@@ -52,11 +52,11 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
   setSuperdoughAudioController(new SuperdoughAudioController(audioContext));
   setMaxPolyphony(1024);
   setMultiChannelOrbits(true);
-  await loadWorklets();
+  await initAudio();
   logger('[webaudio] start rendering');
 
   let haps = pattern.queryArc(begin, end, { _cps: cps });
-  Promise.all(
+  await Promise.all(
     haps.map(async (h) => {
       let s;
       if (h.value.s) {
