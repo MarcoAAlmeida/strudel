@@ -98,7 +98,6 @@ export class Cyclist {
     this.started = v;
     this.onToggle?.(v);
   }
-
   async start() {
     await this.beforeStart?.();
     this.num_ticks_since_cps_change = 0;

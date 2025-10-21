@@ -282,7 +282,7 @@ export async function initAudioOnFirstClick(options) {
 }
 
 let controller;
-function getSuperdoughAudioController() {
+export function getSuperdoughAudioController() {
   if (controller == null) {
     controller = new SuperdoughAudioController(getAudioContext());
   }
@@ -376,7 +376,6 @@ function mapChannelNumbers(channels) {
 }
 
 export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) => {
-  // controller = null;
   // new: t is always expected to be the absolute target onset time
   const ac = getAudioContext();
   const audioController = getSuperdoughAudioController();
@@ -402,7 +401,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       `[superdough]: cannot schedule sounds in the past (target: ${t.toFixed(2)}, now: ${ac.currentTime.toFixed(2)})`,
     );
     return;
-  } // FIXME: fix
+  }
   // destructure
   let {
     tremolo,

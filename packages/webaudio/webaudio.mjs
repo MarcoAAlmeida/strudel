@@ -45,12 +45,11 @@ export const webaudioOutput = (hap, _deadline, hapDuration, cps, t) => {
 };
 
 export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, downloadName = undefined) {
-  const oldAudioCtx = getAudioContext();
-  await oldAudioCtx.close();
-  let audioContext = new OfflineAudioContext(2, ((end - begin) / cps) * sampleRate, sampleRate);
+  let audioContext = getAudioContext();
+  await audioContext.close();
+  audioContext = new OfflineAudioContext(2, ((end - begin) / cps) * sampleRate, sampleRate);
   setAudioContext(audioContext);
-  let context = getAudioContext();
-  setSuperdoughAudioController(new SuperdoughAudioController(context));
+  setSuperdoughAudioController(new SuperdoughAudioController(audioContext));
   setMaxPolyphony(1024);
   setMultiChannelOrbits(true);
   await loadWorklets();
@@ -69,7 +68,7 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
         let bank = getSound(s).data.samples;
         if (bank) {
           let { url: sampleUrl, label } = getSampleInfo(h.value, bank);
-          await loadBuffer(sampleUrl, context, label);
+          await loadBuffer(sampleUrl, audioContext, label);
         }
       }
     }),
@@ -81,10 +80,9 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
     }
   });
 
-  return context
+  return audioContext
     .startRendering()
     .then((renderedBuffer) => {
-      console.log(renderedBuffer);
       const wavBuffer = audioBufferToWav(renderedBuffer);
       const blob = new Blob([wavBuffer], { type: 'audio/wav' });
       const url = URL.createObjectURL(blob);
