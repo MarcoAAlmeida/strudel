@@ -22,11 +22,14 @@ import {
   setMaxPolyphony,
   setMultiChannelOrbits,
   resetGlobalEffects,
+  getDefaultValue,
 } from 'superdough';
 import './supradough.mjs';
 import { workletUrl } from 'supradough';
 import { SuperdoughAudioController } from 'superdough/superdoughoutput.mjs';
-
+import { loadModules } from '@src/repl/util.mjs';
+import { prebake } from '@src/repl/prebake.mjs';
+import { getFontBufferSource, getFontPitch } from 'node_modules/@strudel/soundfonts/fontloader.mjs';
 registerWorklet(workletUrl);
 
 const { Pattern, logger, repl } = strudel;
@@ -56,7 +59,9 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
   logger('[webaudio] start rendering');
 
   let haps = pattern.queryArc(begin, end, { _cps: cps });
-  await Promise.all(
+  await Promise.all([
+    loadModules(),
+    prebake(),
     haps.map(async (h) => {
       let s;
       if (h.value.s) {
@@ -65,13 +70,26 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
         } else {
           s = h.value.s;
         }
-        let bank = getSound(s).data.samples;
-        if (bank) {
-          let { url: sampleUrl, label } = getSampleInfo(h.value, bank);
-          await loadBuffer(sampleUrl, audioContext, label);
+        // let bank = getSound(s).data.samples;
+        let sample = getSound(s);
+        if (sample.data.type == "soundfont") {
+          sample.data.fonts.forEach(async (font) => {
+            await getFontBufferSource(font, h.value, audioContext)
+          })
         }
+        if (sample.data.type == "sample") {
+          let url;
+          if (Array.isArray(sample)) {
+            url = sample.data.samples[i % sample.data.samples.length];
+          } else if (typeof sample === 'object') {
+            console.log(sample.data.samples)
+            url = Object.values(sample.data.samples).flat()[getDefaultValue("i") % Object.values(sample.data.samples).length];
+          }
+          await loadBuffer(url, audioContext, s, 0);
+        } // TODO: waveform
       }
-    }),
+    })
+  ],
   );
   haps.forEach(async (hap) => {
     if (hap.hasOnset()) {

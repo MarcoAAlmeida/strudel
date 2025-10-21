@@ -206,7 +206,7 @@ export function useReplContext() {
   };
 
   const handleExport = async (begin, end, sampleRate, downloadName = undefined) => {
-    await editorRef.current.evaluate(true);
+    await editorRef.current.evaluate(false);
     editorRef.current.repl.scheduler.stop();
     await renderPatternAudio(
       editorRef.current.repl.state.pattern,

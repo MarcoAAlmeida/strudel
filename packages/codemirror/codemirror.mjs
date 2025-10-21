@@ -42,9 +42,9 @@ const extensions = {
   isMultiCursorEnabled: (on) =>
     on
       ? [
-          EditorState.allowMultipleSelections.of(true),
-          EditorView.clickAddsSelectionRange.of((ev) => ev.metaKey || ev.ctrlKey),
-        ]
+        EditorState.allowMultipleSelections.of(true),
+        EditorView.clickAddsSelectionRange.of((ev) => ev.metaKey || ev.ctrlKey),
+      ]
       : [],
 };
 const compartments = Object.fromEntries(Object.keys(extensions).map((key) => [key, new Compartment()]));
@@ -264,9 +264,9 @@ export class StrudelMirror {
       console.warn('first frame could not be painted');
     }
   }
-  async evaluate(autoplay = true) {
+  async evaluate(autostart = true) {
     this.flash();
-    await this.repl.evaluate(this.code, autoplay);
+    await this.repl.evaluate(this.code, autostart);
   }
   async stop() {
     this.repl.scheduler.stop();

@@ -289,7 +289,7 @@ export async function onTriggerSample(t, value, onended, bank, resolveUrl) {
   const { bufferSource, sliceDuration, offset } = await getSampleBufferSource(value, bank, resolveUrl);
 
   // asny stuff above took too long?
-  if (ac.currentTime > t) {
+  if (ac.currentTime > t && !(ac instanceof OfflineAudioContext)) {
     logger(`[sampler] still loading sound "${s}:${n}"`, 'highlight');
     // console.warn('sample still loading:', s, n);
     return;

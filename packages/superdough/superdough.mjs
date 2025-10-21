@@ -562,7 +562,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     return;
   }
 
-  if (ac.currentTime > t) {
+  if (ac.currentTime > t && !(ac instanceof OfflineAudioContext)) {
     logger('[webaudio] skip hap: still loading', ac.currentTime - t);
     return;
   }
