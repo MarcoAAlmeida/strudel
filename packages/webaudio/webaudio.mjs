@@ -17,6 +17,7 @@ import {
   setMaxPolyphony,
   setMultiChannelOrbits,
   resetGlobalEffects,
+  errorLogger,
 } from 'superdough';
 import './supradough.mjs';
 import { workletUrl } from 'supradough';
@@ -62,8 +63,8 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
             cps,
             hap.whole?.begin.valueOf(),
           );
-        } catch (error) {
-          logger("[webaudio] An error had occured while calling superdough. Skipping hap.")
+        } catch (err) {
+          errorLogger(err, 'webaudio')
         }
       }
     }),
@@ -85,12 +86,12 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     })
-  // .finally(async () => {
-  //   setAudioContext(null);
-  //   setSuperdoughAudioController(null);
-  //   resetGlobalEffects();
-  //   await initAudio();
-  // });
+    .finally(async () => {
+      setAudioContext(null);
+      setSuperdoughAudioController(null);
+      resetGlobalEffects();
+      await initAudio();
+    });
 }
 
 export function webaudioRepl(options = {}) {
