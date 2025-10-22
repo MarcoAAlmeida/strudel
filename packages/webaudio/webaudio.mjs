@@ -12,25 +12,15 @@ import {
   doughTrigger,
   registerWorklet,
   setAudioContext,
-  getSampleBufferSource,
-  loadBuffer,
-  getSampleInfo,
-  getSound,
   initAudio,
   setSuperdoughAudioController,
-  loadWorklets,
   setMaxPolyphony,
   setMultiChannelOrbits,
   resetGlobalEffects,
-  getDefaultValue,
-  getSampleBuffer,
 } from 'superdough';
 import './supradough.mjs';
 import { workletUrl } from 'supradough';
 import { SuperdoughAudioController } from 'superdough/superdoughoutput.mjs';
-import { loadModules } from '@src/repl/util.mjs';
-import { prebake } from '@src/repl/prebake.mjs';
-import { getFontBufferSource, getFontPitch } from 'node_modules/@strudel/soundfonts/fontloader.mjs';
 registerWorklet(workletUrl);
 
 const { Pattern, logger, repl } = strudel;
@@ -79,7 +69,6 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
   return audioContext
     .startRendering()
     .then((renderedBuffer) => {
-      console.log('downloading');
       const wavBuffer = audioBufferToWav(renderedBuffer);
       const blob = new Blob([wavBuffer], { type: 'audio/wav' });
       const url = URL.createObjectURL(blob);
