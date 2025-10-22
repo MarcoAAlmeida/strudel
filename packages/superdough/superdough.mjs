@@ -15,6 +15,7 @@ import { logger } from './logger.mjs';
 import { loadBuffer } from './sampler.mjs';
 import { getAudioContext, setAudioContext } from './audioContext.mjs';
 import { SuperdoughAudioController } from './superdoughoutput.mjs';
+import { resetSeenKeys } from './wavetable.mjs';
 
 export const DEFAULT_MAX_POLYPHONY = 128;
 const DEFAULT_AUDIO_DEVICE_NAME = 'System Standard';
@@ -231,6 +232,7 @@ export async function initAudio(options = {}) {
 
   setMaxPolyphony(maxPolyphony);
   setMultiChannelOrbits(multiChannelOrbits);
+  resetSeenKeys();
   if (typeof window === 'undefined') {
     return;
   }

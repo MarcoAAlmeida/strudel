@@ -61,17 +61,25 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
 
   let haps = pattern.queryArc(begin, end, { _cps: cps });
 
-  await Promise.all(haps.map(async (hap) => {
-    if (hap.hasOnset()) {
-      await superdough(hap2value(hap), hap.whole.begin.valueOf() / cps, hap.duration, cps, hap.whole?.begin.valueOf());
-    }
-  }));
+  await Promise.all(
+    haps.map(async (hap) => {
+      if (hap.hasOnset()) {
+        await superdough(
+          hap2value(hap),
+          hap.whole.begin.valueOf() / cps,
+          hap.duration,
+          cps,
+          hap.whole?.begin.valueOf(),
+        );
+      }
+    }),
+  );
   logger('[webaudio] start rendering');
 
   return audioContext
     .startRendering()
     .then((renderedBuffer) => {
-      console.log('downloading')
+      console.log('downloading');
       const wavBuffer = audioBufferToWav(renderedBuffer);
       const blob = new Blob([wavBuffer], { type: 'audio/wav' });
       const url = URL.createObjectURL(blob);
