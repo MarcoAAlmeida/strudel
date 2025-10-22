@@ -54,13 +54,17 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
   await Promise.all(
     haps.map(async (hap) => {
       if (hap.hasOnset()) {
-        await superdough(
-          hap2value(hap),
-          hap.whole.begin.valueOf() / cps,
-          hap.duration,
-          cps,
-          hap.whole?.begin.valueOf(),
-        );
+        try {
+          await superdough(
+            hap2value(hap),
+            hap.whole.begin.valueOf() / cps,
+            hap.duration,
+            cps,
+            hap.whole?.begin.valueOf(),
+          );
+        } catch (error) {
+          logger("[webaudio] An error had occured while calling superdough. Skipping hap.")
+        }
       }
     }),
   );
@@ -81,12 +85,12 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     })
-    .finally(async () => {
-      setAudioContext(null);
-      setSuperdoughAudioController(null);
-      resetGlobalEffects();
-      await initAudio();
-    });
+  // .finally(async () => {
+  //   setAudioContext(null);
+  //   setSuperdoughAudioController(null);
+  //   resetGlobalEffects();
+  //   await initAudio();
+  // });
 }
 
 export function webaudioRepl(options = {}) {
