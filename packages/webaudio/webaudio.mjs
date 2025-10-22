@@ -57,48 +57,16 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
   setMaxPolyphony(1024);
   setMultiChannelOrbits(true);
   await initAudio();
-  logger('[webaudio] start rendering');
+  logger('[webaudio] preloading');
 
   let haps = pattern.queryArc(begin, end, { _cps: cps });
-  await Promise.all([
-    loadModules(),
-    prebake(),
-  ]);
 
-  haps.forEach(async (h) => {
-    let s;
-    if (h.value.s) {
-      if (h.value.bank) {
-        s = `${h.value.bank}_${h.value.s}`;
-      } else {
-        s = h.value.s;
-      }
-      // let bank = getSound(s).data.samples;
-      let sample = getSound(s);
-      if (sample.data.type == "soundfont") {
-        for (let index = 0; index < sample.data.fonts.length; index++) {
-          const font = array[index];
-          await getFontBufferSource(font, h.value, audioContext)
-        }
-      }
-      if (sample.data.type == "sample") {
-        for (let index = 0; index < sample.data.samples.length; index++) {
-          const sample = array[index];
-          await getSampleBuffer(h.value, bank, sample)
-        }
-      } // TODO: waveform
-    }
-  })
-
-  for (let index = 0; index < haps.length; index++) {
-    const hap = haps[index];
+  await Promise.all(haps.map(async (hap) => {
     if (hap.hasOnset()) {
-      await hap.ensureObjectValue();
-      console.log("dough")
-      await superdough(hap.value, hap.whole.begin.valueOf() / cps, hap.duration, cps, hap.whole?.begin.valueOf());
+      await superdough(hap2value(hap), hap.whole.begin.valueOf() / cps, hap.duration, cps, hap.whole?.begin.valueOf());
     }
-  }
-  console.log("starting rendering")
+  }));
+  logger('[webaudio] start rendering');
 
   return audioContext
     .startRendering()
