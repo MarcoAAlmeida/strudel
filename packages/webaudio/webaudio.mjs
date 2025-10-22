@@ -23,6 +23,7 @@ import {
   setMultiChannelOrbits,
   resetGlobalEffects,
   getDefaultValue,
+  getSampleBuffer,
 } from 'superdough';
 import './supradough.mjs';
 import { workletUrl } from 'supradough';
@@ -62,45 +63,47 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
   await Promise.all([
     loadModules(),
     prebake(),
-    haps.map(async (h) => {
-      let s;
-      if (h.value.s) {
-        if (h.value.bank) {
-          s = `${h.value.bank}_${h.value.s}`;
-        } else {
-          s = h.value.s;
-        }
-        // let bank = getSound(s).data.samples;
-        let sample = getSound(s);
-        if (sample.data.type == "soundfont") {
-          sample.data.fonts.forEach(async (font) => {
-            await getFontBufferSource(font, h.value, audioContext)
-          })
-        }
-        if (sample.data.type == "sample") {
-          let url;
-          if (Array.isArray(sample)) {
-            url = sample.data.samples[i % sample.data.samples.length];
-          } else if (typeof sample === 'object') {
-            console.log(sample.data.samples)
-            url = Object.values(sample.data.samples).flat()[getDefaultValue("i") % Object.values(sample.data.samples).length];
-          }
-          await loadBuffer(url, audioContext, s, 0);
-        } // TODO: waveform
+  ]);
+
+  haps.forEach(async (h) => {
+    let s;
+    if (h.value.s) {
+      if (h.value.bank) {
+        s = `${h.value.bank}_${h.value.s}`;
+      } else {
+        s = h.value.s;
       }
-    })
-  ],
-  );
-  haps.forEach(async (hap) => {
+      // let bank = getSound(s).data.samples;
+      let sample = getSound(s);
+      if (sample.data.type == "soundfont") {
+        for (let index = 0; index < sample.data.fonts.length; index++) {
+          const font = array[index];
+          await getFontBufferSource(font, h.value, audioContext)
+        }
+      }
+      if (sample.data.type == "sample") {
+        for (let index = 0; index < sample.data.samples.length; index++) {
+          const sample = array[index];
+          await getSampleBuffer(h.value, bank, sample)
+        }
+      } // TODO: waveform
+    }
+  })
+
+  for (let index = 0; index < haps.length; index++) {
+    const hap = haps[index];
     if (hap.hasOnset()) {
-      hap.ensureObjectValue();
+      await hap.ensureObjectValue();
+      console.log("dough")
       await superdough(hap.value, hap.whole.begin.valueOf() / cps, hap.duration, cps, hap.whole?.begin.valueOf());
     }
-  });
+  }
+  console.log("starting rendering")
 
   return audioContext
     .startRendering()
     .then((renderedBuffer) => {
+      console.log('downloading')
       const wavBuffer = audioBufferToWav(renderedBuffer);
       const blob = new Blob([wavBuffer], { type: 'audio/wav' });
       const url = URL.createObjectURL(blob);
