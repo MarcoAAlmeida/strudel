@@ -39,15 +39,15 @@ export const webaudioOutput = (hap, _deadline, hapDuration, cps, t) => {
   return superdough(hap2value(hap), t, hapDuration, cps, hap.whole?.begin.valueOf());
 };
 
-export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, downloadName = undefined) {
+export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, maxPolyphony, multiChannelOrbits, downloadName = undefined) {
   let audioContext = getAudioContext();
   await audioContext.close();
   audioContext = new OfflineAudioContext(2, ((end - begin) / cps) * sampleRate, sampleRate);
   setAudioContext(audioContext);
   setSuperdoughAudioController(new SuperdoughAudioController(audioContext));
-  setMaxPolyphony(1024);
-  setMultiChannelOrbits(true);
   await initAudio();
+  setMaxPolyphony(maxPolyphony);
+  setMultiChannelOrbits(multiChannelOrbits);
   logger('[webaudio] preloading');
 
   let haps = pattern.queryArc(begin, end, { _cps: cps });
@@ -64,7 +64,7 @@ export async function renderPatternAudio(pattern, cps, begin, end, sampleRate, d
             hap.whole?.begin.valueOf(),
           );
         } catch (err) {
-          errorLogger(err, 'webaudio')
+          errorLogger(err, 'webaudio');
         }
       }
     }),

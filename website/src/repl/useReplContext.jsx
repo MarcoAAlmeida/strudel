@@ -205,7 +205,7 @@ export function useReplContext() {
     editorRef.current.evaluate();
   };
 
-  const handleExport = async (begin, end, sampleRate, downloadName = undefined) => {
+  const handleExport = async (begin, end, sampleRate, maxPolyphony, multiChannelOrbits, downloadName = undefined) => {
     await editorRef.current.evaluate(false);
     editorRef.current.repl.scheduler.stop();
     await renderPatternAudio(
@@ -214,6 +214,8 @@ export function useReplContext() {
       begin,
       end,
       sampleRate,
+      maxPolyphony,
+      multiChannelOrbits,
       downloadName,
     ).finally(() => {
       editorRef.current.repl.scheduler.stop();

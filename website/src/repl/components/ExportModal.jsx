@@ -204,7 +204,7 @@ export default function ExportModal(Props) {
               setStrudelMaxPolyphony(maxPolyphony);
               setStrudelMultiChannelOrbits(multiChannelOrbits);
               setTimeout(refreshProgress, 1000);
-              await handleExport(startCycle, endCycle, sampleRate, downloadName).finally(() => {
+              await handleExport(startCycle, endCycle, sampleRate, maxPolyphony, multiChannelOrbits, downloadName).finally(() => {
                 setExporting(false);
                 const modal = document.getElementById('exportModal');
                 setProgress(0);
