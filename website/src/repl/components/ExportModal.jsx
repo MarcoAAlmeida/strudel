@@ -204,21 +204,16 @@ export default function ExportModal(Props) {
               setStrudelMaxPolyphony(maxPolyphony);
               setStrudelMultiChannelOrbits(multiChannelOrbits);
               setTimeout(refreshProgress, 1000);
-              await handleExport(
-                startCycle,
-                endCycle,
-                sampleRate,
-                maxPolyphony,
-                multiChannelOrbits,
-                downloadName,
-              ).then(() => {
-                const modal = document.getElementById('exportModal');
-                modal.close();
-              }).finally(() => {
-                setExporting(false);
-                setProgress(0);
-                setLength(1);
-              });
+              await handleExport(startCycle, endCycle, sampleRate, maxPolyphony, multiChannelOrbits, downloadName)
+                .then(() => {
+                  const modal = document.getElementById('exportModal');
+                  modal.close();
+                })
+                .finally(() => {
+                  setExporting(false);
+                  setProgress(0);
+                  setLength(1);
+                });
             }}
           >
             <span className="text-foreground">{exporting ? 'Exporting...' : 'Export to WAV'}</span>
