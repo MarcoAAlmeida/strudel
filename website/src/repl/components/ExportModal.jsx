@@ -211,12 +211,13 @@ export default function ExportModal(Props) {
                 maxPolyphony,
                 multiChannelOrbits,
                 downloadName,
-              ).finally(() => {
-                setExporting(false);
+              ).then(() => {
                 const modal = document.getElementById('exportModal');
+                modal.close();
+              }).finally(() => {
+                setExporting(false);
                 setProgress(0);
                 setLength(1);
-                modal.close();
               });
             }}
           >

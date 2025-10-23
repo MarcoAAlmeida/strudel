@@ -68,7 +68,7 @@ export async function renderPatternAudio(
           await superdough(
             hap2value(hap),
             hap.whole.begin.valueOf() / cps,
-            hap.duration,
+            hap.duration / cps,
             cps,
             hap.whole?.begin.valueOf(),
           );
