@@ -79,13 +79,11 @@ const updateCodeWindow = (context, patternData, reset = false) => {
   context.handleUpdate(patternData, reset);
 };
 
-const autoResetPatternOnChange = !isUdels();
-
 function UserPatterns({ context }) {
   const activePattern = useActivePattern();
   const viewingPatternStore = useViewingPatternData();
   const viewingPatternData = parseJSON(viewingPatternStore);
-  const { userPatterns, patternFilter } = useSettings();
+  const { userPatterns, patternFilter, patternAutoStart } = useSettings();
   const viewingPatternID = viewingPatternData?.id;
   return (
     <div className="flex flex-col gap-2 flex-grow overflow-hidden h-full pb-2 ">
@@ -139,7 +137,7 @@ function UserPatterns({ context }) {
             updateCodeWindow(
               context,
               { ...userPatterns[id], collection: userPattern.collection },
-              autoResetPatternOnChange,
+              patternAutoStart,
             )
           }
           patterns={userPatterns}
@@ -188,6 +186,7 @@ function FeaturedPatterns({ context }) {
   const examplePatterns = useExamplePatterns();
   const collections = examplePatterns.collections;
   const patterns = collections.get(patternFilterName.featured);
+  const { patternAutoStart } = useSettings();
   return (
     <PatternPageWithPagination
       patterns={patterns}
@@ -197,7 +196,7 @@ function FeaturedPatterns({ context }) {
         updateCodeWindow(
           context,
           { ...patterns[id], collection: patternFilterName.featured },
-          autoResetPatternOnChange,
+          patternAutoStart,
         );
       }}
       paginationOnChange={async (pageNum) => {
@@ -213,13 +212,14 @@ function LatestPatterns({ context }) {
   const examplePatterns = useExamplePatterns();
   const collections = examplePatterns.collections;
   const patterns = collections.get(patternFilterName.public);
+  const { patternAutoStart } = useSettings();
   return (
     <PatternPageWithPagination
       patterns={patterns}
       context={context}
       initialPage={latestPageNum}
       patternOnClick={(id) => {
-        updateCodeWindow(context, { ...patterns[id], collection: patternFilterName.public }, autoResetPatternOnChange);
+        updateCodeWindow(context, { ...patterns[id], collection: patternFilterName.public }, patternAutoStart);
       }}
       paginationOnChange={async (pageNum) => {
         await loadAndSetPublicPatterns(pageNum - 1);
