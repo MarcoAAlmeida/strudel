@@ -1764,7 +1764,13 @@ export const { chord } = registerControl('chord');
  * @name dictionary
  * @param {string} dictionaryName which dictionary (having been defined with `addVoicings`) to use
  * @example
- * chord("Am C D F Am E Am E").dict('house').voicing
+ * addVoicings('house', {
+'': ['7 12 16', '0 7 16', '4 7 12'],
+'m': ['0 3 7']
+})
+chord("<Am C D F Am E Am E>")
+.dict('house').anchor(66)
+.voicing().room(.5)
  **/
 export const { dictionary, dict } = registerControl('dictionary', 'dict');
 /** The top note to align the voicing to. Defaults to c5
