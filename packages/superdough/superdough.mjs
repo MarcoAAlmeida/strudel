@@ -20,13 +20,13 @@ import { resetSeenKeys } from './wavetable.mjs';
 export const DEFAULT_MAX_POLYPHONY = 128;
 const DEFAULT_AUDIO_DEVICE_NAME = 'System Standard';
 
-let maxPolyphony = DEFAULT_MAX_POLYPHONY;
+export let maxPolyphony = DEFAULT_MAX_POLYPHONY;
 
 export function setMaxPolyphony(polyphony) {
   maxPolyphony = parseInt(polyphony) ?? DEFAULT_MAX_POLYPHONY;
 }
 
-let multiChannelOrbits = false;
+export let multiChannelOrbits = false;
 export function setMultiChannelOrbits(bool) {
   multiChannelOrbits = bool == true;
 }
@@ -398,7 +398,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   // duration is passed as value too..
   value.duration = hapDuration;
   // calculate absolute time
-  if (t < ac.currentTime && !(ac instanceof OfflineAudioContext)) {
+  if (t < ac.currentTime) {
     console.warn(
       `[superdough]: cannot schedule sounds in the past (target: ${t.toFixed(2)}, now: ${ac.currentTime.toFixed(2)})`,
     );
@@ -564,7 +564,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     return;
   }
 
-  if (ac.currentTime > t && !(ac instanceof OfflineAudioContext)) {
+  if (ac.currentTime > t) {
     logger('[webaudio] skip hap: still loading', ac.currentTime - t);
     return;
   }

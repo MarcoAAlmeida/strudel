@@ -18,6 +18,8 @@ import {
   setMultiChannelOrbits,
   resetGlobalEffects,
   errorLogger,
+  maxPolyphony as superdoughMaxPolyphony,
+  multiChannelOrbits as superdoughMultiChannelOrbits
 } from 'superdough';
 import './supradough.mjs';
 import { workletUrl } from 'supradough';
@@ -49,14 +51,19 @@ export async function renderPatternAudio(
   multiChannelOrbits,
   downloadName = undefined,
 ) {
+  let realtimeOptions = {
+    maxPolyphony: superdoughMaxPolyphony,
+    multiChannelOrbits: superdoughMultiChannelOrbits
+  }
   let audioContext = getAudioContext();
   await audioContext.close();
   audioContext = new OfflineAudioContext(2, ((end - begin) / cps) * sampleRate, sampleRate);
   setAudioContext(audioContext);
   setSuperdoughAudioController(new SuperdoughAudioController(audioContext));
-  await initAudio();
-  setMaxPolyphony(maxPolyphony);
-  setMultiChannelOrbits(multiChannelOrbits);
+  await initAudio({
+    maxPolyphony,
+    multiChannelOrbits
+  });
   logger('[webaudio] preloading');
 
   let haps = pattern.queryArc(begin, end, { _cps: cps });
@@ -99,7 +106,7 @@ export async function renderPatternAudio(
       setAudioContext(null);
       setSuperdoughAudioController(null);
       resetGlobalEffects();
-      await initAudio();
+      await initAudio(realtimeOptions);
     });
 }
 

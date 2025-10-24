@@ -4,8 +4,6 @@ import NumberInput from './NumberInput';
 import { useEffect, useState } from 'react';
 import { Textbox } from './textbox/Textbox';
 import {
-  setMultiChannelOrbits as setStrudelMultiChannelOrbits,
-  setMaxPolyphony as setStrudelMaxPolyphony,
   getAudioContext,
 } from '@strudel/webaudio';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
@@ -201,8 +199,6 @@ export default function ExportModal(Props) {
             disabled={exporting}
             onClick={async () => {
               setExporting(true);
-              setStrudelMaxPolyphony(maxPolyphony);
-              setStrudelMultiChannelOrbits(multiChannelOrbits);
               setTimeout(refreshProgress, 1000);
               await handleExport(startCycle, endCycle, sampleRate, maxPolyphony, multiChannelOrbits, downloadName)
                 .then(() => {
