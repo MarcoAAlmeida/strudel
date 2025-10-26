@@ -96,7 +96,7 @@ export function useSettings() {
     isPanelOpen: parseBoolean(state.isPanelOpen),
     userPatterns: userPatterns,
     multiChannelOrbits: parseBoolean(state.multiChannelOrbits),
-    patternAutoStart: isUdels() ? false : parseBoolean(state.patternAutoStart)
+    patternAutoStart: isUdels() ? false : state.patternAutoStart === undefined ? true : parseBoolean(state.patternAutoStart)
   };
 }
 
