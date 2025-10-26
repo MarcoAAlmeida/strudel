@@ -23,8 +23,8 @@ export async function prebake() {
     // https://github.com/sgossner/VCSL/
     // https://api.github.com/repositories/126427031/contents/
     // LICENSE: CC0 general-purpose
-    samples(`${baseNoTrailing}/vcsl.json`, 'github:sgossner/VCSL/master/', { prebake: true }),
-    samples(`${baseNoTrailing}/tidal-drum-machines.json`, 'github:ritchse/tidal-drum-machines/main/machines/', {
+    samples(`${baseNoTrailing}/vcsl.json`, 'https://strudel.b-cdn.net/VCSL/', { prebake: true }),
+    samples(`${baseNoTrailing}/tidal-drum-machines.json`, 'https://strudel.b-cdn.net/tidal-drum-machines/machines/', {
       prebake: true,
       tag: 'drum-machines',
     }),
@@ -145,7 +145,7 @@ export async function prebake() {
           'num/20.wav',
         ],
       },
-      'github:tidalcycles/dirt-samples',
+      'https://strudel.b-cdn.net/Dirt-Samples/',
       {
         prebake: true,
       },
