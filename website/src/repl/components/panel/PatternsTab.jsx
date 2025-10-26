@@ -133,13 +133,17 @@ function UserPatterns({ context }) {
       <div className="overflow-auto h-full bg-background p-2 rounded-md">
         {/* {patternFilter === patternFilterName.user && ( */}
         <PatternButtons
-          onClick={(id) =>
+          onClick={(id) => {
             updateCodeWindow(
               context,
               { ...userPatterns[id], collection: userPattern.collection },
               patternAutoStart,
             )
-          }
+
+            if (context.started && activePattern === id) {
+              context.handleEvaluate()
+            }
+          }}
           patterns={userPatterns}
           started={context.started}
           activePattern={activePattern}
