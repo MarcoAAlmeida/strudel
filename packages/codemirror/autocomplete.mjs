@@ -1,8 +1,9 @@
 import jsdoc from '../../doc.json';
 import { autocompletion } from '@codemirror/autocomplete';
 import { h } from './html';
-import { Scale } from '@tonaljs/tonal';
-import { soundMap } from 'superdough';
+//TODO: fix tonal scale import
+// import { Scale } from '@tonaljs/tonal';
+import { soundMap } from '@strudel/webaudio';
 import { complex } from '@strudel/tonal';
 
 const escapeHtml = (str) => {
@@ -90,13 +91,13 @@ export function bankCompletions() {
     .map((name) => ({ label: name, type: 'bank' }));
 }
 
-// Attempt to get all scale names from Tonal
-let scaleCompletions = [];
-try {
-  scaleCompletions = (Scale.names ? Scale.names() : []).map((name) => ({ label: name, type: 'scale' }));
-} catch (e) {
-  console.warn('[autocomplete] Could not load scale names from Tonal:', e);
-}
+// Attempt to get all scale names from Tonal TODO: FIX IMPORT
+// let scaleCompletions = [];
+// try {
+//   scaleCompletions = (Scale.names ? Scale.names() : []).map((name) => ({ label: name, type: 'scale' }));
+// } catch (e) {
+//   console.warn('[autocomplete] Could not load scale names from Tonal:', e);
+// }
 
 // Valid mode values for voicing
 const modeCompletions = [
