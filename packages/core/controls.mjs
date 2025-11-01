@@ -2049,6 +2049,7 @@ export const { distort, dist } = registerControl(['distort', 'distortvol', 'dist
  *
  * @name distortvol
  * @synonyms distvol
+ * @tags fx, superdough, supradough
  * @param {number | Pattern} volume linear postgain of the distortion
  * @example
  * s("bd*4").bank("tr909").distort(2).distortvol(0.8)
@@ -2059,6 +2060,7 @@ export const { distortvol } = registerControl('distortvol', 'distvol');
  * Type of waveshaping distortion to apply.
  *
  * @name distorttype
+ * @tags fx, superdough, supradough
  * @synonyms disttype
  * @param {number | string | Pattern} type type of distortion to apply
  * @example
@@ -2487,6 +2489,7 @@ export const { polyTouch } = registerControl('polyTouch');
 /**
  * The host to send open sound control messages to. Requires running the OSC bridge.
  * @name oschost
+ * @tags external_io
  * @param {string | Pattern} oschost e.g. 'localhost'
  * @example
  * note("c4").oschost('127.0.0.1').oscport(57120).osc();
@@ -2496,6 +2499,7 @@ export const { oschost } = registerControl('oschost');
 /**
  * The port to send open sound control messages to. Requires running the OSC bridge.
  * @name oscport
+ * @tags external_io
  * @param {number | Pattern} oscport e.g. 57120
  * @example
  * note("c4").oschost('127.0.0.1').oscport(57120).osc();

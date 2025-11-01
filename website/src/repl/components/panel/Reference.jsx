@@ -11,8 +11,13 @@ const availableFunctions = (() => {
   for (const doc of jsdocJson.docs) {
     if (!isValid(doc)) continue;
     if (seen.has(doc.name)) continue;
-    doc.tags = doc.tags?.filter((t) => t && typeof t === 'string') || [];
+
+    // jsdoc also uses "tags" for when you use @something in the comments and it doesn't know what
+    // @something is. We only want data from comments like `@tags fx, superdough` here.
+    // If nothing is specified, we default to "untagged" for debugging
+    doc.tags = doc.tags?.filter((t) => t && typeof t === 'string') || ['untagged'];
     functions.push(doc);
+
     const synonyms = doc.synonyms || [];
     seen.add(doc.name);
     for (const s of synonyms) {
@@ -37,16 +42,6 @@ const getInnerText = (html) => {
   div.innerHTML = html;
   return div.textContent || div.innerText || '';
 };
-
-const GROUP_DISPLAY_NAMES = {
-  external_io: 'External I/O',
-  effects: 'Effects',
-  untagged: 'Untagged',
-  structure: 'Structure',
-  transforms: 'Transforms',
-};
-
-const GROUP_ORDER = ['effects', 'transforms', 'structure', 'untagged', 'external_io'];
 
 export function Reference() {
   const [search, setSearch] = useState('');
@@ -80,29 +75,6 @@ export function Reference() {
     });
   }, [search, selectedTag]);
 
-  const visibleFunctionsByGroup = (() => {
-    const groups = {};
-    for (const doc of visibleFunctions) {
-      const group = (doc.tags || ['untagged'])[0];
-      if (!groups[group]) {
-        groups[group] = [];
-      }
-      groups[group].push(doc);
-    }
-    return groups;
-  })();
-  // console.log(visibleFunctionsByGroup);
-
-  // Sort and map group entries
-  const sortedGroups = Object.entries(visibleFunctionsByGroup).sort(([a], [b]) => {
-    const ai = GROUP_ORDER.indexOf(a);
-    const bi = GROUP_ORDER.indexOf(b);
-    if (ai === -1 && bi === -1) return a.localeCompare(b);
-    if (ai === -1) return 1;
-    if (bi === -1) return -1;
-    return ai - bi;
-  });
-
   const tagCounts = {};
   for (const doc of availableFunctions) {
     (doc.tags || ['untagged']).forEach((t) => {
@@ -114,7 +86,7 @@ export function Reference() {
 
   return (
     <div className="flex flex-col h-full w-full p-2">
-      <div className="w-full  flex flex-col gap-2 h-1/3 mb-2">
+      <div className="w-full  flex flex-col gap-2 h-2/5 mb-2">
         <div className="w-full flex flex-col gap-2">
           <Textbox className="w-full" placeholder="Search" value={search} onChange={setSearch} />
           <div>

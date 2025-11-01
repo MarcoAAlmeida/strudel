@@ -3128,6 +3128,7 @@ export const extend = stepRegister('extend', function (factor, pat) {
  * `stepcat("a b".fast(2), "c d")` would be the same as `"[a b] [a b] c d"`.
  *
  * TODO: find out how this function differs from extend
+ * @tags temporal
  * @example
  * stepcat(
  *   sound("bd bd - cp").replicate(2),
@@ -3697,6 +3698,7 @@ export const morph = (frompat, topat, bypat) => {
  * Soft-clipping distortion
  *
  * @name soft
+ * @tags fx
  * @param {number | Pattern} distortion amount of distortion to apply
  * @param {number | Pattern} volume linear postgain of the distortion
  *
@@ -3705,6 +3707,7 @@ export const morph = (frompat, topat, bypat) => {
  * Hard-clipping distortion
  *
  * @name hard
+ * @tags fx
  * @param {number | Pattern} distortion amount of distortion to apply
  * @param {number | Pattern} volume linear postgain of the distortion
  *
@@ -3713,6 +3716,7 @@ export const morph = (frompat, topat, bypat) => {
  * Cubic polynomial distortion
  *
  * @name cubic
+ * @tags fx
  * @param {number | Pattern} distortion amount of distortion to apply
  * @param {number | Pattern} volume linear postgain of the distortion
  *
@@ -3721,6 +3725,7 @@ export const morph = (frompat, topat, bypat) => {
  * Diode-emulating distortion
  *
  * @name diode
+ * @tags fx
  * @param {number | Pattern} distortion amount of distortion to apply
  * @param {number | Pattern} volume linear postgain of the distortion
  *
@@ -3729,6 +3734,7 @@ export const morph = (frompat, topat, bypat) => {
  * Asymmetrical diode distortion
  *
  * @name asym
+ * @tags fx
  * @param {number | Pattern} distortion amount of distortion to apply
  * @param {number | Pattern} volume linear postgain of the distortion
  *
@@ -3737,6 +3743,7 @@ export const morph = (frompat, topat, bypat) => {
  * Wavefolding distortion
  *
  * @name fold
+ * @tags fx
  * @param {number | Pattern} distortion amount of distortion to apply
  * @param {number | Pattern} volume linear postgain of the distortion
  *
@@ -3745,6 +3752,7 @@ export const morph = (frompat, topat, bypat) => {
  * Wavefolding distortion composed with sinusoid
  *
  * @name sinefold
+ * @tags fx
  * @param {number | Pattern} distortion amount of distortion to apply
  * @param {number | Pattern} volume linear postgain of the distortion
  *
@@ -3753,6 +3761,7 @@ export const morph = (frompat, topat, bypat) => {
  * Distortion via Chebyshev polynomials
  *
  * @name chebyshev
+ * @tags fx
  * @param {number | Pattern} distortion amount of distortion to apply
  * @param {number | Pattern} volume linear postgain of the distortion
  *
