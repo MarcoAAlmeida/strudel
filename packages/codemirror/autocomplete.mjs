@@ -92,7 +92,7 @@ export function bankCompletions() {
 }
 
 // Attempt to get all scale names from Tonal TODO: FIX IMPORT
-// let scaleCompletions = [];
+let scaleCompletions = [];
 // try {
 //   scaleCompletions = (Scale.names ? Scale.names() : []).map((name) => ({ label: name, type: 'scale' }));
 // } catch (e) {
