@@ -399,7 +399,7 @@ export const { note } = registerControl(['note', 'n']);
  * A pattern of numbers that speed up (or slow down) samples while they play. Currently only supported by osc / superdirt.
  *
  * @name accelerate
- * @tags samples
+ * @tags samples, superdirt
  * @param {number | Pattern} amount acceleration.
  * @superdirtOnly
  * @example
@@ -444,7 +444,7 @@ export const { postgain } = registerControl('postgain');
  * Like `gain`, but linear.
  *
  * @name amp
- * @tags fx
+ * @tags fx, superdirt
  * @param {number | Pattern} amount gain.
  * @superdirtOnly
  * @example
@@ -1075,7 +1075,7 @@ export const { phasercenter, phc } = registerControl('phasercenter', 'phc');
  * The amount the signal is affected by the phaser effect. Defaults to 0.75
  *
  * @name phaserdepth
- * @tags fx, superdough
+ * @tags fx, superdough, superdirt
  * @synonyms phd, phasdp
  * @param {number | Pattern} depth number between 0 and 1
  * @example
@@ -1546,7 +1546,7 @@ export const { delaysync } = registerControl('delaysync');
  * Specifies whether delaytime is calculated relative to cps.
  *
  * @name lock
- * @tags fx
+ * @tags fx, superdirt
  * @param {number | Pattern} enable When set to 1, delaytime is a direct multiple of a cycle.
  * @superdirtOnly
  * @example
@@ -1595,7 +1595,7 @@ export const { spread } = registerControl('spread');
  * Set dryness of reverb. See `room` and `size` for more information about reverb.
  *
  * @name dry
- * @tags fx, superdough
+ * @tags fx, superdough, superdirt
  * @param {number | Pattern} dry 0 = wet, 1 = dry
  * @example
  * n("[0,3,7](3,8)").s("superpiano").room(.7).dry("<0 .5 .75 1>").osc()
@@ -1727,7 +1727,7 @@ export const { gate, gat } = registerControl('gate', 'gat');
  * Emulation of a Leslie speaker: speakers rotating in a wooden amplified cabinet.
  *
  * @name leslie
- * @tags fx
+ * @tags fx, superdirt
  * @param {number | Pattern} wet between 0 and 1
  * @example
  * n("0,4,7").s("supersquare").leslie("<0 .4 .6 1>").osc()
@@ -1739,7 +1739,7 @@ export const { leslie } = registerControl('leslie');
  * Rate of modulation / rotation for leslie effect
  *
  * @name lrate
- * @tags fx
+ * @tags fx, superdirt
  * @param {number | Pattern} rate 6.7 for fast, 0.7 for slow
  * @example
  * n("0,4,7").s("supersquare").leslie(1).lrate("<1 2 4 8>").osc()
@@ -1752,7 +1752,7 @@ export const { lrate } = registerControl('lrate');
  * Physical size of the cabinet in meters. Be careful, it might be slightly larger than your computer. Affects the Doppler amount (pitch warble)
  *
  * @name lsize
- * @tags fx
+ * @tags fx, superdirt
  * @param {number | Pattern} meters somewhere between 0 and 1
  * @example
  * n("0,4,7").s("supersquare").leslie(1).lrate(2).lsize("<.1 .5 1>").osc()
@@ -1801,6 +1801,7 @@ export const { nudge } = registerControl('nudge');
  * Sets the default octave of a synth.
  *
  * @name octave
+ * @tags fx, superdirt
  * @param {number | Pattern} octave octave number
  * @example
  * n("0,4,7").s('supersquare').octave("<3 4 5 6>").osc()
@@ -2089,7 +2090,7 @@ export const { stretch } = registerControl('stretch');
  * Used in conjunction with `speed`, accepts values of "r" (rate, default behavior), "c" (cycles), or "s" (seconds). Using `unit "c"` means `speed` will be interpreted in units of cycles, e.g. `speed "1"` means samples will be stretched to fill a cycle. Using `unit "s"` means the playback speed will be adjusted so that the duration is the number of seconds specified by `speed`.
  *
  * @name unit
- * @tags fx
+ * @tags fx, superdirt
  * @param {number | string | Pattern} unit see description above
  * @example
  * speed("1 2 .5 3").s("bd").unit("c").osc()
@@ -2104,7 +2105,7 @@ export const { unit } = registerControl('unit');
  * "A simplistic pitch-raising algorithm. It's not meant to sound natural; its sound is reminiscent of some weird mixture of filter, ring-modulator and pitch-shifter, depending on the input. The algorithm works by cutting the signal into fragments (delimited by upwards-going zero-crossings) and squeezing those fragments in the time domain (i.e. simply playing them back faster than they came in), leaving silences inbetween. All the parameters apart from memlen can be modulated."
  *
  * @name squiz
- * @tags fx
+ * @tags fx, superdirt
  * @param {number | Pattern} squiz Try passing multiples of 2 to it - 2, 4, 8 etc.
  * @example
  * squiz("2 4/2 6 [8 16]").s("bd").osc()
