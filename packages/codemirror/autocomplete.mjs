@@ -83,7 +83,7 @@ const hasExcludedTags = (doc) =>
 export function bankCompletions() {
   // TODO: FIX IMPORT
   const soundDict = soundMap?.get() ?? {};
-  
+
   const banks = new Set();
   for (const key of Object.keys(soundDict)) {
     const [bank, suffix] = key.split('_');
