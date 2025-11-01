@@ -1,6 +1,7 @@
 import { getAudioContext, registerSound } from './index.mjs';
 import { getCommonSampleInfo } from './util.mjs';
 import {
+  applyFM,
   applyParameterModulators,
   destroyAudioWorkletNode,
   getADSRValues,
@@ -231,12 +232,12 @@ export async function onTriggerSynth(t, value, onended, tables, cps, frameLen) {
       begin: t,
       end: envEnd,
       frequency,
-      detune: value.detune,
+      freqspread: value.detune,
       position: value.wt,
       warp: value.warp,
       warpMode: warpmode,
       voices: Math.max(value.unison ?? 1, 1),
-      spread: value.spread,
+      panspread: value.spread,
       phaserand: (value.wtphaserand ?? value.unison > 1) ? 1 : 0,
     },
     { outputChannelCount: [2] },
@@ -309,6 +310,7 @@ export async function onTriggerSynth(t, value, onended, tables, cps, frameLen) {
     },
   );
   const vibratoOscillator = getVibratoOscillator(source.parameters.get('detune'), value, t);
+  const fm = applyFM(source.parameters.get('frequency'), value, t);
   const envGain = ac.createGain();
   const node = source.connect(envGain);
   getParamADSR(node.gain, attack, decay, sustain, release, 0, 0.3, t, holdEnd, 'linear');
@@ -319,6 +321,7 @@ export async function onTriggerSynth(t, value, onended, tables, cps, frameLen) {
     () => {
       destroyAudioWorkletNode(source);
       vibratoOscillator?.stop();
+      fm?.stop();
       node.disconnect();
       wtPosModulators?.disconnect();
       wtWarpModulators?.disconnect();
