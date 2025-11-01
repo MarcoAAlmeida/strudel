@@ -92,7 +92,7 @@ export function registerSamplesFromDB(config = userSamplesDBConfig, onComplete =
 
 async function blobToDataUrl(blob) {
   return new Promise((resolve) => {
-    resolve(URL.createObjectURL(blob))
+    resolve(URL.createObjectURL(blob));
   });
 }
 

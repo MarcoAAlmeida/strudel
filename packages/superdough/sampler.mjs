@@ -349,6 +349,7 @@ export async function onTriggerSample(t, value, onended, bank, resolveUrl) {
 }
 
 function registerSample(key, bank, params) {
+  console.info({ key, bank });
   registerSound(key, (t, hapValue, onended) => onTriggerSample(t, hapValue, onended, bank), {
     type: 'sample',
     samples: bank,
