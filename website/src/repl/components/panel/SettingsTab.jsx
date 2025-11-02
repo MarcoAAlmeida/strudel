@@ -112,7 +112,7 @@ export function SettingsTab({ started }) {
     multiChannelOrbits,
     isTabIndentationEnabled,
     isMultiCursorEnabled,
-    patternAutoStart
+    patternAutoStart,
   } = useSettings();
   const shouldAlwaysSync = isUdels();
   const canChangeAudioDevice = AudioContext.prototype.setSinkId != null;

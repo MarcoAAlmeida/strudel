@@ -134,14 +134,10 @@ function UserPatterns({ context }) {
         {/* {patternFilter === patternFilterName.user && ( */}
         <PatternButtons
           onClick={(id) => {
-            updateCodeWindow(
-              context,
-              { ...userPatterns[id], collection: userPattern.collection },
-              patternAutoStart,
-            )
+            updateCodeWindow(context, { ...userPatterns[id], collection: userPattern.collection }, patternAutoStart);
 
             if (context.started && activePattern === id) {
-              context.handleEvaluate()
+              context.handleEvaluate();
             }
           }}
           patterns={userPatterns}
@@ -197,11 +193,7 @@ function FeaturedPatterns({ context }) {
       context={context}
       initialPage={featuredPageNum}
       patternOnClick={(id) => {
-        updateCodeWindow(
-          context,
-          { ...patterns[id], collection: patternFilterName.featured },
-          patternAutoStart,
-        );
+        updateCodeWindow(context, { ...patterns[id], collection: patternFilterName.featured }, patternAutoStart);
       }}
       paginationOnChange={async (pageNum) => {
         await loadAndSetFeaturedPatterns(pageNum - 1);
