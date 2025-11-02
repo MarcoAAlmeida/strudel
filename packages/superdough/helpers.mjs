@@ -280,6 +280,11 @@ export function getVibratoOscillator(param, value, t) {
     return vibratoOscillator;
   }
 }
+
+export function scheduleAtTime(callback, targetTime, audioContext = getAudioContext()) {
+  const currentTime = audioContext.currentTime;
+  webAudioTimeout(audioContext, callback, currentTime, targetTime);
+}
 // ConstantSource inherits AudioScheduledSourceNode, which has scheduling abilities
 // a bit of a hack, but it works very well :)
 export function webAudioTimeout(audioContext, onComplete, startTime, stopTime) {
