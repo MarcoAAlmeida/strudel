@@ -1566,6 +1566,11 @@ export function fastcat(...pats) {
   return result;
 }
 
+/** See `fastcat` */
+export function sequence(...pats) {
+  return fastcat(...pats);
+}
+
 /** Like **cat**, but the items are crammed into one cycle.
  * @tags combiners
  * @synonyms seq, fastcat
@@ -1579,9 +1584,6 @@ export function fastcat(...pats) {
  *   note("c4(5,8)")
  * )
  */
-export function sequence(...pats) {
-  return fastcat(...pats);
-}
 
 export function seq(...pats) {
   return fastcat(...pats);
