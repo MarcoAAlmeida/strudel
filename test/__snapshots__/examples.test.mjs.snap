@@ -9337,6 +9337,43 @@ exports[`runs examples > example "scale" example index 4 1`] = `
 ]
 `;
 
+exports[`runs examples > example "scale" example index 5 1`] = `
+[
+  "[ 0/1 → 1/8 | note:C3 ]",
+  "[ 1/8 → 1/4 | note:C3 ]",
+  "[ 1/4 → 3/8 | note:D3 ]",
+  "[ 3/8 → 1/2 | note:Eb3 ]",
+  "[ 1/2 → 5/8 | note:E3 ]",
+  "[ 5/8 → 3/4 | note:G3 ]",
+  "[ 3/4 → 7/8 | note:A3 ]",
+  "[ 7/8 → 1/1 | note:C4 ]",
+  "[ 1/1 → 9/8 | note:C3 ]",
+  "[ 9/8 → 5/4 | note:C3 ]",
+  "[ 5/4 → 11/8 | note:D3 ]",
+  "[ 11/8 → 3/2 | note:Eb3 ]",
+  "[ 3/2 → 13/8 | note:E3 ]",
+  "[ 13/8 → 7/4 | note:G3 ]",
+  "[ 7/4 → 15/8 | note:A3 ]",
+  "[ 15/8 → 2/1 | note:C4 ]",
+  "[ 2/1 → 17/8 | note:C3 ]",
+  "[ 17/8 → 9/4 | note:C3 ]",
+  "[ 9/4 → 19/8 | note:D3 ]",
+  "[ 19/8 → 5/2 | note:Eb3 ]",
+  "[ 5/2 → 21/8 | note:E3 ]",
+  "[ 21/8 → 11/4 | note:G3 ]",
+  "[ 11/4 → 23/8 | note:A3 ]",
+  "[ 23/8 → 3/1 | note:C4 ]",
+  "[ 3/1 → 25/8 | note:C3 ]",
+  "[ 25/8 → 13/4 | note:C3 ]",
+  "[ 13/4 → 27/8 | note:D3 ]",
+  "[ 27/8 → 7/2 | note:Eb3 ]",
+  "[ 7/2 → 29/8 | note:E3 ]",
+  "[ 29/8 → 15/4 | note:G3 ]",
+  "[ 15/4 → 31/8 | note:A3 ]",
+  "[ 31/8 → 4/1 | note:C4 ]",
+]
+`;
+
 exports[`runs examples > example "scaleTranspose" example index 0 1`] = `
 [
   "[ 0/1 → 1/2 | note:C3 ]",
