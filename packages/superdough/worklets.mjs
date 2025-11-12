@@ -507,6 +507,7 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
         name: 'voices',
         defaultValue: 5,
         min: 1,
+        automationRate: 'k-rate',
       },
     ];
   }
@@ -518,12 +519,10 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
       // this.port.postMessage({ type: 'onended' });
       return false;
     }
-
     const output = outputs[0];
-
+    const voices = pv(params.voices, 0); // k-rate
     for (let i = 0; i < output[0].length; i++) {
       const detune = pv(params.detune, i);
-      const voices = pv(params.voices, i);
       const freqspread = pv(params.freqspread, i);
       const panspread = pv(params.panspread, i) * 0.5 + 0.5;
       const gain1 = Math.sqrt(1 - panspread);
@@ -552,7 +551,9 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
         output[0][i] += v * gainL;
         output[1][i] += v * gainR;
 
-        this.phase[n] = ffrac(this.phase[n] + dt);
+        let pn = this.phase[n] + dt;
+        if (pn >= 1.0) pn -= 1.0;
+        this.phase[n] = pn;
       }
     }
     return true;
