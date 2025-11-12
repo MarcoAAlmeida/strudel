@@ -21,44 +21,42 @@ const frac = (x) => x - Math.floor(x);
 const ffloor = (x) => x | 0;
 const fround = (x) => ffloor(x + 0.5);
 const fceil = (x) => ffloor(x + 1);
+const ffrac = (x) => x - ffloor(x);
 
 const fast_tanh = (x) => {
   const x2 = x * x;
   return (x * (27.0 + x2)) / (27.0 + 9.0 * x2);
 };
-const getUnisonDetune = (unison, detune, voiceIndex) => {
+
+// Optimized per-voice detuner which precomputes constants
+const getDetuner = (unison, detune) => {
   if (unison < 2) {
-    return 0;
+    return (_voiceIdx) => 0;
   }
-  return lerp(-detune * 0.5, detune * 0.5, voiceIndex / (unison - 1));
+  const scale = detune / (unison - 1);
+  const center = detune * 0.5;
+  return (voiceIdx) => voiceIdx * scale - center;
 };
+
 const applySemitoneDetuneToFrequency = (frequency, detune) => {
   return frequency * Math.pow(2, detune / 12);
 };
 
-// Restrict phase to the range [0, maxPhase) via wrapping
-function wrapPhase(phase, maxPhase = 1) {
-  if (phase >= maxPhase) {
-    phase -= maxPhase;
-  } else if (phase < 0) {
-    phase += maxPhase;
-  }
-  return phase;
-}
 // Smooth waveshape near discontinuities to remove frequencies above Nyquist and prevent aliasing
 // referenced from https://www.kvraudio.com/forum/viewtopic.php?t=375517
 function polyBlep(phase, dt) {
   dt = Math.min(dt, 1 - dt);
+  const invdt = 1 / dt;
   // Start of cycle
   if (phase < dt) {
-    phase /= dt;
+    phase *= invdt;
     // 2 * (phase - phase^2/2 - 0.5)
     return phase + phase - phase * phase - 1;
   }
 
   // End of cycle
   else if (phase > 1 - dt) {
-    phase = (phase - 1) / dt;
+    phase = (phase - 1) * invdt;
     // 2 * (phase^2/2 + phase + 0.5)
     return phase * phase + phase + phase + 1;
   }
@@ -171,7 +169,7 @@ class LFOProcessor extends AudioWorkletProcessor {
     const blockSize = output[0].length ?? 0;
 
     if (this.phase == null) {
-      this.phase = mod(time * frequency + phaseoffset, 1);
+      this.phase = ffrac(time * frequency + phaseoffset);
     }
     const dt = frequency * INVSR;
     for (let n = 0; n < blockSize; n++) {
@@ -533,6 +531,7 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
       let freq = pv(params.frequency, i);
       // Main detuning
       freq = applySemitoneDetuneToFrequency(freq, detune / 100);
+      const detuner = getDetuner(voices, freqspread);
       for (let n = 0; n < voices; n++) {
         const isOdd = (n & 1) == 1;
         let gainL = gain1;
@@ -543,17 +542,17 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
           gainR = gain1;
         }
         // Individual voice detuning
-        const freqVoice = applySemitoneDetuneToFrequency(freq, getUnisonDetune(voices, freqspread, n));
+        const freqVoice = applySemitoneDetuneToFrequency(freq, detuner(n));
         // We must wrap this here because it is passed into sawblep below which
         // has domain [0, 1]
-        const dt = mod(freqVoice * INVSR, 1);
+        const dt = ffrac(freqVoice * INVSR);
         this.phase[n] = this.phase[n] ?? Math.random();
         const v = waveshapes.sawblep(this.phase[n], dt);
 
-        output[0][i] = output[0][i] + v * gainL;
-        output[1][i] = output[1][i] + v * gainR;
+        output[0][i] += v * gainL;
+        output[1][i] += v * gainR;
 
-        this.phase[n] = wrapPhase(this.phase[n] + dt);
+        this.phase[n] = ffrac(this.phase[n] + dt);
       }
     }
     return true;
@@ -699,7 +698,7 @@ class PhaseVocoderProcessor extends OLAProcessor {
       // shift whole region of influence around peak to shifted peak
       const startOffset = startIndex - peakIndex;
       const endOffset = endIndex - peakIndex;
-      const omegaDelta = TWO_PI * this.invfftSize * (binIndexShifted - binIndex);
+      const omegaDelta = TWO_PI * this.invfftSize * (peakIndexShifted - peakIndex);
       const phaseShiftReal = Math.cos(omegaDelta * this.timeCursor);
       const phaseShiftImag = Math.sin(omegaDelta * this.timeCursor);
       for (let j = startOffset; j < endOffset; j++) {
@@ -792,11 +791,11 @@ class PulseOscillatorProcessor extends AudioWorkletProcessor {
       dphi;
 
     for (let i = 0; i < (output[0].length ?? 0); i++) {
-      const pw = (1 - clamp(pv(params.pulsewidth, i), -0.99, 0.99)) * this.pi;
+      const pw = (1 - clamp(pv(params.pulsewidth, i), -0.99, 0.99)) * PI;
       const detune = pv(params.detune, i);
       const freq = applySemitoneDetuneToFrequency(pv(params.frequency, i), detune / 100);
 
-      dphi = freq * (this.pi / (sampleRate * 0.5)); // phase increment
+      dphi = freq * (PI / (sampleRate * 0.5)); // phase increment
       this.dphif += 0.1 * (dphi - this.dphif);
 
       env *= 0.9998; // exponential decay envelope
@@ -808,7 +807,7 @@ class PulseOscillatorProcessor extends AudioWorkletProcessor {
 
       // Waveform generation (half-Tomisawa oscillators)
       this.phi += this.dphif; // phase increment
-      if (this.phi >= this.pi) this.phi -= 2 * this.pi; // phase wrapping
+      if (this.phi >= PI) this.phi -= TWO_PI; // phase wrapping
 
       // First half-Tomisawa generator
       let out0 = Math.cos(this.phi + this.B * this.Y0); // self-phase modulation
@@ -847,13 +846,13 @@ const chyx = {
     }
   },
   /*sin that loops every 128 "steps", instead of every pi steps*/ sinf: function (x) {
-    return Math.sin(x / (128 / Math.PI));
+    return Math.sin((x * PI) / 128);
   },
   /*cos that loops every 128 "steps", instead of every pi steps*/ cosf: function (x) {
-    return Math.cos(x / (128 / Math.PI));
+    return Math.cos((x * PI) / 128);
   },
   /*tan that loops every 128 "steps", instead of every pi steps*/ tanf: function (x) {
-    return Math.tan(x / (128 / Math.PI));
+    return Math.tan((x * PI) / 128);
   },
   /*converts t into a string composed of it's bits, regex's that*/ regG: function (t, X) {
     return X.test(t.toString(2));
@@ -986,6 +985,7 @@ export const WarpMode = Object.freeze({
   SIGMOID: 19,
   FRACTAL: 20,
   FLIP: 21,
+  MODULAR: 22,
 });
 
 function hash32(u) {
@@ -1125,7 +1125,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
       case WarpMode.FOLD: {
         const K = 7;
         const k = 1 + Math.max(1, fround(K * amt));
-        return Math.abs(frac(k * phase) - 0.5) * 2;
+        return Math.abs(ffrac(k * phase) - 0.5) * 2;
       }
       case WarpMode.PWM: {
         const w = clamp(0.5 + 0.49 * (2 * amt - 1), 0, 1);
@@ -1135,12 +1135,12 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
       case WarpMode.ORBIT: {
         const depth = 0.5 * amt;
         const n = 3;
-        return frac(phase + depth * Math.sin(2 * Math.PI * n * phase));
+        return frac(phase + depth * Math.sin(TWO_PI * n * phase));
       }
       case WarpMode.SPIN: {
         const depth = 0.5 * amt;
         const { n } = this._toBits(amt, 1, 6);
-        return frac(phase + depth * Math.sin(2 * Math.PI * n * phase));
+        return frac(phase + depth * Math.sin(TWO_PI * n * phase));
       }
       case WarpMode.CHAOS: {
         const r = 3.7 + 0.3 * amt;
@@ -1169,8 +1169,8 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
       case WarpMode.MODULAR: {
         const { n } = this._toBits(amt);
         const depth = 0.5 * amt;
-        const jump = frac(phase * n) / n;
-        return frac(phase + depth * jump);
+        const jump = ffrac(phase * n) / n;
+        return ffrac(phase + depth * jump);
       }
       case WarpMode.BROWNIAN: {
         const disp = 0.25 * amt * brownian(64 * phase, 4);
@@ -1207,7 +1207,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
         return (y - y0) / (y1 - y0);
       }
       case WarpMode.FRACTAL: {
-        const d = 0.5 * Math.sin(2 * Math.PI * phase) * amt;
+        const d = 0.5 * Math.sin(TWO_PI * phase) * amt;
         return frac(phase + d);
       }
       case WarpMode.FLIP: {
@@ -1271,6 +1271,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
       let f = pv(parameters.frequency, i);
       f = applySemitoneDetuneToFrequency(f, detune / 100); // overall detune
       const normalizer = 1 / Math.sqrt(voices);
+      const detuner = getDetuner(voices, freqspread);
       for (let n = 0; n < voices; n++) {
         const isOdd = (n & 1) == 1;
         let gainL = gain1;
@@ -1280,7 +1281,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
           gainL = gain2;
           gainR = gain1;
         }
-        const fVoice = applySemitoneDetuneToFrequency(f, getUnisonDetune(voices, freqspread, n)); // voice detune
+        const fVoice = applySemitoneDetuneToFrequency(f, detuner(n)); // voice detune
         const dPhase = fVoice * INVSR;
         const level = this._chooseMip(dPhase);
         const table = this.tables[level];
@@ -1296,7 +1297,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
         }
         outL[i] += s * gainL * normalizer;
         outR[i] += s * gainR * normalizer;
-        this.phase[n] = wrapPhase(this.phase[n] + dPhase);
+        this.phase[n] = ffrac(this.phase[n] + dPhase);
       }
     }
     return true;
