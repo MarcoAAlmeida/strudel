@@ -591,10 +591,6 @@ class PhaseVocoderProcessor extends OLAProcessor {
     this.fftSize = this.blockSize;
     this.invfftSize = 1 / this.fftSize;
     this.hannWindow = genHannWindow(this.fftSize);
-    // rescale hann window (empirically sounds nicer)
-    for (let i = 0; i < this.hannWindow.length; i++) {
-      this.hannWindow[i] *= 1.62;
-    }
     // prepare FFT and pre-allocate buffers
     this.fft = new FFT(this.fftSize);
     this.freqComplexBuffer = this.fft.createComplexArray();
@@ -633,7 +629,7 @@ class PhaseVocoderProcessor extends OLAProcessor {
   /** Apply Hann window in-place */
   applyHannWindow(input) {
     for (let i = 0; i < this.blockSize; i++) {
-      input[i] *= this.hannWindow[i];
+      input[i] *= this.hannWindow[i] * 1.62;
     }
   }
 
@@ -791,7 +787,7 @@ class PulseOscillatorProcessor extends AudioWorkletProcessor {
       const detune = pv(params.detune, i);
       const freq = applySemitoneDetuneToFrequency(pv(params.frequency, i), detune / 100);
 
-      dphi = freq * (PI / (sampleRate * 0.5)); // phase increment
+      dphi = freq * TWO_PI * INVSR; // phase increment
       this.dphif += 0.1 * (dphi - this.dphif);
 
       env *= 0.9998; // exponential decay envelope
@@ -981,7 +977,6 @@ export const WarpMode = Object.freeze({
   SIGMOID: 19,
   FRACTAL: 20,
   FLIP: 21,
-  MODULAR: 22,
 });
 
 function hash32(u) {
@@ -1161,12 +1156,6 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
         const idx = ffloor(phase * n);
         const ridx = bitReverse(idx, b);
         return ridx / n;
-      }
-      case WarpMode.MODULAR: {
-        const { n } = this._toBits(amt);
-        const depth = 0.5 * amt;
-        const jump = ffrac(phase * n) / n;
-        return ffrac(phase + depth * jump);
       }
       case WarpMode.BROWNIAN: {
         const disp = 0.25 * amt * brownian(64 * phase, 4);
