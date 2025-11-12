@@ -24,7 +24,7 @@ const fceil = (x) => ffloor(x + 1);
 const ffrac = (x) => x - ffloor(x);
 
 const fast_tanh = (x) => {
-  const x2 = x * x;
+  const x2 = x ** 2;
   return (x * (27.0 + x2)) / (27.0 + 9.0 * x2);
 };
 
@@ -50,17 +50,13 @@ function polyBlep(phase, dt) {
   // Start of cycle
   if (phase < dt) {
     phase *= invdt;
-    // 2 * (phase - phase^2/2 - 0.5)
-    return phase + phase - phase * phase - 1;
+    return 2 * phase - phase ** 2 - 1;
   }
-
   // End of cycle
   else if (phase > 1 - dt) {
     phase = (phase - 1) * invdt;
-    // 2 * (phase^2/2 + phase + 0.5)
-    return phase * phase + phase + phase + 1;
+    return phase ** 2 + 2 * phase + 1;
   }
-
   // 0 otherwise
   else {
     return 0;
@@ -520,7 +516,7 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
       return false;
     }
     const output = outputs[0];
-    const voices = pv(params.voices, 0); // k-rate
+    const voices = params.voices[0]; // k-rate
     for (let i = 0; i < output[0].length; i++) {
       const detune = pv(params.detune, i);
       const freqspread = pv(params.freqspread, i);
@@ -641,7 +637,7 @@ class PhaseVocoderProcessor extends OLAProcessor {
       const real = this.freqComplexBuffer[j];
       const imag = this.freqComplexBuffer[j + 1];
       // no need to sqrt for peak finding
-      this.magnitudes[i] = real * real + imag * imag;
+      this.magnitudes[i] = real ** 2 + imag ** 2;
       i += 1;
       j += 2;
     }
@@ -1033,7 +1029,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
       { name: 'position', defaultValue: 0, min: 0, max: 1 },
       { name: 'warp', defaultValue: 0, min: 0, max: 1 },
       { name: 'warpMode', defaultValue: 0 },
-      { name: 'voices', defaultValue: 1, min: 1 },
+      { name: 'voices', defaultValue: 1, min: 1, automationRate: 'k-rate' },
       { name: 'panspread', defaultValue: 0.7, min: 0, max: 1 },
       { name: 'phaserand', defaultValue: 0, min: 0, max: 1 },
     ];
@@ -1106,7 +1102,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
         return amt < 0.5 ? this._warpPhase(phase, 1 - 2 * amt, 3) : this._warpPhase(phase, 2 * amt - 1, 2);
       }
       case WarpMode.SYNC: {
-        const syncRatio = Math.pow(16, amt * amt);
+        const syncRatio = Math.pow(16, amt ** 2);
         return (phase * syncRatio) % 1;
       }
       case WarpMode.QUANT: {
@@ -1142,7 +1138,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
         const isPrime = (n) => {
           if (n < 2) return false;
           if (n % 2 === 0) return n === 2;
-          for (let d = 3; d * d <= n; d += 2) if (n % d === 0) return false;
+          for (let d = 3; d ** 2 <= n; d += 2) if (n % d === 0) return false;
           return true;
         };
         let { n } = this._toBits(amt, 3);
@@ -1239,6 +1235,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
       if (outR !== outL) outR.set(outL);
       return true;
     }
+    const voices = parameters.voices[0]; // k-rate
     for (let i = 0; i < outL.length; i++) {
       const detune = pv(parameters.detune, i);
       const freqspread = pv(parameters.freqspread, i);
@@ -1248,7 +1245,6 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
       const frac = idx - fIdx;
       const warpAmount = clamp(pv(parameters.warp, i), 0, 1);
       const warpMode = pv(parameters.warpMode, i);
-      const voices = pv(parameters.voices, i);
       const phaseRand = clamp(pv(parameters.phaserand, i), 0, 1);
       const panspread = voices > 1 ? clamp(pv(parameters.panspread, i), 0, 1) : 0;
       const gain1 = Math.sqrt(0.5 - 0.5 * panspread);
