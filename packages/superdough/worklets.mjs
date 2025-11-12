@@ -525,21 +525,13 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
       const detune = pv(params.detune, i);
       const freqspread = pv(params.freqspread, i);
       const panspread = pv(params.panspread, i) * 0.5 + 0.5;
-      const gain1 = Math.sqrt(1 - panspread);
-      const gain2 = Math.sqrt(panspread);
+      let gainL = Math.sqrt(1 - panspread);
+      let gainR = Math.sqrt(panspread);
       let freq = pv(params.frequency, i);
       // Main detuning
       freq = applySemitoneDetuneToFrequency(freq, detune / 100);
       const detuner = getDetuner(voices, freqspread);
       for (let n = 0; n < voices; n++) {
-        const isOdd = (n & 1) == 1;
-        let gainL = gain1;
-        let gainR = gain2;
-        // invert right and left gain
-        if (isOdd) {
-          gainL = gain2;
-          gainR = gain1;
-        }
         // Individual voice detuning
         const freqVoice = applySemitoneDetuneToFrequency(freq, detuner(n));
         // We must wrap this here because it is passed into sawblep below which
@@ -554,6 +546,9 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
         let pn = this.phase[n] + dt;
         if (pn >= 1.0) pn -= 1.0;
         this.phase[n] = pn;
+        // invert right and left gain
+        gainL = gainR;
+        gainR = gainL;
       }
     }
     return true;
