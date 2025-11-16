@@ -12,8 +12,8 @@ import { useMemo } from 'react';
 import { getMetadata } from '../../../metadata_parser.js';
 import { useExamplePatterns } from '../../useExamplePatterns.jsx';
 import { parseJSON, isUdels } from '../../util.mjs';
-import { ButtonGroup } from './Forms.jsx';
-import { settingsMap, useSettings } from '../../../settings.mjs';
+import { useSettings } from '../../../settings.mjs';
+import { ActionButton } from '../button/action-button.jsx';
 import { Pagination } from '../pagination/Pagination.jsx';
 import { useState } from 'react';
 import { useDebounce } from '../usedebounce.jsx';
@@ -75,26 +75,15 @@ function PatternButtons({ patterns, activePattern, onClick, started }) {
   );
 }
 
-function ActionButton({ children, onClick, label, labelIsHidden }) {
-  return (
-    <button className="hover:opacity-50 text-nowrap" onClick={onClick} title={label}>
-      {labelIsHidden !== true && label}
-      {children}
-    </button>
-  );
-}
-
 const updateCodeWindow = (context, patternData, reset = false) => {
   context.handleUpdate(patternData, reset);
 };
-
-const autoResetPatternOnChange = !isUdels();
 
 function UserPatterns({ context }) {
   const activePattern = useActivePattern();
   const viewingPatternStore = useViewingPatternData();
   const viewingPatternData = parseJSON(viewingPatternStore);
-  const { userPatterns, patternFilter } = useSettings();
+  const { userPatterns, patternFilter, patternAutoStart } = useSettings();
   const viewingPatternID = viewingPatternData?.id;
   return (
     <div className="flex flex-col gap-2 flex-grow overflow-hidden h-full pb-2 ">
@@ -144,13 +133,13 @@ function UserPatterns({ context }) {
       <div className="overflow-auto h-full bg-background p-2 rounded-md">
         {/* {patternFilter === patternFilterName.user && ( */}
         <PatternButtons
-          onClick={(id) =>
-            updateCodeWindow(
-              context,
-              { ...userPatterns[id], collection: userPattern.collection },
-              autoResetPatternOnChange,
-            )
-          }
+          onClick={(id) => {
+            updateCodeWindow(context, { ...userPatterns[id], collection: userPattern.collection }, patternAutoStart);
+
+            if (context.started && activePattern === id) {
+              context.handleEvaluate();
+            }
+          }}
           patterns={userPatterns}
           started={context.started}
           activePattern={activePattern}
@@ -197,17 +186,14 @@ function FeaturedPatterns({ context }) {
   const examplePatterns = useExamplePatterns();
   const collections = examplePatterns.collections;
   const patterns = collections.get(patternFilterName.featured);
+  const { patternAutoStart } = useSettings();
   return (
     <PatternPageWithPagination
       patterns={patterns}
       context={context}
       initialPage={featuredPageNum}
       patternOnClick={(id) => {
-        updateCodeWindow(
-          context,
-          { ...patterns[id], collection: patternFilterName.featured },
-          autoResetPatternOnChange,
-        );
+        updateCodeWindow(context, { ...patterns[id], collection: patternFilterName.featured }, patternAutoStart);
       }}
       paginationOnChange={async (pageNum) => {
         await loadAndSetFeaturedPatterns(pageNum - 1);
@@ -222,13 +208,14 @@ function LatestPatterns({ context }) {
   const examplePatterns = useExamplePatterns();
   const collections = examplePatterns.collections;
   const patterns = collections.get(patternFilterName.public);
+  const { patternAutoStart } = useSettings();
   return (
     <PatternPageWithPagination
       patterns={patterns}
       context={context}
       initialPage={latestPageNum}
       patternOnClick={(id) => {
-        updateCodeWindow(context, { ...patterns[id], collection: patternFilterName.public }, autoResetPatternOnChange);
+        updateCodeWindow(context, { ...patterns[id], collection: patternFilterName.public }, patternAutoStart);
       }}
       paginationOnChange={async (pageNum) => {
         await loadAndSetPublicPatterns(pageNum - 1);

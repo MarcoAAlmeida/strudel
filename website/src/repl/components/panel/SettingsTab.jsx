@@ -74,6 +74,7 @@ const fontFamilyOptions = {
   FiraCode: 'FiraCode',
   'FiraCode-SemiBold': 'FiraCode SemiBold',
   teletext: 'teletext',
+  tic80: 'tic80',
   mode7: 'mode7',
   BigBlueTerminal: 'BigBlueTerminal',
   x3270: 'x3270',
@@ -111,6 +112,7 @@ export function SettingsTab({ started }) {
     multiChannelOrbits,
     isTabIndentationEnabled,
     isMultiCursorEnabled,
+    patternAutoStart,
   } = useSettings();
   const shouldAlwaysSync = isUdels();
   const canChangeAudioDevice = AudioContext.prototype.setSinkId != null;
@@ -303,6 +305,11 @@ export function SettingsTab({ started }) {
           onChange={(cbEvent) => settingsMap.setKey('isCSSAnimationDisabled', cbEvent.target.checked)}
           value={isCSSAnimationDisabled}
         />
+        <Checkbox
+          label="Auto-start pattern on pattern change"
+          onChange={(cbEvent) => settingsMap.setKey('patternAutoStart', cbEvent.target.checked)}
+          value={patternAutoStart}
+        />
       </FormItem>
       <FormItem label="Zen Mode">Try clicking the logo in the top left!</FormItem>
       <FormItem label="Reset Settings">
@@ -311,7 +318,8 @@ export function SettingsTab({ started }) {
           onClick={() => {
             confirmDialog('Sure?').then((r) => {
               if (r) {
-                settingsMap.set(defaultSettings);
+                const { userPatterns } = settingsMap.get(); // keep current patterns
+                settingsMap.set({ ...defaultSettings, userPatterns });
               }
             });
           }}
