@@ -41,7 +41,6 @@ Tune.prototype.tonicize = function(newTonic) {
 	this.tonic = newTonic
 }
 
-
 /* Return data in the mode you are in (freq, ratio, or midi) */
 
 Tune.prototype.note = function(input,octave){
@@ -139,10 +138,10 @@ Tune.prototype.MIDI = function(stepIn,octaveIn) {
 
 /* Load a new scale */
 
-Tune.prototype.loadScale = function(name){
+Tune.prototype.loadScale = function(scale){
 
 	/* load the scale */
-	var freqs = TuningList[name].frequencies
+	var freqs = isArrayOfNumbers(scale) ? scale : TuningList[scale].frequencies
 	this.scale = []
 	for (var i=0;i<freqs.length-1;i++) {
 		this.scale.push(freqs[i]/freqs[0])
@@ -207,8 +206,13 @@ Tune.prototype.search = function(letters) {
 	return possible
 }
 
-Tune.prototype.isValidScale = function(name) {
-  return !!TuningList[name];
+function isArrayOfNumbers(arg) {
+    return Array.isArray(arg) && arg.length > 0 && arg.every(item => typeof item === 'number' && !isNaN(item));
+}
+
+/* allow an array of values too */
+Tune.prototype.isValidScale = function(scale) {
+  return !!TuningList[scale] || isArrayOfNumbers(scale) ;
 }
 
 /* Return a collection of notes as an array */
