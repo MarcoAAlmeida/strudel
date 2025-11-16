@@ -47,19 +47,17 @@ export function registerSynthSounds() {
           [0.001, 0.05, 0.6, 0.01],
         );
 
-        let sound = getOscillator(s, t, value);
-        let { node: o, stop, triggerRelease } = sound;
-
         // turn down
         const g = gainNode(0.3);
 
-        const { duration } = value;
-
-        o.onended = () => {
-          o.disconnect();
+        let sound = getOscillator(s, t, value, () => {
           g.disconnect();
           onended();
-        };
+        });
+
+        let { node: o, stop, triggerRelease } = sound;
+
+        const { duration } = value;
 
         const envGain = gainNode(1);
         let node = o.connect(g).connect(envGain);
@@ -446,7 +444,7 @@ export function waveformN(partials, type) {
 }
 
 // expects one of waveforms as s
-export function getOscillator(s, t, value) {
+export function getOscillator(s, t, value, onended) {
   let { n: partials, duration, noise = 0 } = value;
   let o;
   // If no partials are given, use stock waveforms
@@ -460,7 +458,6 @@ export function getOscillator(s, t, value) {
   }
   // set frequency
   o.frequency.value = getFrequencyFromValue(value);
-  o.start(t);
 
   let vibratoOscillator = getVibratoOscillator(o.detune, value, t);
 
@@ -472,6 +469,12 @@ export function getOscillator(s, t, value) {
   if (noise) {
     noiseMix = getNoiseMix(o, noise, t);
   }
+
+  o.onended = () => {
+    noiseMix?.node.disconnect();
+    onended();
+  };
+  o.start(t);
 
   return {
     node: noiseMix?.node || o,
