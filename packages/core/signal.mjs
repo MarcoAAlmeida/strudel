@@ -365,13 +365,13 @@ export const scramble = register('scramble', (n, pat) => {
  * @param {Pattern} pat Pattern to update
  * @returns Pattern
  */
-function withSeed(func, pat) {
+export const withSeed = (func, pat) => {
   return new Pattern((state) => {
     let { randSeed, ...controls } = state.controls;
     randSeed = func(randSeed);
     return pat.query(state.setControls({ ...controls, randSeed }));
   }, pat._steps);
-}
+};
 
 /**
  * Change the seed for random signals. Normally, random signals depend on time,
