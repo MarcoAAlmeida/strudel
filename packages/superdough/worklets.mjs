@@ -825,13 +825,12 @@ const chyx = {
   /*bit reverse*/ br: function (x, size = 8) {
     if (size > 32) {
       throw new Error('br() Size cannot be greater than 32');
-    } else {
-      let result = 0;
-      for (let idx = 0; idx < size - 0; idx++) {
-        result += chyx.bitC(x, 2 ** idx, 2 ** (size - (idx + 1)));
-      }
-      return result;
     }
+    let result = 0;
+    for (let idx = 0; idx < size; idx++) {
+      result |= chyx.bitC(x, 1 << idx, 1 << (size - (idx + 1)));
+    }
+    return result;
   },
   /*sin that loops every 128 "steps", instead of every pi steps*/ sinf: function (x) {
     return Math.sin((x * PI) / 128);
@@ -842,7 +841,7 @@ const chyx = {
   /*tan that loops every 128 "steps", instead of every pi steps*/ tanf: function (x) {
     return Math.tan((x * PI) / 128);
   },
-  /*converts t into a string composed of it's bits, regex's that*/ regG: function (t, X) {
+  /*converts t into a string composed of its bits; regexes that*/ regG: function (t, X) {
     return X.test(t.toString(2));
   },
 };
@@ -850,7 +849,7 @@ const chyx = {
 // Create shortened Math functions
 let mathParams, byteBeatHelperFuncs;
 function getByteBeatFunc(codetext) {
-  if ((mathParams || byteBeatHelperFuncs) == null) {
+  if (mathParams == null) {
     mathParams = Object.getOwnPropertyNames(Math);
     byteBeatHelperFuncs = mathParams.map((k) => Math[k]);
     const chyxNames = Object.getOwnPropertyNames(chyx);
@@ -883,7 +882,7 @@ class ByteBeatProcessor extends AudioWorkletProcessor {
 
       this.func = getByteBeatFunc(codeText);
     };
-    this.initialOffset = null;
+    this.initialOffset = 0;
     this.t = null;
     this.func = null;
   }
@@ -930,18 +929,19 @@ class ByteBeatProcessor extends AudioWorkletProcessor {
       this.t = params.begin[0] * sampleRate;
     }
     const output = outputs[0];
+    const scale = 256 * INVSR;
     for (let i = 0; i < output[0].length; i++) {
       const detune = pv(params.detune, i);
       const freq = applySemitoneDetuneToFrequency(pv(params.frequency, i), detune / 100);
-      let local_t = 256 * this.t * INVSR * freq + this.initialOffset;
+      const local_t = scale * freq * this.t + this.initialOffset;
       const funcValue = this.func(local_t);
-      let signal = (funcValue & 255) / 127.5 - 1;
-      const out = signal * 0.2;
+      const signal = (funcValue & 255) / 127.5 - 1;
+      //prevent speaker blowout via clipping if threshold exceeds
+      const out = clamp(signal * 0.2, -0.4, 0.4);
       for (let c = 0; c < output.length; c++) {
-        //prevent speaker blowout via clipping if threshold exceeds
-        output[c][i] = clamp(out, -0.4, 0.4);
+        output[c][i] = out;
       }
-      this.t = this.t + 1;
+      this.t++;
     }
 
     return true; // keep the audio processing going
