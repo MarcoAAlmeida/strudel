@@ -48,7 +48,7 @@ export class DoughMirror {
 
     // init event highlighting
     this.framer = new Framer(
-      () => {
+      (time) => {
         const frameHaps = this.repl.processHaps();
         highlightMiniLocations(this.editor, time, frameHaps);
       },

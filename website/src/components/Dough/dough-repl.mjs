@@ -1,6 +1,6 @@
 // import { Dough, doughsamples } from 'dough-synth';
 import { Dough, doughsamples } from 'https://unpkg.com/dough-synth@0.1.9/dough.js';
-import { Pattern, noteToMidi, evaluate } from '@strudel/core';
+import { Pattern, noteToMidi, evaluate, stack } from '@strudel/core';
 // import doughUrl from 'dough-synth?url';
 import { transpiler } from '@strudel/transpiler';
 //const doughBaseUrl = doughUrl.split('/').slice(0, -1).join('/') + '/';
