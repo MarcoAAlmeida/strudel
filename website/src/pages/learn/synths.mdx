@@ -48,28 +48,71 @@ You can also use the `crackle` type to play some subtle noise crackles. You can 
 
 ### Additive Synthesis
 
-To tame the harsh sound of the basic waveforms, we can set the `n` control to limit the overtones of the waveform:
+Waveforms are often composed of several [harmonics](https://en.wikipedia.org/wiki/Harmonic) above a fundamental frequency, lying at integer multiples. These overtones combine to give a sound its unique timbral quality.
+
+For the basic waveforms, we offer you control over these harmonics with the `partials` and `phases` functions.
+
+#### Partials
+
+`partials` refers to the magnitude of each harmonic relative to the fundamental frequency. They can thus be used to spectrally filter these waveforms and tame some of their harshness:
 
 <MiniRepl
   client:idle
   tune={`note("c2 <eb2 <g2 g1>>".fast(2))
 .sound("sawtooth")
-.n("<32 16 8 4>")
+.partials([1, 1, 0, 1])
 ._scope()`}
 />
 
-When the `n` control is used on a basic waveform, it defines the number of harmonic partials the sound is getting.
-You can also set `n` directly in mini notation with `sound`:
+`partials` can also be used to construct _new_ waveforms not present in our basic set with the 'user' sound source:
 
 <MiniRepl
   client:idle
   tune={`note("c2 <eb2 <g2 g1>>".fast(2))
-.sound("sawtooth:<32 16 8 4>")
+.sound("user")
+.partials([1, 0, 0.3, 0, 0.1, 0, 0, 0.3])
 ._scope()`}
 />
 
-Note for tidal users: `n` in tidal is synonymous to `note` for synths only.
-In strudel, this is not the case, where `n` will always change timbre, be it though different samples or different waveforms.
+We may algorithmically construct lists of partials with Javascript code like:
+
+<MiniRepl
+  client:idle
+  tune={`const numHarmonics = 22;
+note("c2 <eb2 <g2 g1>>".fast(2))
+.sound("user")
+.partials(new Array(numHarmonics).fill(1))
+._scope()`}
+/>
+
+This approach can act as a form of bandlimiting. `partials` is also compatible with pattern functions designed to produce lists, like `randL` or `binaryL`:
+
+<MiniRepl
+  client:idle
+  tune={`const numHarmonics = 22;
+note("c2 <eb2 <g2 g1>>".fast(2))
+.sound("user")
+.partials(randL(8))
+._scope()`}
+/>
+
+Note that the first value in the `partials` array controls the magnitude of the fundamental harmonic rather than the DC offset, which is fixed at 0.
+
+#### Phases
+
+We mentioned that our sounds can be broken into a constituent set of harmonics above a fundamental frequency. These are defined by two values: their magnitude (how loud they are) and their [phase](https://en.wikipedia.org/wiki/Phase_(waves)), which can be thought of as which point in its cycle each sine wave is initialized at when we begin adding them.
+
+These phases too can be declared in Strudel and can give your sounds interesting depth.
+
+<MiniRepl
+  client:idle
+  tune={`const numHarmonics = 22;
+note("c2 <eb2 <g2 g1>>".fast(2))
+.sound("user")
+.partials(randL(8))
+.phases(randL(8).late(0.3))
+._scope()`}
+/>
 
 ## Vibrato
 
