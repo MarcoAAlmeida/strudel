@@ -96,6 +96,16 @@ note("c2 <eb2 <g2 g1>>".fast(2))
 ._scope()`}
 />
 
+and with lists _of_ patterns:
+
+<MiniRepl
+  client:idle
+  tune={`note("c2 <eb2 <g2 g1>>".fast(4))
+.sound("user")
+.partials([1, 0, "0 1", "0 1 0.3", rand])
+._scope()`}
+/>
+
 Note that the first value in the `partials` array controls the magnitude of the fundamental harmonic rather than the DC offset, which is fixed at 0.
 
 #### Phases

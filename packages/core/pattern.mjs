@@ -3653,10 +3653,11 @@ export const parray = (pats) => {
  *   .partials(binaryL(256))
  */
 export const { partials } = register('partials', (list, pat) => {
+  debugger;
   if (Array.isArray(list)) {
     list = parray(list);
   }
-  return pat.withValue((v) => ({...v, partials: list}));
+  return pat.withValue((v) => (l) => ({...v, partials: l})).appLeft(list);
 });
 
 /**
@@ -3673,5 +3674,5 @@ export const { phases } = register('phases', (list, pat) => {
   if (Array.isArray(list)) {
     list = parray(list);
   }
-  return pat.withValue((v) => ({...v, phases: list}));
+  return pat.withValue((v) => (l) => ({...v, phases: l})).appLeft(list);
 });
