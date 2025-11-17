@@ -85,7 +85,7 @@ note("c2 <eb2 <g2 g1>>".fast(2))
 ._scope()`}
 />
 
-which acts as a spectral filter or
+which acts as a spectral filter. Or:
 
 <MiniRepl
   client:idle
@@ -129,11 +129,12 @@ These phases too can be declared in Strudel and can give your sounds interesting
 
 <MiniRepl
   client:idle
-  tune={`note("c2 <eb2 <g2 g1>>".fast(2))
-.sound("saw")
-.partials(randL(100))
-.phases(randL(100))
-._scope()`}
+  tune={`s("saw").seg(16).n(irand(12)).scale("F1:minor")
+  .penv(48).panchor(0).pdec(0.05)
+  .delay(0.25).room(0.25)
+  .compressor(-20).vib(0.3)
+  .partials(randL(200))
+  .phases(randL(200))`}
 />
 
 ## Vibrato

@@ -3638,6 +3638,13 @@ export const parray = (pats) => {
   return acc;
 };
 
+const _ensureListPattern = (list) => {
+  if (Array.isArray(list)) {
+    return parray(list);
+  }
+  return reify(list);
+};
+
 /**
  * Scale the magnitude of the harmonics of one of the core synths ('sine', 'tri', 'saw', ..)
  *
@@ -3650,21 +3657,15 @@ export const parray = (pats) => {
  *   .partials([1, 0, 1, 0, 0, 1])
  * @example
  * s("saw").seg(8).n(irand(12)).scale("G#:minor")
- *   .partials(randL(16))
+ *   .partials(binaryL(irand(256).add("1")))
  */
-register('partials', (list, pat) => {
-  if (Array.isArray(list)) {
-    list = parray(list);
-  }
-  return pat.withValue((v) => (l) => ({ ...v, partials: l })).appLeft(list);
-});
+Pattern.prototype.partials = function (list) {
+  return this.withValue((v) => (l) => ({ ...v, partials: l })).appLeft(_ensureListPattern(list));
+};
 
 // Also create a top-level function
 export const partials = (list) => {
-  if (Array.isArray(list)) {
-    list = parray(list);
-  }
-  return list.as('partials');
+  return _ensureListPattern(list).as('partials');
 };
 
 /**
@@ -3673,22 +3674,16 @@ export const partials = (list) => {
  * @name phases
  * @param {number[] | Pattern} phases List of [0, 1) phases for partials. 0th entry is the fundamental phase (i.e. DC offset is skipped)
  * @example
- * s("saw").seg(8).n(irand(12)).scale("G#:minor")
- *   .partials(randL(16))
- *   .phases(randL(16))
+ * // Phase cancellation
+ * s("saw").seg(8).n(irand(12)).scale("G#1:minor")
+ *   .partials(partials([1, 1, 1]))
+ *   .superimpose(x => x.phases([0.5, 0.5, 0.5]))
  */
-register('phases', (list, pat) => {
-  if (Array.isArray(list)) {
-    list = parray(list);
-  }
-  pat = pat ?? pure({});
-  return pat.withValue((v) => (l) => ({ ...v, phases: l })).appLeft(list);
-});
+Pattern.prototype.phases = function (list) {
+  return this.withValue((v) => (l) => ({ ...v, phases: l })).appLeft(_ensureListPattern(list));
+};
 
 // Also create a top-level function
 export const phases = (list) => {
-  if (Array.isArray(list)) {
-    list = parray(list);
-  }
-  return list.as('phases');
+  return _ensureListPattern(list).as('phases');
 };
