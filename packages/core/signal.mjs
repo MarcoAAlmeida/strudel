@@ -524,7 +524,7 @@ export const wchoose = (...pairs) => wchooseWith(rand, ...pairs);
  * @example
  * wchooseCycles(["bd",10], ["hh",1], ["sd",1]).s().fast(8)
  * @example
- * wchooseCycles(["bd bd bd",5], ["hh hh hh",3], ["sd sd sd",1]).fast(4).s()
+ * wchooseCycles(["c c c",5], ["a a a",3], ["f f f",1]).fast(4).note()
  * @example
  * // The probability can itself be a pattern
  * wchooseCycles(["bd(3,8)","<5 0>"], ["hh hh hh",3]).fast(4).s()
