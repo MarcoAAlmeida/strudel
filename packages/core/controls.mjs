@@ -468,7 +468,8 @@ export const { attack, att } = registerControl('attack', 'att');
  * ._scope()
  *
  */
-export const { fmh, fmh1, fmh2, fmh3, fmh4, fmh5, fmh6, fmh7, fmh8 } = registerMultiControl(['fmh', 'fmi'], 8, 'fmh');
+Object.assign(globalThis, registerMultiControl(['fmh', 'fmi'], 8, 'fmh'));
+
 /**
  * Sets the Frequency Modulation of the synth.
  * Controls the modulation index, which defines the brightness of the sound.
@@ -491,8 +492,8 @@ export const { fmh, fmh1, fmh2, fmh3, fmh4, fmh5, fmh6, fmh7, fmh8 } = registerM
  *  .fmh(1.06).fmh2(10).fmh3(0.1)
  *
  */
-export const { fmi, fmi1, fmi2, fmi3, fmi4, fmi5, fmi6, fmi7, fmi8, fm, fm1, fm2, fm3, fm4, fm5, fm6, fm7, fm8 } =
-  registerMultiControl(['fmi', 'fmh'], 8, 'fm');
+Object.assign(globalThis, registerMultiControl(['fmi', 'fmh'], 8, 'fm'));
+
 // fm envelope
 /**
  * Ramp type of fm envelope. Exp might be a bit broken..
@@ -511,10 +512,8 @@ export const { fmi, fmi1, fmi2, fmi3, fmi4, fmi5, fmi6, fmi7, fmi8, fm, fm1, fm2
  * ._scope()
  *
  */
-export const { fmenv, fmenv1, fmenv2, fmenv3, fmenv4, fmenv5, fmenv6, fmenv7, fmenv8 } = registerMultiControl(
-  'fmenv',
-  8,
-);
+Object.assign(globalThis, registerMultiControl('fmenv', 8));
+
 /**
  * Attack time for the FM envelope: time it takes to reach maximum modulation
  *
@@ -531,26 +530,7 @@ export const { fmenv, fmenv1, fmenv2, fmenv3, fmenv4, fmenv5, fmenv6, fmenv7, fm
  * ._scope()
  *
  */
-export const {
-  fmattack,
-  fmattack1,
-  fmattack2,
-  fmattack3,
-  fmattack4,
-  fmattack5,
-  fmattack6,
-  fmattack7,
-  fmattack8,
-  fmatt,
-  fmatt1,
-  fmatt2,
-  fmatt3,
-  fmatt4,
-  fmatt5,
-  fmatt6,
-  fmatt7,
-  fmatt8,
-} = registerMultiControl('fmattack', 8, 'fmatt');
+Object.assign(globalThis, registerMultiControl('fmattack', 8, 'fmatt'));
 
 /**
  * Waveform of the fm modulator
@@ -566,10 +546,7 @@ export const {
  * n("0 1 2 3".fast(4)).chord("<Dm Am F G>").voicing().s("sawtooth").fmwave("brown").fm(.6)
  *
  */
-export const { fmwave, fmwave1, fmwave2, fmwave3, fmwave4, fmwave5, fmwave6, fmwave7, fmwave8 } = registerMultiControl(
-  'fmwave',
-  8,
-);
+Object.assign(globalThis, registerMultiControl('fmwave', 8));
 
 /**
  * Decay time for the FM envelope: seconds until the sustain level is reached after the attack phase.
@@ -588,26 +565,8 @@ export const { fmwave, fmwave1, fmwave2, fmwave3, fmwave4, fmwave5, fmwave6, fmw
  * ._scope()
  *
  */
-export const {
-  fmdecay,
-  fmdecay1,
-  fmdecay2,
-  fmdecay3,
-  fmdecay4,
-  fmdecay5,
-  fmdecay6,
-  fmdecay7,
-  fmdecay8,
-  fmdec,
-  fmdec1,
-  fmdec2,
-  fmdec3,
-  fmdec4,
-  fmdec5,
-  fmdec6,
-  fmdec7,
-  fmdec8,
-} = registerMultiControl('fmdecay', 8, 'fmdec');
+Object.assign(globalThis, registerMultiControl('fmdecay', 8, 'fmdec'));
+
 /**
  * Sustain level for the FM envelope: how much modulation is applied after the decay phase
  *
@@ -625,26 +584,8 @@ export const {
  * ._scope()
  *
  */
-export const {
-  fmsustain,
-  fmsustain1,
-  fmsustain2,
-  fmsustain3,
-  fmsustain4,
-  fmsustain5,
-  fmsustain6,
-  fmsustain7,
-  fmsustain8,
-  fmsus,
-  fmsus1,
-  fmsus2,
-  fmsus3,
-  fmsus4,
-  fmsus5,
-  fmsus6,
-  fmsus7,
-  fmsus8,
-} = registerMultiControl('fmsustain', 8, 'fmsus');
+Object.assign(globalThis, registerMultiControl('fmsustain', 8, 'fmsus'));
+
 /**
  * Release time for the FM envelope: how much modulation is applied after the note is released
  *
@@ -656,31 +597,12 @@ export const {
  * @param {number | Pattern} time release time
  *
  */
-export const {
-  fmrelease,
-  fmrelease1,
-  fmrelease2,
-  fmrelease3,
-  fmrelease4,
-  fmrelease5,
-  fmrelease6,
-  fmrelease7,
-  fmrelease8,
-  fmrel,
-  fmrel1,
-  fmrel2,
-  fmrel3,
-  fmrel4,
-  fmrel5,
-  fmrel6,
-  fmrel7,
-  fmrel8,
-} = registerMultiControl('fmrelease', 8, 'fmrel');
+Object.assign(globalThis, registerMultiControl('fmrelease', 8, 'fmrel'));
 
 // FM Matrix
 for (let i = 0; i <= 8; i++) {
   for (let j = 0; j <= 8; j++) {
-    registerControl(`fmi${i}${j}`, `fm${i}${j}`);
+    Object.assign(globalThis, registerControl(`fmi${i}${j}`, `fm${i}${j}`));
   }
 }
 

@@ -336,6 +336,7 @@ export function webAudioTimeout(audioContext, onComplete, startTime, stopTime) {
   constantNode.stop(stopTime);
   return constantNode;
 }
+
 const mod = (freq, type = 'sine') => {
   const ctx = getAudioContext();
   let osc;
@@ -349,10 +350,10 @@ const mod = (freq, type = 'sine') => {
     osc.frequency.value = freq;
   }
   osc.start();
-  return { osc, stop: (t) => osc.stop(t), freq };
+  return { osc, freq };
 };
 
-const fm = (frequencyparam, harmonicityRatio, modulationIndex, wave = 'sine') => {
+const fm = (frequencyparam, harmonicityRatio, wave = 'sine') => {
   const carrfreq = frequencyparam.value;
   const modfreq = carrfreq * harmonicityRatio;
   return mod(modfreq, wave);
@@ -360,7 +361,7 @@ const fm = (frequencyparam, harmonicityRatio, modulationIndex, wave = 'sine') =>
 
 export function applyFM(param, value, begin) {
   const ac = getAudioContext();
-  let stop = (t) => {};
+  const toStop = []; // fm oscillators we will expose `stop` for
   const fms = {};
   // Matrix
   for (let i = 1; i <= 8; i++) {
@@ -377,8 +378,8 @@ export function applyFM(param, value, begin) {
       if (!amt) continue;
       let io = [];
       for (let [isMod, idx] of [
-        [true, i],
-        [false, j],
+        [true, i], // source
+        [false, j], // target
       ]) {
         if (idx === 0) {
           io.push(param);
@@ -387,15 +388,11 @@ export function applyFM(param, value, begin) {
         if (!fms[idx]) {
           const idxS = idx === 1 ? '' : idx;
           const { osc, freq } = fm(param, value[`fmh${idxS}`] ?? 1, value[`fmwave${idxS}`] ?? 'sine');
-          const currStop = stop;
-          stop = (t) => {
-            currStop(t);
-            osc.stop(t);
-          };
+          toStop.push(osc);
+          const toCleanup = [osc]; // nodes we want to cleanup after oscillator `stop`
           const adsr = ['attack', 'decay', 'sustain', 'release'].map((s) => value[`fm${s}${idxS}`]);
-          if (!adsr.some((v) => v !== undefined)) {
-            fms[idx] = { input: osc.frequency, output: osc, freq };
-          } else {
+          let output = osc;
+          if (adsr.some((v) => v !== undefined)) {
             const envGain = ac.createGain();
             const [attack, decay, sustain, release] = getADSRValues(adsr);
             const holdEnd = begin + value.duration;
@@ -412,12 +409,16 @@ export function applyFM(param, value, begin) {
               holdEnd,
               fmEnvelopeType === 'exp' ? 'exponential' : 'linear',
             );
-            fms[idx] = { input: osc.frequency, output: osc.connect(envGain), freq };
+            toCleanup.push(envGain);
+            output = osc.connect(envGain);
           }
+          fms[idx] = { input: osc.frequency, output, freq, toCleanup };
+          osc.onended = () => cleanupNodes(fms[idx].toCleanup);
         }
-        const { input, output, freq } = fms[idx];
+        const { input, output, freq, toCleanup } = fms[idx];
         const g = gainNode(amt * freq);
         io.push(isMod ? output.connect(g) : input);
+        toCleanup.push(g);
       }
       if (!io[1]) {
         logger(
@@ -429,7 +430,9 @@ export function applyFM(param, value, begin) {
       io[0].connect(io[1]);
     }
   }
-  return { stop };
+  return {
+    stop: (t) => toStop.forEach((m) => m?.stop(t)),
+  };
 }
 
 // Saturation curves
@@ -548,4 +551,15 @@ export const destroyAudioWorkletNode = (node) => {
   }
   node.disconnect();
   node.parameters.get('end')?.setValueAtTime(0, 0);
+};
+
+export const cleanupNode = (node, time) => {
+  if (node == null) return;
+  node.disconnect?.();
+  node.parameters?.get('end')?.setValueAtTime(0, 0);
+  node.stop?.(time);
+};
+
+export const cleanupNodes = (nodes, time) => {
+  nodes.forEach((n) => cleanupNode(n, time));
 };
