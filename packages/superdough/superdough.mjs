@@ -376,8 +376,7 @@ export function resetGlobalEffects() {
   controller?.reset();
   analysers = {};
   analysersData = {};
-  lfos = {};
-  nodes = {};
+  idToNodes = {};
 }
 
 function _getNodeParam(node, name) {
@@ -409,66 +408,21 @@ function _getNodeParams(node) {
   return Array.from(params);
 }
 
-/**
- * Split parameters (which might be arrays -- implying multiple-parameter modulation -- or a single number) into independent
- * objects which only account for single-parameter modulation
- *
- * @param {Object} params - Dictionary of modulation parameters.
- * @returns {Object[]} - Array of parameter objects, one per parameter modulation
- */
-function _splitParams(params) {
-  const num = ['num', 'target', 'param'] // names used to indicate individual parameter modulations
-    .map((k) => [params[k] ?? 0].flat().length)
-    .reduce((a, v) => Math.max(a, v), 1);
-
-  const individualParams = [];
-  for (let i = 0; i < num; i++) {
-    const paramsI = {};
-    for (const k in params) {
-      const flatV = [params[k]].flat();
-      if (flatV.length !== num && flatV.length !== 1) {
-        errorLogger(
-          new Error(
-            `Could not set up modulations. We derived ${num} items, but ${k}: ${JSON.stringify(flatV)} has length ${flatV.length} (needs 1 or ${num}).`,
-          ),
-          'superdough',
-        );
-        return [];
-      }
-      paramsI[k] = flatV[i] ?? flatV[0];
-    }
-    individualParams.push(paramsI);
-  }
-  return individualParams;
-}
-
-/**
- * Given a node name and the name of a parameter on that node, attempt to retrieve
- * all nodes corresponding to the name and their associated parameters
- *
- * Note that we say nodes, plural, because some nodes have multiple sub-nodes, like a
- * 24db filter which is two filters in series
- *
- * @param {string} targetName - Name of the node to modulate parameters on (e.g. `lpf`, `source`, etc.)
- * @param {string} paramName - Name of the parameter to modulate on that node
- * @returns {AudioParam[]} - Array of audio parameter objects for modulation
- *
- */
-function _getTargetParams(targetName, paramName) {
-  const targetNodes = nodes[targetName];
+function _getTargetParams(nodes, target) {
+  const targetNodes = nodes[target];
   if (!targetNodes) {
     const keys = Object.keys(nodes);
     errorLogger(
       new Error(
-        `Could not connect to target '${targetName}' — it does not exist. Available targets: ${keys.join(', ')}`,
+        `Could not connect to target '${target}' — it does not exist. Available targets: ${keys.join(', ')}`,
       ),
       'superdough',
     );
     return [];
   }
-
   const audioParams = [];
   targetNodes.forEach((targetNode) => {
+    const paramName = guessParamName(blah);
     const targetParam = _getNodeParam(targetNode, paramName);
     if (!targetParam) {
       const available = _getNodeParams(targetNode);
@@ -485,64 +439,57 @@ function _getTargetParams(targetName, paramName) {
   return audioParams;
 }
 
-function _setWorkletParamsAtTime(audioParams, params, time) {
-  for (const [name, value] of params) {
-    if (value == null) continue;
-    const p = audioParams.get(name);
-    if (p.cancelAndHoldAtTime) p.cancelAndHoldAtTime(time);
-    else p.cancelScheduledValues(time);
-    p.setValueAtTime(value, time);
-  }
-}
-
-let lfos = {};
-function _connectLFO(params, nodeTracker) {
+function connectLFO(idx, params, nodeTracker) {
   const {
-    frequency = 1,
-    synced = 0,
-    cps = 0.5,
-    num = 1, // default to LFO 1
+    rate = 1,
+    sync,
+    cps,
     target,
-    param,
-    begin,
     ...filteredParams
   } = params;
-  filteredParams['frequency'] = synced ? frequency / cps : frequency;
-  let lfoNode = lfos[num];
-  if (lfoNode == null) {
-    const ac = getAudioContext();
-    lfoNode = getLfo(ac, filteredParams);
-    lfos[num] = lfoNode;
-    nodeTracker[`lfo${num}`] = [lfoNode];
-  }
-  const targets = _getTargetParams(target, param);
-  targets.forEach((target) => lfoNode.connect(target));
-  _setWorkletParamsAtTime(lfoNode.parameters, Object.entries(filteredParams), begin);
-  return lfoNode;
+  filteredParams['frequency'] = sync !== undefined ? sync / cps : rate;
+  const ac = getAudioContext();
+  lfoNode = getLfo(ac, filteredParams);
+  nodeTracker[`lfo${idx}`] = [lfoNode];
+  _getTargetParams(target).forEach(lfoNode.connect);
 }
 
-function _connectEnvelope(params) {
-  const { target, param, envDepth, begin, end, attack, decay, sustain, release, curve, ...filteredParams } = params;
-  const targets = _getTargetParams(target, param);
-  const [att, dec, sus, rel] = getADSRValues([attack, decay, sustain, release], curve, [0.005, 0.14, 0, 0.1]);
-  targets.forEach((targetParam) => {
-    const currentValue = targetParam.value;
-    const min = currentValue;
-    const max = currentValue + envDepth;
-    getParamADSR(targetParam, att, dec, sus, rel, min, max, begin, end, curve);
-  });
+function connectEnvelope(idx, params, nodeTracker) {
+  const { target, ...filteredParams } = params;
+  const ac = getAudioContext();
+  envNode = getEnvelope(ac, filteredParams);
+  nodeTracker[`env${idx}`] = [envNode];
+  _getTargetParams(nodeTracker, target).forEach(envNode.connect);
 }
 
-function connectModulators(params, modulatorType, nodeTracker) {
-  // We break down params specifying multiple modulators into a set of parameters for
-  // a single one
-  const individualParams = _splitParams(params);
-  if (modulatorType === 'lfo') {
-    individualParams.map((p) => _connectLFO(p, nodeTracker));
-  } else if (modulatorType === 'envelope') {
-    individualParams.forEach(_connectEnvelope);
-  }
-  return [];
+function connectSendModulator(params, signal, nodeTracker, pendingConnections) {
+  const dc = new ConstantSourceNode(ac, { offset: params.dc ?? 0 });
+  dc.start(t);
+  const offset = new ConstantSourceNode(ac, { offset: params.offset ?? 0 });
+  offset.start(t);
+  const raw = dc.connect(gainNode(1));
+  const modulator = post
+    .connect(raw)
+    .connect(gainNode((params.depth ?? 1) / 0.3))
+    .connect(gainNode(1));
+  offset.connect(modulator);
+  webAudioTimeout(
+    ac,
+    () => {
+      _getTargetParams(nodeTracker, params.target).forEach(signal.connect);;
+    },
+    0,
+    params.begin,
+  );
+  webAudioTimeout(
+    ac,
+    () => {
+      signal.disconnect();
+      delete pendingConnections[params.id][chainID];
+    },
+    0,
+    params.end + 0.05,
+  );
 }
 
 let activeSoundSources = new Map();
@@ -552,9 +499,10 @@ function mapChannelNumbers(channels) {
   return (Array.isArray(channels) ? channels : [channels]).map((ch) => ch - 1);
 }
 
-let nodes = {};
-
+let idToNodes = {};
+let pendingConnections = {};
 export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) => {
+  const nodes = {};
   // new: t is always expected to be the absolute target onset time
   const ac = getAudioContext();
   const audioController = getSuperdoughAudioController();
@@ -644,24 +592,6 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     compressorKnee,
     compressorAttack,
     compressorRelease,
-    lfoNum,
-    lfoTarget,
-    lfoParam,
-    lfoRate,
-    lfoDepth,
-    lfoDCOffset,
-    lfoShape,
-    lfoSkew,
-    lfoCurve,
-    lfoSynced,
-    envTarget,
-    envParam,
-    envAttack,
-    envDecay,
-    envSustain,
-    envRelease,
-    envCurve,
-    envDepth,
   } = value;
 
   delaytime = delaytime ?? cycleToSeconds(delaysync, cps);
@@ -991,45 +921,56 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   chain.slice(1).reduce((last, current) => last.connect(current), chain[0]);
   audioNodes = audioNodes.concat(chain);
 
-  // finally, now that `nodes` is populated, set up LFOs and envelopes
-  if (lfoTarget !== undefined && lfoParam !== undefined) {
-    connectModulators(
-      {
-        num: lfoNum ?? 1,
-        target: lfoTarget,
-        param: lfoParam,
-        frequency: lfoRate,
-        depth: lfoDepth,
-        dcoffset: lfoDCOffset ?? 0, // override default value of 0.5
-        shape: lfoShape,
-        skew: lfoSkew,
-        curve: lfoCurve,
-        persistent: 1,
-        begin: t,
-        synced: lfoSynced,
-        cps: cps,
-      },
-      'lfo',
-      nodes,
-    );
+  // finally, now that `nodes` is populated, set up modulators
+  if (value.lfo) {
+    for (const [params, idx] of Object.entries(value.lfo)) {
+      connectLFO(
+        idx,
+        {
+          ...params,
+          cps,
+          begin: t,
+          end: endWithRelease,
+        },
+        'lfo',
+        nodes,
+      );
+    }
   }
-  if (envTarget !== undefined && envParam !== undefined) {
-    connectModulators(
-      {
-        target: envTarget,
-        param: envParam,
-        envDepth,
-        attack: envAttack,
-        decay: envDecay,
-        sustain: envSustain,
-        release: envRelease,
-        curve: envCurve,
-        begin: t,
-        end: endWithRelease,
-      },
-      'envelope',
-    );
+  if (value.env) {
+    for (const [params, idx] of Object.entries(value.env)) {
+      connectEnvelope(
+        idx,
+        {
+          ...params,
+          begin: t,
+          end: endWithRelease,
+        },
+        'envelope',
+        nodes,
+      );
+    }
   }
+  if (value.id) {
+    idToNodes[value.id] = new WeakRef(nodes);
+  }
+  if (value.send) {
+    for (const p of value.env) {
+      const modNodes = idToNodes[p.id];
+      if (!modNodes) {
+        logger(
+          `[superdough] Could not connect to pattern ${p.id} -- make sure a pattern with this name exists. Available targets: ${Object.keys(idToNodes).join(', ')}`,
+        );
+      } else {
+        connectSendModulator(params, post);
+        pendingConnections[p.id] ??= {};
+        pendingConnections[p.id][chainID] = [modulator, p.target, p.param, endWithRelease];
+      }
+    });
+  }
+
+  if (applySends) {
+
 };
 
 export const superdoughTrigger = (t, hap, ct, cps) => {

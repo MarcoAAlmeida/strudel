@@ -123,7 +123,6 @@ class LFOProcessor extends AudioWorkletProcessor {
       { name: 'dcoffset', defaultValue: 0 },
       { name: 'min', defaultValue: 0 },
       { name: 'max', defaultValue: 1 },
-      { name: 'persistent', defaultValue: 0, min: 0, max: 1 }, // whether to ignore end
     ];
   }
 
@@ -142,8 +141,7 @@ class LFOProcessor extends AudioWorkletProcessor {
   process(_inputs, outputs, parameters) {
     const begin = parameters['begin'][0];
     const end = parameters['end'][0];
-    const persistent = parameters['persistent'][0];
-    if (persistent < 0.5 && currentTime >= end) {
+    if (currentTime >= end) {
       return false;
     }
     if (currentTime <= begin) {
