@@ -1,0 +1,403 @@
+---
+title: Frequently Asked Questions
+layout: ../../layouts/MainLayout.astro
+---
+
+import { MiniRepl } from '../../docs/MiniRepl';
+import { JsDoc } from '../../docs/JsDoc';
+
+# Frequently Asked Questions
+
+This page contains frequently asked questions. Usually, the topic is explained in more detail in a section which is linked in the answer. This page's aim is to give an overview over topics which are important to the users of strudel.
+
+## Is Strudel/Tidal free?
+
+Yes - there is no charge, this is a collective open source project, and the music you make with it is your own. 
+
+However there are some caveats - the source code must stay free, i.e. you cannot distribute strudel or tidal as part of projects with incompatible licenses - see the [license](<https://www.gnu.org/licenses/agpl-3.0.en.html>) for details. The contributed examples and tracks are also separately licensed, and must not e.g. be used to train AI models without permission.
+
+## How to record or export audio?
+
+There are multiple ways to record the audio -- and video -- output of Strudel:
+    - capture the raw stereo signal coming out of your web browser.
+    - use the alternative SuperDirt audio engine. Read [this page](/learn/input-output/#oscsuperdirtstrudeldirt) to know more about it.
+    - capture the audio/video stream using a capture tool such as [OBS](<https://obsproject.com/fr>).
+    - don't record anything and code it again in front of your friends.
+
+You will need an external audio editor/DAW such as Reaper/Audacity/Ardour, etc. Strudel itself does not have functionality for exporting stems / individual tracks to an audio or midi file. Strudel is not a digital audio workstation and does not operate following the same principles shared by most traditional audio softwares.
+
+## Can I use strudel with my IDE?
+
+Yes you can. There are experimental modes, made by community members, for several IDEs such as:
+   - VS Code: [Strudel VS](<https://marketplace.visualstudio.com/items?itemName=cmillsdev.strudelvs>): an experimental mode for Microsoft VSCode. A revived version of [TidalStrudel](<https://marketplace.visualstudio.com/items?itemName=roipoussiere.tidal-strudel>), which is defunct.
+   - nvim: [strudel.nvim](https://github.com/gruvw/strudel.nvim) 
+   
+## How can I record samples?
+
+You can use your own samples with Strudel. There are multiple ways to load your sample collection. Some methods are good for quick experimentation, some others are good to share your audio collection with other musicians:
+
+    - Import folders [from the interface](/learn/samples/#from-disk-via-import-sounds-folder)
+    - Host your sound library e.g. on github and [load them from an URL](/learn/samples/#loading-custom-samples)
+
+## Can I use Strudel with AI/LLM tools?
+
+You are free to do what you like with Strudel, within the terms of the free/open source AGPLv3 license. However as a community we are interested in exploring human creativity. AI is *way* over-hyped right now, including by people with very shady motives. Many in the community are very wary of people training models on their tunes that they've poured their love into. So please keep discussion and questions around AI and LLMs to channels dedicated to the topic and be fully respectful of other people's work.
+
+Furthermore, tools like ChatGPT generally give wrong answers. Please don't ask the community to fix those answers for you, as generally they will be timewasting nonsense.
+    
+Human questions only!
+
+## How to run offline?
+
+Strudel works offline just fine! There are multiple techniques to run it yourself, see [this explanation](learn/pwa/#using-strudel-offline).
+
+## How to change tempo? How do I translate BPM to cpm?
+
+If you have your tempo in beats per minute and use 4 beats per cycle (e.g. if your track is in 4/4ths) then you can do `setcpm(BPM/4)` where BPM is your beats per minute. 
+
+If you have a different number of beats per bar or are using more or less beats per cycle (e.g. If you want to put only half a bar or two bars into one cycle), adjust accordingly.
+
+## Where can I see all the functions?
+
+If you pop open the sidetab of strudel.cc (small white < on the right hand side), there is a tab "reference" which lists all the functions of strudel.
+
+## Where can I see all the samples and synths?
+
+If you pop open the sidetab of strudel.cc (small white < on the right hand side), there is a tab "sounds" which lists all the drum machines, samples and synths currently loaded.
+
+## How do I use this exactly like a DAW?
+
+Short answer: you don't.
+    
+Long answer: you can use Strudel to work along your creative work in a DAW. There are many ways to do so.
+   
+If you want to emulate the functionality of a DAW in a live coding language, you'll have to identify the operations executed by the DAW (sequencing, repeating, applying filters and envelopes) and write code that is equivalent to these operations. You might then find that the typical DAW workflow is not really adapted to live coding (because, despite both being ways of making music on the computer, they are two very different tools) and adapt your way of proceeding to the medium of code. This might mean leaving more place to serendipity and writing code that you don't predict the output of.
+
+## Why doesn't everyone just use a DAW?
+
+There is no easy answer to this question. Here are some thoughts:
+    - Live coding tools such as Strudel are excellent for improvising music and visuals using a computer. DAWs are valuable and robust companions for other activities such as producing, mastering and mixing audio, among other usages. Using a tool does not exclude from using any another tool, just build a toolbox.
+    - Live coding has been practiced for quite some time as a performative activity. Artists like to show their screens while playing in front of an audience. It is an essential part of what they do, of the way they share their activity with everybody. 
+    - Code is a human language, it is made for other humans to read it. You can read the code and enjoy the music too. It has meaning, value, and there might even be something poetic/important about it!
+    - Strudel is free and open source, you can inspect the code, reshape it, contribute to it if you can/want. It is not opaque and this matters for many people. There is no black box, no obscure abstractions, no business model or hidden features. We need open tools in the arts!
+    - Live coders don't shy away from using DAWs. They use them all of the time, especially when it makes their life easier for... live coding!
+    - Code is an artistic material like any other. There is something valuable in the process of making music through code. More generally speaking, it is nice to tackle creative problems through the use of a programming language: creative thinking, building up your own solutions, DIY approach to music-making, unexpected outcome of algorithms, funny human errors, etc.
+    - There are pianos and trumpets in your DAW: why do people continue playing the piano or the trumpet? Think of live coding tools as instruments that you activate through the act of programming. 
+
+## Is it more efficient to use Strudel than a DAW?
+
+Strudel was not build to be a DAW, yet it can still be used to make covers, arrange tracks, or prepare patterns for jamming. When playing concerts or jamming, some livecoders prepare their code, some perform from scratch.
+
+It might be interesting for you to check out for yourself how strudel can be used to express yourself creatively. Also you are free to combine a language like Strudel with a DAW.
+
+## How can I interface Strudel with my favorite music software? What can I do with it?
+
+Strudel can send [MIDI and OSC](/learn/input-output/), which are protocols for communicating musical information.
+
+Another music software (or hardware!) can then listen to these messages and process them according to its capabilities.
+
+A simple example would be to send livecoded audio to Ableton on different tracks and then use it to mix them. 
+
+You could also send the MIDI of a sequenced pattern to Musescore and then have it transcribe your livecoded work as a musical score.
+
+You could also send MIDI to your hardware synths because you think they sound better than the software synths built-in Strudel. 
+
+## How do I use this in my closed source webgame?
+
+You don't. You would need to re-license your game to AGPLv3 to fulfill the license Strudel is distributed under.
+
+## Where can I download loads of patterns to train my LLM?
+
+You cannot, as there is no such place. For details regarding our stance towards AI/LLM, see [above](/learn/faq/#can-i-use-strudel-with-aillm-tools)
+
+## How to play different patterns simultaneously?
+
+Using the $ operator, several patterns can be played at once:
+<MiniRepl client:idle tune={`$: s("bd*4").bank("tr707")
+$: s("- sd").bank("tr909")`} />
+
+See also [stack](intro/#combining-patterns)
+
+## Is it possible to mute a pattern?
+
+With an additional underscore, a pattern can be muted.
+
+<MiniRepl client:idle tune={`$: s("bd*4").bank("tr707")
+_$: s("- sd").bank("tr909")`} />
+
+See also [hush](/learn/conditional-modifiers/#hush)
+
+## How can I arrange in Strudel using `mask`?
+
+With mini-notation, using the `<>` and `!` operators, you can try something like 
+```
+.mask("<0!24 1!40>")
+```
+It mutes a pattern for 24 cycles and plays it for 40. You would gain 64 cycles total, a multiple of 2/4/8 commonly used in western music.
+
+If each cycle is a bar, as a starting point, you could write a mask like that for any pattern:
+```
+.mask("<0!16 0!16 0!16 0!16 0!16 0!10>") 
+```
+It mutes it throughout.
+
+For arranging, you could add the same mask to each part and replace some zeroes with ones in your different masks to make parts play.
+
+If you use `.mask()` on different patterns mess up your counting, then patterns do not align anymore.
+On the other hand, doing that on purpose is one of the things that could be considered a strength of tidalcycles and Strudel. 
+You can make things quite lively and more organic with a little (controlled) interference, according to your own taste.
+And you are free to arrange in cycles like 3, 6 or 9 too.
+
+To modify everything at once, you could try all and when, for example:
+
+```
+all(x=>x.when("<0!7 1>", x=>x.lpf(saw.range(200, 2000))))
+```
+
+This would lowpass filter sweep everything every 8 cycles.
+
+## How can I arrange in Strudel using `arrange` or `pick`?
+
+Take [Pachelbel's Canon in D](https://en.wikipedia.org/wiki/Pachelbel%27s_Canon#Analysis) as an example which has 4 voices (one cello and 3 violins) which have repeating patterns, as seen in the link above.
+     
+The following snipped defines the patterns as constants which can then be used for the different voices. `arrange` takes multiple arguments, which are each a number of cycles and a pattern which is played for the number of cycles, wrapped in `[]` If the pattern is shorter than the number, it is repeated.
+<MiniRepl client:idle tune={`const cello = note(
+  "<[d3 a2 b2 f#2] [g2 d3 g2 a2]>")
+  .color("grey").sound("gm_tremolo_strings:3")
+ const violin_p1 = note(
+  "<[f#5 e5 d5 c#5] [b4 a4 b4 c#5]>")
+  .color("blue")
+ const violin_p2 = note(
+  "<[d5 c#5 b4 a4] [ g4 f#4 g4 f#4]>")
+ .color("green")
+ const violin_p3 = note(
+  "<[d4 f#4 a4 g4 f#4 d4 f#4 e4] [d4 b3 d4 a4 g4 b4 a4 g4]>")
+  .color("purple")
+ const violin_p4 = note(
+  "<[f#4 d4 e4 c#5 d5 f#5 a5 a4] [b4 g4 a4 f#4 d4 d5 [d5@3 c#5]@2]>")
+  .color("red")
+
+
+ cello$: arrange(
+  [2, silence],
+  [18,cello])
+ violin1$: arrange(
+  [4,silence], 
+  [2,violin_p1], [2,violin_p2], 
+  [2,violin_p3], [2,violin_p4], 
+  [2,violin_p1], [2,violin_p2], 
+  [2,violin_p3], [2,violin_p4]
+  ).sound("gm_tremolo_strings:0")
+ violin2$: arrange(
+  [6,silence], [2,violin_p1], 
+  [2,violin_p2], [2,violin_p3], 
+  [2,violin_p4], [2,violin_p1], 
+  [2,violin_p2], [2,violin_p3] 
+  ).sound("gm_tremolo_strings:1")
+ violin3$: arrange(
+  [8,silence], 
+  [2,violin_p1], [2,violin_p2], 
+  [2,violin_p3], [2,violin_p4], 
+  [2,violin_p1], [2,violin_p2]
+ ).sound("gm_tremolo_strings:2")
+
+    all(x => x.release(.2))
+`} />
+
+Alternatively, you can also put the different patterns for the violins into one single array (`const violins = [violin_p1, violin_p2, violin_p3, violin_p4]`) and use a pattern as an index to `pick` the nth element of that array. This replaces the voices defined above. Here you use `0@2` to specifiy that the first item (i.e. with index `0`) is played for `2` cycles. 
+
+`pick` has better highlighting than `arrange`:
+
+<MiniRepl client:idle tune={`const cello = note(
+  "<[d3 a2 b2 f#2] [g2 d3 g2 a2]>")
+  .color("grey").sound("gm_tremolo_strings:3")
+ const violin_p1 = note(
+  "<[f#5 e5 d5 c#5] [b4 a4 b4 c#5]>")
+  .color("blue")
+ const violin_p2 = note(
+  "<[d5 c#5 b4 a4] [ g4 f#4 g4 f#4]>")
+ .color("green")
+ const violin_p3 = note(
+  "<[d4 f#4 a4 g4 f#4 d4 f#4 e4] [d4 b3 d4 a4 g4 b4 a4 g4]>")
+  .color("purple")
+ const violin_p4 = note(
+  "<[f#4 d4 e4 c#5 d5 f#5 a5 a4] [b4 g4 a4 f#4 d4 d5 [d5@3 c#5]@2]>")
+  .color("red")
+
+const violins = [violin_p1, violin_p2, violin_p3, violin_p4]
+
+cello$: "<~@2 0@18>".pick([cello])
+violin1$: "<~@4 0@2 1@2 2@2 3@2 0@2 1@2 2@2 3@2>".pick(violins)
+.sound("gm_tremolo_strings:0")
+violin2$: "<~@6 0@2 1@2 2@2 3@2 0@2 1@2 2@2>".pick(violins)
+.sound("gm_tremolo_strings:1")
+violin3$: "<~@8 0@2 1@2 2@2 3@2 0@2 1@2  >".pick(violins)
+.sound("gm_tremolo_strings:2")
+all(x => x.release(.2))
+`} />  
+ 
+The `pick` method also works with jsons which have named elements, which makes it easier to read, see the [here](/learn/conditional-modifiers/#pick). `pickRestart` restarts the pattern upon picking it which can make a difference if the duration of the pick indexes doesn't line up with the patterns which are picked - which is not the case here.
+
+Try adding `.punchcard()` after the `release(.2)` for a visualization.
+
+## I saw Switch Angel using functions which I cannot find in the reference (e.g. `trancegate`). How do I make it work?
+
+Methods like  `trancegate()`, `rlpf()` and `acidenv()` are currently not pattern methods which come natively with strudel. 
+
+It's part of a script for strudel which was written by Switch Angel and published [here](https://github.com/switchangel/strudel-scripts/blob/main/allscripts.js)
+
+Note that this script defines functions and registers methods which `trancegate()` will depend on so just pasting the `trancegate()` method from that script alone will not suffice, but you will also need the `fill` method.
+
+If you copy the full script into your strudel, be mindful of lines which try to load local samples - these should be deleted or prefixed with `//` as a comment.
+
+If you paste these functions into your strudel session, hit "Update" and delete the source of the functions, the functions will still be availabe until you do a browser refresh.
+
+## Is there difference between `n` and `note`?
+
+They are not aliases of each other, in contrast to `s` and `sound`.
+    
+The method `note` is used to reference a certain note (either as its name, such as `c` or `b2` or the midi number `69`, for example `note("c3 e3 g3")`). 
+    
+On the other hand, `n` is  a way to reference the nth index of something. This something can be a scale (eg `n("0 2 4").scale("C:major")`) , but it can also be a particular note in a chord (see https://strudel.cc/recipes/recipes/#arpeggios for an example) . 
+
+The method `n`  can also be used for something completely unrelated to notes like the nth sample from a sample map `s("hh*8").bank("RolandTR909").n("0 1 2 3")`. Note that `pick` does *not* use `n`.
+
+<MiniRepl client:idle tune={`"<0@2 1@2 2@2 3@2>".pickRestart([
+        n("0 1 2 0"),
+        n("2 3 4 ~"),
+        n("[4 5] [4 3] 2 0"),
+        n("0 -3 0 ~")
+      ]).scale("C:major").s("piano")`} /> 
+
+
+## Is there a cheat sheet for all symbols?
+
+Yes!
+
+```
+'   marks start and end of strings, is different from "
+"   marks start and end of single line patterns in mini notation, is different from '
+`   marks start and end of patterns with line breaks in mini notation, is different from '
+[]  used for patterns, each item in it has the same length
+<>  used for patterns, alternates each item each cycle
+{}  historically used for polyrhythmic patterns. {a b c}%4 is the same as <a b c>*4.
+@3  elongates the item by a factor of 3 (other numbers work too)
+@   after an item: elongates the item once (multiple @ work too c @ @ is the same as c@3)
+_   after an item: also elongates an item once (multiple _ work too c _ _ is the same as c@3)
+.   this divides equal parts of a pattern and is called a foot. Can be used instead of [] like this: "1 6 7 8 . 2 . 3 . 4" is the same as "[1 6 7 8] 2 3 4"
+-   silence
+~   also silence
+x   not silence (for the use in struct, same as 1)
+s   increase a note of a scale by one semitone, i.e. sharp
+b   decrease a note of a scale by one semitone, i.e. flat
+#   used in mondo notation
+#   also used for names of chords, like F#
+*3  play the sample or pattern at thrice the speed, fast(3)
+!3  play the sample or pattern three times
+/2  play the sample or pattern at half speed, slow(2)
+?   play the pattern sometimes
+|   once per cycle, choose randomly a pattern of those separated by i.e. chooseCycles()
+,   play all items separated by it at the same time, i.e. stack()
+:   is used to separate multiple parameters, such as adsr(".1:.1:.5:.2")
+$:  at the start of a line, defines a member of the stack. is the only stack name that should occur multiple names
+_   before a stack name: mutes the stack, i.e. hush(), for example _$: s("bd")
+```
+
+## Are there more FAQ items?
+
+These pages have been taken from [this pad](https://doc.patternclub.org/_CgofWouTciXXHexUP9AVg?both). Some of the items there have not been brushed up and brought here. 
+
+These include the following items: 9, 11, 12 and 19
+
+# Coding Syntax (old Content from code)
+
+Let's take a step back and understand how the syntax in Strudel works.
+
+Take a look at this simple example:
+
+<MiniRepl client:idle tune={`note("c a f e").s("piano")`} />
+
+- We have a word `note` which is followed by some brackets `()` with some words/letters/numbers inside, surrounded by quotes `"c a f e"`
+- Then we have a dot `.` followed by another similar piece of code `s("piano")`.
+- We can also see these texts are _highlighted_ using colours: word `note` is purple, the brackets `()` are grey, and the content inside the `""` are green. (The colors could be different if you've changed the default theme)
+
+What happens if we try to 'break' this pattern in different ways?
+
+<MiniRepl client:idle tune={`note(c a f e).s(piano)`} />
+
+<MiniRepl client:idle tune={`note("c a f e")s("piano")`} />
+
+<MiniRepl client:idle tune={`note["c a f e"].s{"piano"}`} />
+
+Ok, none of these seem to work...
+
+<MiniRepl client:idle tune={`s("piano").note("c a f e")`} />
+
+This one does work, but now we only hear the first note...
+
+So what is going on here?
+
+# Functions, arguments and chaining
+
+So far, we've seen the following syntax:
+
+```
+xxx("foo").yyy("bar")
+```
+
+Generally, `xxx` and `yyy` are called [_functions_](<https://en.wikipedia.org/wiki/Function_(computer_programming)>), while `foo` and `bar` are called function [_arguments_ or _parameters_](<https://en.wikipedia.org/wiki/Parameter_(computer_programming)>).
+So far, we've used the functions to declare which aspect of the sound we want to control, and their arguments for the actual data.
+The `yyy` function is called a [_chained_ function](https://en.wikipedia.org/wiki/Method_chaining), because it is preceded with a dot (`.`).
+
+Generally, the idea with chaining is that code such as `a("this").b("that").c("other")` allows `a`, `b` and `c` functions to happen in a specified order, without needing to write them as three separate lines of code.
+You can think of this as being similar to chaining audio effects together using guitar pedals or digital audio effects.
+
+Strudel makes heavy use of chained functions. Here is a more sophisticated example:
+
+<MiniRepl
+  client:idle
+  tune={`note("a3 c#4 e4 a4")
+.s("sawtooth")
+.cutoff(500)
+//.delay(0.5)
+.room(0.5)`}
+/>
+
+## Write your own chained function
+
+You can write your own chained function using `register`. Here's the above chain but registered as a reusable, chained function.
+
+<MiniRepl
+  client:idle
+  tune={`const effectChain = register('effectChain', (pat) => pat
+    .s("sawtooth")
+    .cutoff(500)
+    //.delay(0.5)
+    .room(0.5)
+  )
+note("a3 c#4 e4 a4").effectChain()`}
+/>
+
+Try adding `.rev()` after `effectChain()` to hear further effects added.
+
+# Comments
+
+The `//` in the example above is a line comment, resulting in the `delay` function being ignored.
+It is a handy way to quickly turn code on and off.
+Try uncommenting this line by deleting `//` and refreshing the pattern.
+You can also use the keyboard shortcut `cmd-/` to toggle comments on and off.
+
+You might noticed that some comments in the REPL samples include some words starting with a "@", like `@by` or `@license`.
+Those are just a convention to define some information about the music. We will talk about it in the [Music metadata](/learn/metadata) section.
+
+# Strings
+
+Ok, so what about the content inside the quotes (e.g. `"c a f e"`)?
+In JavaScript, as in most programming languages, this content is referred to as being a [_string_](<https://en.wikipedia.org/wiki/String_(computer_science)>).
+A string is simply a sequence of individual characters.
+In TidalCycles, double quoted strings are used to write _patterns_ using the mini-notation, and you may hear the phrase _pattern string_ from time to time.
+If you want to create a regular string and not a pattern, you can use single quotes, e.g. `'C minor'` will not be parsed as Mini Notation.
+
+The good news is, that this covers most of the JavaScript syntax needed for Strudel!
+
+<br />
