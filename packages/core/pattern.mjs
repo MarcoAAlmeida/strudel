@@ -2574,8 +2574,8 @@ export const { chunkBack, chunkback } = register(
  * @returns Pattern
  * @example
  * "<0 8> 1 2 3 4 5 6 7"
- * .fastChunk(4, x => x.color('red')).slow(2)
  * .scale("C2:major").note()
+ * .fastChunk(4, x => x.color('red')).slow(2)
  */
 export const { fastchunk, fastChunk } = register(
   ['fastchunk', 'fastChunk'],
@@ -3626,6 +3626,69 @@ for (const name of distAlgoNames) {
 }
 
 /**
+ * Turns a list of patterns into a single pattern which outputs list-values
+ *
+ * @name parray
+ * @returns Pattern
+ */
+export const parray = (pats) => {
+  const pack = (...xs) => xs;
+  let acc = pure(curry(pack, null, pats.length));
+  for (const p of pats) acc = acc.appBoth(reify(p));
+  return acc;
+};
+
+const _ensureListPattern = (list) => {
+  if (Array.isArray(list)) {
+    return parray(list);
+  }
+  return reify(list);
+};
+
+/**
+ * Scale the magnitude of the harmonics of one of the core synths ('sine', 'tri', 'saw', ..)
+ *
+ * Can also be used to create a new synth via `s('user').partials(...)`
+ *
+ * @name partials
+ * @param {number[] | Pattern} magnitudes List of [0, 1] magnitudes for partials. 0th entry is the fundamental harmonic (i.e. DC offset is skipped)
+ * @example
+ * s("user").seg(16).n(irand(8)).scale("A:major")
+ *   .partials([1, 0, 1, 0, 0, 1])
+ * @example
+ * s("saw").seg(8).n(irand(12)).scale("G#:minor")
+ *   .partials(binaryL(irand(256).add("1")))
+ */
+Pattern.prototype.partials = function (list) {
+  return this.withValue((v) => (l) => ({ ...v, partials: l })).appLeft(_ensureListPattern(list));
+};
+
+// Also create a top-level function
+export const partials = (list) => {
+  return _ensureListPattern(list).as('partials');
+};
+
+/**
+ * Rotates the harmonics of one of the core synths ('sine', 'tri', 'saw', 'user', ..) by a list of phases
+ *
+ * @name phases
+ * @param {number[] | Pattern} phases List of [0, 1) phases for partials. 0th entry is the fundamental phase (i.e. DC offset is skipped)
+ * @example
+ * // Phase cancellation
+ * s("saw").seg(8).n(irand(12)).scale("G#1:minor")
+ *   .partials(partials([1, 1, 1]))
+ *   .superimpose(x => x.phases([0.5, 0.5, 0.5]))
+ */
+Pattern.prototype.phases = function (list) {
+  return this.withValue((v) => (l) => ({ ...v, phases: l })).appLeft(_ensureListPattern(list));
+};
+
+// Also create a top-level function
+export const phases = (list) => {
+  return _ensureListPattern(list).as('phases');
+};
+
+/**
  * Selects which LFO number to use for modulation. Multiple LFOs
  * can be applied using the ':' mininotation. There are an arbitrary number
  * of LFOs available -- the number is only used to share LFOs across targets
@@ -3662,7 +3725,6 @@ for (const name of distAlgoNames) {
  *   .envParam("detune:frequency")
  */
 
-  
 /**
  * Establishes a signal chain. Can be called in sequence like pat.chain(...).chain(...) and so forth
  * and/or in a single .chain(..., ..., etc) call. The arguments to `chain` are _patterns_ which each act like
@@ -3683,5 +3745,5 @@ Pattern.prototype.chain = function (...pats) {
     return { ...v, chain: currChain.concat(vEff) };
   }).appLeft(parray(pats));
 };
-  
+
 export const chain = (pats) => pure({}).chain(pats);
