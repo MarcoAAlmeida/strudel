@@ -408,7 +408,38 @@ function _getNodeParams(node) {
   return Array.from(params);
 }
 
+const targetToParamGuess = {
+  source: 'detune',
+  lpf: 'frequency',
+  bpf: 'frequency',
+  hpf: 'frequency',
+  distort: 'distort',
+  gain: 'gain',
+  vowel: 'frequency',
+  coarse: 'coarse',
+  crush: 'crush',
+  shape: 'shape',
+  compressor: 'threshold',
+  pan: 'pan',
+  phaser: 'rate',
+  post: 'gain',
+  delay: 'time',
+  room: 'size',
+  djf: 'value',
+  lfo: 'frequency',
+  env: 'depth',
+  send: 'depth',
+}
+
 function _getTargetParams(nodes, target) {
+  let param;
+  if (target.includes('.')) {
+    const split = target.split('.');
+    target = split[0];
+    param = split[1];
+  } else {
+    param = targetToParamGuess[target];
+  }
   const targetNodes = nodes[target];
   if (!targetNodes) {
     const keys = Object.keys(nodes);
@@ -422,13 +453,12 @@ function _getTargetParams(nodes, target) {
   }
   const audioParams = [];
   targetNodes.forEach((targetNode) => {
-    const paramName = guessParamName(blah);
-    const targetParam = _getNodeParam(targetNode, paramName);
+    const targetParam = _getNodeParam(targetNode, param);
     if (!targetParam) {
       const available = _getNodeParams(targetNode);
       errorLogger(
         new Error(
-          `Could not connect to parameter '${paramName}' on '${targetName}'. Available parameters: ${available.join(', ')}`,
+          `Could not connect to parameter '${param}' on '${targetName}'. Available parameters: ${available.join(', ')}`,
         ),
         'superdough',
       );
