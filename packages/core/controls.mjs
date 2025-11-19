@@ -1740,29 +1740,6 @@ export const { panorient } = registerControl('panorient');
 // ['pitch2'],
 // ['pitch3'],
 // ['portamento'],
-/**
- * Selects which LFO number to use for modulation. Multiple LFOs
- * can be applied using the ':' mininotation. There are an arbitrary number
- * of LFOs available -- the number is only used to share LFOs across targets
- * if desired (and to conserve processing power)
- *
- * @name lfoNum
- * @param {number | Pattern} lfoNum Index of the LFO.
- * setup: note("F2").sound("supersaw")
- *   .lpf(100)
- *   .lfoDepth(1000)
- *   .lfoRate(0.25)
- *   .lfoSynced(1)
- *   .lfoTarget("lpf")
- *   .lfoParam("frequency")
- *   .lfoNum(2)
- *
- * reuse: note("F3").sound("square").lpf(50)
- *   .lfoTarget("lpf")
- *   .lfoParam("frequency")
- *   .lfoNum(2) // uses the same LFO
- */
-export const { lfoNum } = registerControl('lfoNum');
 
 /**
  * Sets the target destination for the LFO modulation. Names are typically related
@@ -1770,7 +1747,8 @@ export const { lfoNum } = registerControl('lfoNum');
  * and if it fails, the console will print the available options.
  *
  * @name lfoTarget
- * @param {string | Pattern} lfoTarget Target identifier for modulation.
+ * @synonyms lfot, lfotarget
+ * @param {string | Pattern} target Target identifier for modulation.
  * note("F2").sound("supersaw")
  *   .lpf(100)
  *   .lfoDepth(3000)
@@ -1779,7 +1757,7 @@ export const { lfoNum } = registerControl('lfoNum');
  *   .lfoTarget("lpf")
  *   .lfoParam("frequency")
  */
-export const { lfoTarget } = registerControl('lfoTarget');
+export const { lfoTarget, lfot, lfotarget } = registerControl('lfoTarget', 'lfot', 'lfotarget');
 
 /**
  * Chooses which parameter the LFO will modulate on the target. Parameter values
@@ -1787,7 +1765,8 @@ export const { lfoTarget } = registerControl('lfoTarget');
  * and if it fails, the console will print the available options.
  *
  * @name lfoParam
- * @param {string | Pattern} lfoParam Parameter name
+ * @synonyms lfop, lfoparam
+ * @param {string | Pattern} param Parameter name
  * note("F2").sound("supersaw")
  *   .lpf(100)
  *   .lfoDepth(3000)
@@ -1796,13 +1775,14 @@ export const { lfoTarget } = registerControl('lfoTarget');
  *   .lfoTarget("lpf")
  *   .lfoParam("frequency")
  */
-export const { lfoParam } = registerControl('lfoParam');
+export const { lfoParam, lfop, lfoparam } = registerControl('lfoParam', 'lfop', 'lfoparam');
 
 /**
  * Controls the speed of the LFO.
  *
  * @name lfoRate
- * @param {number | Pattern} lfoRate Frequency or tempo-relative value.
+ * @synonyms lfor, lforate
+ * @param {number | Pattern} rate Frequency or tempo-relative value.
  * note("F2").sound("supersaw")
  *   .lpf(100)
  *   .lfoTarget("lpf")
@@ -1810,13 +1790,14 @@ export const { lfoParam } = registerControl('lfoParam');
  *   .lfoDepth(3000)
  *   .lfoRate(0.25)
  */
-export const { lfoRate } = registerControl('lfoRate');
+export const { lfoRate, lfor, lforate } = registerControl('lfoRate', 'lfor', 'lforate');
 
 /**
  * Sets the modulation depth of the LFO.
  *
  * @name lfoDepth
- * @param {number | Pattern} lfoDepth Modulation depth amount.
+ * @synonyms lfod, lfodepth
+ * @param {number | Pattern} depth Modulation depth amount.
  * note("F2").sound("supersaw")
  *   .lpf(100)
  *   .lfoTarget("lpf")
@@ -1824,7 +1805,7 @@ export const { lfoRate } = registerControl('lfoRate');
  *   .lfoSynced(1)
  *   .lfoDepth(5000)
  */
-export const { lfoDepth } = registerControl('lfoDepth');
+export const { lfoDepth, lfod, lfodepth } = registerControl('lfoDepth', 'lfod', 'lfodepth');
 
 /**
  * Applies a DC offset to the LFO signal. Normally the LFO varies from
@@ -1832,7 +1813,8 @@ export const { lfoDepth } = registerControl('lfoDepth');
  * a bipolar LFO.
  *
  * @name lfoDCOffset
- * @param {number | Pattern} lfoDCOffset Offset amount.
+ * @synonyms lfodc, lfodcoffset
+ * @param {number | Pattern} offset Offset amount.
  * note("F2").sound("supersaw")
  *   .lpf(2000)
  *   .lfoTarget("lpf")
@@ -1842,7 +1824,7 @@ export const { lfoDepth } = registerControl('lfoDepth');
  *   .lfoSynced(1)
  *   .lfoDCOffset(-0.5)
  */
-export const { lfoDCOffset } = registerControl('lfoDCOffset');
+export const { lfoDCOffset, lfodc, lfodcoffset } = registerControl('lfoDCOffset', 'lfodc', 'lfodcoffset');
 
 /**
  * Selects the waveform shape of the LFO. Current options are
@@ -1850,7 +1832,8 @@ export const { lfoDCOffset } = registerControl('lfoDCOffset');
  * respectively).
  *
  * @name lfoShape
- * @param {number | Pattern} lfoShape Waveform type identifier.
+ * @synonyms lfosh, lfoshape
+ * @param {number | Pattern} shape Waveform type identifier.
  * note("F2").sound("supersaw")
  *   .lpf(100)
  *   .lfoTarget("lpf")
@@ -1860,13 +1843,14 @@ export const { lfoDCOffset } = registerControl('lfoDCOffset');
  *   .lfoSynced(1)
  *   .lfoShape(3)
  */
-export const { lfoShape } = registerControl('lfoShape');
+export const { lfoShape, lfosh, lfoshape } = registerControl('lfoShape', 'lfosh', 'lfoshape');
 
 /**
  * Skews the LFO waveform.
  *
  * @name lfoSkew
- * @param {number | Pattern} lfoSkew Skew amount (between 0 and 1).
+ * @synonyms lfosk, lfoskew
+ * @param {number | Pattern} skew Skew amount (between 0 and 1).
  * note("F2").sound("supersaw")
  *   .lpf(100)
  *   .lfoTarget("lpf")
@@ -1876,13 +1860,14 @@ export const { lfoShape } = registerControl('lfoShape');
  *   .lfoSynced(1)
  *   .lfoSkew(0.75)
  */
-export const { lfoSkew } = registerControl('lfoSkew');
+export const { lfoSkew, lfosk, lfoskew } = registerControl('lfoSkew', 'lfosk', 'lfoskew');
 
 /**
  * Adjusts the (exponential) curvature of the LFO waveform.
  *
  * @name lfoCurve
- * @param {number | Pattern} lfoCurve Curve shaping amount.
+ * @synonyms lfoc, lfocurve
+ * @param {number | Pattern} curve Curve shaping amount.
  * note("F2").sound("supersaw")
  *   .lpf(100)
  *   .lfoTarget("lpf")
@@ -1892,22 +1877,22 @@ export const { lfoSkew } = registerControl('lfoSkew');
  *   .lfoSynced(1)
  *   .lfoCurve(0.95)
  */
-export const { lfoCurve } = registerControl('lfoCurve');
+export const { lfoCurve, lfoc, lfocurve } = registerControl('lfoCurve', 'lfoc', 'lfocurve');
 
 /**
- * Determines whether the LFO is tempo-synced.
+ * Sets the tempo-synced rate of the LFO
  *
- * @name lfoSynced
- * @param {number | Pattern} lfoSynced Boolean flag (0 or 1).
+ * @name lfoSync
+ * @synonyms lfos, lfosync
+ * @param {number | Pattern} rate Rate to be multiplied by cycles per second
  * note("F2").sound("supersaw")
  *   .lpf(100)
  *   .lfoTarget("lpf")
  *   .lfoParam("frequency")
  *   .lfoDepth(1000)
- *   .lfoShape(3).lfoRate(2)
- *   .lfoSynced(1)
+ *   .lfoShape(3).lfoSync(2)
  */
-export const { lfoSynced } = registerControl('lfoSynced');
+export const { lfoSync, lfos, lfosync } = registerControl('lfoSync', 'lfos', 'lfosync');
 
 /**
  * Sets the target destination for the envelope modulation. Names are typically related
@@ -1915,6 +1900,7 @@ export const { lfoSynced } = registerControl('lfoSynced');
  * and if it fails, the console will print the available options.
  *
  * @name envTarget
+ * @synonyms envt, envtarget
  * @param {number | Pattern} envTarget Target identifier for modulation.
  * n(irand(12).seg(8)).scale("F#3:minor").room(1)
  *   .lpf(100)
@@ -1922,7 +1908,7 @@ export const { lfoSynced } = registerControl('lfoSynced');
  *   .envTarget("source:lpf")
  *   .envParam("detune:frequency")
  */
-export const { envTarget } = registerControl('envTarget');
+export const { envTarget, envt, envtarget } = registerControl('envTarget', 'envt', 'envtarget');
 
 /**
  * Chooses which parameter the LFO will modulate on the target. Parameter values
@@ -1930,6 +1916,7 @@ export const { envTarget } = registerControl('envTarget');
  * and if it fails, the console will print the available options.
  *
  * @name envParam
+ * @synonyms envp, envparam
  * @param {number | Pattern} envParam Parameter index or identifier.
  * n(irand(12).seg(8)).scale("F#3:minor").room(1)
  *   .lpf(100)
@@ -1937,12 +1924,13 @@ export const { envTarget } = registerControl('envTarget');
  *   .envTarget("source:lpf")
  *   .envParam("detune:frequency")
  */
-export const { envParam } = registerControl('envParam');
+export const { envParam, envp, envparam } = registerControl('envParam', 'envp', 'envparam');
 
 /**
  * Controls the attack time of the envelope.
  *
  * @name envAttack
+ * @synonyms envatt, envattack
  * @param {number | Pattern} envAttack Duration of attack phase.
  * n(irand(12).seg(8)).scale("F#3:minor").room(1)
  *   .lpf(500)
@@ -1951,12 +1939,13 @@ export const { envParam } = registerControl('envParam');
  *   .envParam("detune:frequency")
  *   .envAttack(0.5)
  */
-export const { envAttack } = registerControl('envAttack');
+export const { envAttack, envatt, envattack } = registerControl('envAttack', 'envatt', 'envattack');
 
 /**
  * Controls the decay time of the envelope.
  *
  * @name envDecay
+ * @synonyms envdec, envdecay
  * @param {number | Pattern} envDecay Duration of decay phase.
  * n(irand(12).seg(8)).scale("F#3:minor").room(1)
  *   .lpf(100)
@@ -1965,12 +1954,13 @@ export const { envAttack } = registerControl('envAttack');
  *   .envParam("detune:frequency")
  *   .envDecay("0.03:0.15").envCurve("exp:exp")
  */
-export const { envDecay } = registerControl('envDecay');
+export const { envDecay, envdec, envdecay } = registerControl('envDecay', 'envdec', 'envdecay');
 
 /**
  * Sets the sustain level of the envelope.
  *
  * @name envSustain
+ * @synonyms envs, envsustain
  * @param {number | Pattern} envSustain Sustain amplitude level.
  * n(irand(12).seg(8)).scale("F#3:minor").room(1)
  *   .lpf(100)
@@ -1980,12 +1970,13 @@ export const { envDecay } = registerControl('envDecay');
  *   .envDecay("0.03:0.15").envCurve("exp:exp")
  *   .envSustain(0.2)
  */
-export const { envSustain } = registerControl('envSustain');
+export const { envSustain, envs, envsustain } = registerControl('envSustain', 'envs', 'envsustain');
 
 /**
  * Controls the release time of the envelope.
  *
  * @name envRelease
+ * @synonyms envr, envrelease
  * @param {number | Pattern} envRelease Duration of release phase.
  * @example
  * n(irand(12).seg(8)).scale("F#3:minor").room(1)
@@ -1997,12 +1988,13 @@ export const { envSustain } = registerControl('envSustain');
  *   .envSustain(0.5)
  *   .envRelease(3)
  */
-export const { envRelease } = registerControl('envRelease');
+export const { envRelease, envr, envrelease } = registerControl('envRelease', 'envr', 'envrelease');
 
 /**
  * Selects the style of envelope: `exp` or `lin` (exponential or linear).
  *
  * @name envCurve
+ * @synonyms envc, envcurve
  * @param {string | Pattern} envCurve Envelope curve style.
  * @example
  * n(irand(12).seg(8)).scale("F#3:minor").room(1)
@@ -2013,12 +2005,13 @@ export const { envRelease } = registerControl('envRelease');
  *   .envDecay("0.3:0.15")
  *   .envCurve("lin:exp")
  */
-export const { envCurve } = registerControl('envCurve');
+export const { envCurve, envc, envcurve } = registerControl('envCurve', 'envc', 'envcurve');
 
 /**
  * Sets the modulation depth of the envelope.
  *
  * @name envDepth
+ * @synonyms envd, envdepth
  * @param {number | Pattern} envDepth Modulation depth amount.
  * @example
  * n(irand(12).seg(8)).scale("F#3:minor").room(1)
@@ -2027,7 +2020,7 @@ export const { envCurve } = registerControl('envCurve');
  *   .envParam("detune:frequency")
  *   .envDepth("4800:400")
  */
-export const { envDepth } = registerControl('envDepth');
+export const { envDepth, envd, envdepth } = registerControl('envDepth', 'envd', 'envdepth');
 
 // TODO: slide param for certain synths
 export const { slide } = registerControl('slide');
@@ -2399,6 +2392,15 @@ export const { clip, legato } = registerControl('clip', 'legato');
  *
  */
 export const { duration, dur } = registerControl('duration', 'dur');
+
+/**
+ * Sets the ID of the pattern for later reference
+ *
+ * @name id
+ * @param {number | Pattern} id ID of the pattern
+ *
+ */
+export const { id } = registerControl('id');
 
 // ZZFX
 export const { zrand } = registerControl('zrand');

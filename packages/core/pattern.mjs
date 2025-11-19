@@ -3624,3 +3624,64 @@ for (const name of distAlgoNames) {
     return this.distort(argsPat);
   };
 }
+
+/**
+ * Selects which LFO number to use for modulation. Multiple LFOs
+ * can be applied using the ':' mininotation. There are an arbitrary number
+ * of LFOs available -- the number is only used to share LFOs across targets
+ * if desired (and to conserve processing power)
+ *
+ * @name lfoNum
+ * @param {number | Pattern} lfoNum Index of the LFO.
+ * setup: note("F2").sound("supersaw")
+ *   .lpf(100)
+ *   .lfoDepth(1000)
+ *   .lfoRate(0.25)
+ *   .lfoSynced(1)
+ *   .lfoTarget("lpf")
+ *   .lfoParam("frequency")
+ *   .lfoNum(2)
+ *
+ * reuse: note("F3").sound("square").lpf(50)
+ *   .lfoTarget("lpf")
+ *   .lfoParam("frequency")
+ *   .lfoNum(2) // uses the same LFO
+ */
+
+/**
+ * Sets the target destination for the envelope modulation. Names are typically related
+ * to existing controls ("source", "lpf", "vibrato", etc.). You can try a value
+ * and if it fails, the console will print the available options.
+ *
+ * @name envTarget
+ * @param {number | Pattern} envTarget Target identifier for modulation.
+ * n(irand(12).seg(8)).scale("F#3:minor").room(1)
+ *   .lpf(100)
+ *   .envDepth("4800:400")
+ *   .envTarget("source:lpf")
+ *   .envParam("detune:frequency")
+ */
+
+  
+/**
+ * Establishes a signal chain. Can be called in sequence like pat.chain(...).chain(...) and so forth
+ * and/or in a single .chain(..., ..., etc) call. The arguments to `chain` are _patterns_ which each act like
+ * a self-contained pattern and follow the normal [signal chain](https://strudel.cc/learn/effects/).
+ *
+ * If multiple sound generators are present within the chain, they will be mixed in at the location where
+ * they are declared.
+ *
+ * @name chain
+ * @memberof Pattern
+ * @param {Pattern | Pattern[]} patterns Patterns to combine into a single chain
+ * @returns Pattern
+ */
+Pattern.prototype.chain = function (...pats) {
+  pats = pats.map(reify);
+  return this.withValue((v) => (vEff) => {
+    const currChain = v.chain ?? [];
+    return { ...v, chain: currChain.concat(vEff) };
+  }).appLeft(parray(pats));
+};
+  
+export const chain = (pats) => pure({}).chain(pats);
