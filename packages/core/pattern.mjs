@@ -3706,50 +3706,120 @@ const resolveConfigKey = (funcName, key) => {
   return aliasMap.get(normalized) ?? key;
 };
 
-addConfigAlias('lfo', 'lfoTarget', 'lfot', 'lfotarget', 'target', 't');
-addConfigAlias('lfo', 'lfoParam', 'lfop', 'lfoparam', 'param', 'parameter', 'p');
-addConfigAlias('lfo', 'lfoRate', 'lfor', 'lforate', 'rate', 'r');
-addConfigAlias('lfo', 'lfoDepth', 'lfod', 'lfodepth', 'depth', 'd');
-addConfigAlias('lfo', 'lfoDCOffset', 'lfodc', 'lfodcoffset', 'dcoffset', 'offset', 'dc');
-addConfigAlias('lfo', 'lfoShape', 'lfosh', 'lfoshape', 'shape', 'sh');
-addConfigAlias('lfo', 'lfoSkew', 'lfosk', 'lfoskew', 'skew', 'sk');
-addConfigAlias('lfo', 'lfoCurve', 'lfoc', 'lfocurve', 'curve', 'c');
-addConfigAlias('lfo', 'lfoSync', 'lfos', 'lfosync', 'sync', 'synced', 's');
-addConfigAlias('env', 'envTarget', 'envt', 'envtarget');
-addConfigAlias('env', 'envParam', 'envp', 'envparam');
-addConfigAlias('env', 'envAttack', 'envatt', 'envattack');
-addConfigAlias('env', 'envDecay', 'envdec', 'envdecay');
-addConfigAlias('env', 'envSustain', 'envs', 'envsustain');
-addConfigAlias('env', 'envRelease', 'envr', 'envrelease');
-addConfigAlias('env', 'envDepth', 'envd', 'envdepth');
-addConfigAlias('env', 'envACurve', 'envac', 'envacurve');
-addConfigAlias('env', 'envDCurve', 'envdc', 'envdcurve');
-addConfigAlias('env', 'envRCurve', 'envrc', 'envrcurve');
+addConfigAlias('lfo', 'target', 't');
+addConfigAlias('lfo', 'param', 'p');
+addConfigAlias('lfo', 'rate', 'r');
+addConfigAlias('lfo', 'depth', 'dep', 'dp', 'd');
+addConfigAlias('lfo', 'dc');
+addConfigAlias('lfo', 'shape', 'sh');
+addConfigAlias('lfo', 'skew', 'sk');
+addConfigAlias('lfo', 'curve', 'c');
+addConfigAlias('lfo', 'sync', 's');
+addConfigAlias('env', 'target', 't');
+addConfigAlias('env', 'attack', 'att', 'a');
+addConfigAlias('env', 'decay', 'dec', 'd');
+addConfigAlias('env', 'sustain', 'sus', 's');
+addConfigAlias('env', 'release', 'rel', 'r');
+addConfigAlias('env', 'depth', 'dep', 'dp');
+addConfigAlias('env', 'acurve', 'ac');
+addConfigAlias('env', 'dcurve', 'dc');
+addConfigAlias('env', 'rcurve', 'rc');
+addConfigAlias('send', 'id');
+addConfigAlias('send', 'target', 't');
+addConfigAlias('send', 'depth', 'dep', 'dp', 'd');
+addConfigAlias('send', 'dc');
+addConfigAlias('send', 'offset', 'off', 'o');
 
-/**
- * Establishes a signal chain. Can be called in sequence like pat.chain(...).chain(...) and so forth
- * and/or in a single .chain(..., ..., etc) call. The arguments to `chain` are _patterns_ which each act like
- * a self-contained pattern and follow the normal [signal chain](https://strudel.cc/learn/effects/).
- *
- * If multiple sound generators are present within the chain, they will be mixed in at the location where
- * they are declared.
- *
- * @name chain
- * @memberof Pattern
- * @param {Pattern | Pattern[]} patterns Patterns to combine into a single chain
- * @returns Pattern
- */
-Pattern.prototype.lfo = function (config) {
+Pattern.prototype.mod = function (type, config, idx) {
   if (config == null || typeof config !== 'object') {
+    return this;
+  }
+  if (!['lfo', 'send', 'env'].includes(type)) {
+    logger(`[core] Modulation type ${type} not found. Please use one of 'lfo', 'env', 'send'`);
     return this;
   }
   let output = this;
   for (const [rawKey, value] of Object.entries(config)) {
-    const key = resolveConfigKey('lfo', rawKey);
+    const key = resolveConfigKey(type, rawKey);
     const pat = reify(value);
-    output = output.set(pat.as(key));
+    output = output
+      .fmap((v) => (c) => {
+        v[type] ??= [];
+        const t = v[type];
+        idx ??= t.length;
+        t[idx] ??= {};
+        t[idx][key] = c;
+        return v;
+      })
+      .appLeft(pat);
   }
   return output;
 };
 
+/**
+ * Configures an LFO. Can be called in sequence like pat.lfo(...).lfo(...) to set up multiple LFOs
+ *
+ *
+ * @name lfo
+ * @memberof Pattern
+ * @param {Object} config LFO configuration.
+ * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: target, t
+ * @param {number | Pattern} [config.rate] Modulation rate. Aliases: rate, r
+ * @param {number | Pattern} [config.depth] Modulation depth. Aliases: dep, dp, d
+ * @param {number | Pattern} [config.dc] DC offset / bias for the waveform
+ * @param {number | Pattern} [config.shape] Waveform shape index. Aliases: sh
+ * @param {number | Pattern} [config.skew] Waveform skew amount. Aliases: sk
+ * @param {number | Pattern} [config.curve] Exponential curve amount. Aliases: c
+ * @param {number | Pattern} [config.sync] Tempo-synced modulation rate. Aliases: s
+ * @param {number | null} idx Index of the LFO slot to overwrite. Omit to append a new LFO
+ * @returns Pattern
+ */
+Pattern.prototype.lfo = function (config, idx) {
+  return this.mod('lfo', config, idx);
+};
 export const lfo = (config) => pure({}).lfo(config);
+
+/**
+ * Configures an envelope. Can be called in sequence like pat.env(...).env(...) to set up multiple envelopes
+ *
+ *
+ * @name env
+ * @memberof Pattern
+ * @param {Object} config Envelope configuration.
+ * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: target, t
+ * @param {number | Pattern} [config.depth] Modulation depth. Aliases: dep, dp
+ * @param {number | Pattern} [config.attack] Time to reach depth. Aliases: att, a
+ * @param {number | Pattern} [config.decay] Time to reach sustain. Aliases: dec, d
+ * @param {number | Pattern} [config.sustain] Sustain depth. Aliases: sus, s
+ * @param {number | Pattern} [config.release] Time to return to nominal value. Aliases: rel, r
+ * @param {number | Pattern} [config.acurve] Snappiness of attack curve (-1 = relaxed, 1 = snappy). Aliases: ac
+ * @param {number | Pattern} [config.dcurve] Snappiness of decay curve (-1 = relaxed, 1 = snappy). Aliases: dc
+ * @param {number | Pattern} [config.rcurve] Snappiness of release curve (-1 = relaxed, 1 = snappy). Aliases: rc
+ * @param {number | null} idx Index of the envelope slot to overwrite. Omit to append a new envelope
+ * @returns Pattern
+ */
+Pattern.prototype.env = function (config, idx) {
+  return this.mod('env', config, idx);
+};
+export const env = (config) => pure({}).env(config);
+
+/**
+ * Sends the output of this pattern to a parameter on another pattern.
+ * Can be called in sequence like pat.send(...).send(...) to send to multiple parameters
+ *
+ *
+ * @name send
+ * @memberof Pattern
+ * @param {Object} config Send configuration.
+ * @param {string | Pattern} [config.id] Pattern id to modulate
+ * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: target, t
+ * @param {number | Pattern} [config.depth] Modulation depth. Aliases:dep, dp, d
+ * @param {number | Pattern} [config.dc] DC offset prior to application
+ * @param {number | Pattern} [config.offset] Offset to apply to the parameter. Aliases: off, o
+ * @param {number | null} idx Index of the send slot to overwrite. Omit to append a new send
+ * @returns Pattern
+ */
+Pattern.prototype.send = function (config, idx) {
+  return this.mod('send', config, idx);
+};
+export const send = (config) => pure({}).send(config);
