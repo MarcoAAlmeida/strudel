@@ -2097,7 +2097,8 @@ export const { envAttack, envatt, envattack } = registerControl('envAttack', 'en
  *   .envDepth("4800:400")
  *   .envTarget("source:lpf")
  *   .envParam("detune:frequency")
- *   .envDecay("0.03:0.15").envCurve("exp:exp")
+ *   .envDecay("0.03:0.15")
+ *   .envDCurve(-0.4)
  */
 export const { envDecay, envdec, envdecay } = registerControl('envDecay', 'envdec', 'envdecay');
 
@@ -2112,7 +2113,7 @@ export const { envDecay, envdec, envdecay } = registerControl('envDecay', 'envde
  *   .envDepth("4800:400")
  *   .envTarget("source:lpf")
  *   .envParam("detune:frequency")
- *   .envDecay("0.03:0.15").envCurve("exp:exp")
+ *   .envACurve(0.6).envDCurve(-0.2)
  *   .envSustain(0.2)
  */
 export const { envSustain, envs, envsustain } = registerControl('envSustain', 'envs', 'envsustain');
@@ -2129,28 +2130,11 @@ export const { envSustain, envs, envsustain } = registerControl('envSustain', 'e
  *   .envDepth("4800:400")
  *   .envTarget("source:lpf")
  *   .envParam("detune:frequency")
- *   .envDecay("0.03:0.15").envCurve("exp:exp")
+ *   .envDecay("0.03:0.15").envRCurve(0.5)
  *   .envSustain(0.5)
  *   .envRelease(3)
  */
 export const { envRelease, envr, envrelease } = registerControl('envRelease', 'envr', 'envrelease');
-
-/**
- * Selects the style of envelope: `exp` or `lin` (exponential or linear).
- *
- * @name envCurve
- * @synonyms envc, envcurve
- * @param {string | Pattern} envCurve Envelope curve style.
- * @example
- * n(irand(12).seg(8)).scale("F#3:minor").room(1)
- *   .lpf(100).release(2)
- *   .envTarget("source:lpf")
- *   .envParam("detune:frequency")
- *   .envDepth("500:4000")
- *   .envDecay("0.3:0.15")
- *   .envCurve("lin:exp")
- */
-export const { envCurve, envc, envcurve } = registerControl('envCurve', 'envc', 'envcurve');
 
 /**
  * Sets the modulation depth of the envelope.
@@ -2166,6 +2150,36 @@ export const { envCurve, envc, envcurve } = registerControl('envCurve', 'envc', 
  *   .envDepth("4800:400")
  */
 export const { envDepth, envd, envdepth } = registerControl('envDepth', 'envd', 'envdepth');
+
+/**
+ * Adjusts the curvature of the attack portion of the envelope. Positive values are snappy,
+ * negative values are slow
+ *
+ * @name envACurve
+ * @synonyms envac, envacurve
+ * @param {number | Pattern} envACurve Curvature amount (between -1 and 1).
+ */
+export const { envACurve, envac, envacurve } = registerControl('envACurve', 'envac', 'envacurve');
+
+/**
+ * Adjusts the curvature of the decay portion of the envelope. Positive values are snappy,
+ * negative values are slow
+ *
+ * @name envDCurve
+ * @synonyms envdc, envdcurve
+ * @param {number | Pattern} envDCurve Curvature amount (between -1 and 1).
+ */
+export const { envDCurve, envdc, envdcurve } = registerControl('envDCurve', 'envdc', 'envdcurve');
+
+/**
+ * Adjusts the curvature of the release portion of the envelope. Positive values are snappy,
+ * negative values are slow
+ *
+ * @name envRCurve
+ * @synonyms envrc, envrcurve
+ * @param {number | Pattern} envRCurve Curvature amount (between -1 and 1).
+ */
+export const { envRCurve, envrc, envrcurve } = registerControl('envRCurve', 'envrc', 'envrcurve');
 
 // TODO: slide param for certain synths
 export const { slide } = registerControl('slide');

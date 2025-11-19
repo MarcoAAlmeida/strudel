@@ -3688,42 +3688,43 @@ export const phases = (list) => {
   return _ensureListPattern(list).as('phases');
 };
 
-/**
- * Selects which LFO number to use for modulation. Multiple LFOs
- * can be applied using the ':' mininotation. There are an arbitrary number
- * of LFOs available -- the number is only used to share LFOs across targets
- * if desired (and to conserve processing power)
- *
- * @name lfoNum
- * @param {number | Pattern} lfoNum Index of the LFO.
- * setup: note("F2").sound("supersaw")
- *   .lpf(100)
- *   .lfoDepth(1000)
- *   .lfoRate(0.25)
- *   .lfoSynced(1)
- *   .lfoTarget("lpf")
- *   .lfoParam("frequency")
- *   .lfoNum(2)
- *
- * reuse: note("F3").sound("square").lpf(50)
- *   .lfoTarget("lpf")
- *   .lfoParam("frequency")
- *   .lfoNum(2) // uses the same LFO
- */
+const configAliases = new Map();
+const addConfigAlias = (funcName, canonical, ...aliases) => {
+  const lowerFunc = String(funcName).toLowerCase();
+  const aliasMap = configAliases.get(lowerFunc) ?? new Map();
+  const allKeys = new Set([canonical, ...aliases]);
+  for (const alias of allKeys) {
+    aliasMap.set(String(alias).toLowerCase(), canonical);
+  }
+  configAliases.set(lowerFunc, aliasMap);
+};
 
-/**
- * Sets the target destination for the envelope modulation. Names are typically related
- * to existing controls ("source", "lpf", "vibrato", etc.). You can try a value
- * and if it fails, the console will print the available options.
- *
- * @name envTarget
- * @param {number | Pattern} envTarget Target identifier for modulation.
- * n(irand(12).seg(8)).scale("F#3:minor").room(1)
- *   .lpf(100)
- *   .envDepth("4800:400")
- *   .envTarget("source:lpf")
- *   .envParam("detune:frequency")
- */
+const resolveConfigKey = (funcName, key) => {
+  const aliasMap = configAliases.get(String(funcName).toLowerCase());
+  if (!aliasMap) return key;
+  const normalized = String(key).toLowerCase();
+  return aliasMap.get(normalized) ?? key;
+};
+
+addConfigAlias('lfo', 'lfoTarget', 'lfot', 'lfotarget', 'target', 't');
+addConfigAlias('lfo', 'lfoParam', 'lfop', 'lfoparam', 'param', 'parameter', 'p');
+addConfigAlias('lfo', 'lfoRate', 'lfor', 'lforate', 'rate', 'r');
+addConfigAlias('lfo', 'lfoDepth', 'lfod', 'lfodepth', 'depth', 'd');
+addConfigAlias('lfo', 'lfoDCOffset', 'lfodc', 'lfodcoffset', 'dcoffset', 'offset', 'dc');
+addConfigAlias('lfo', 'lfoShape', 'lfosh', 'lfoshape', 'shape', 'sh');
+addConfigAlias('lfo', 'lfoSkew', 'lfosk', 'lfoskew', 'skew', 'sk');
+addConfigAlias('lfo', 'lfoCurve', 'lfoc', 'lfocurve', 'curve', 'c');
+addConfigAlias('lfo', 'lfoSync', 'lfos', 'lfosync', 'sync', 'synced', 's');
+addConfigAlias('env', 'envTarget', 'envt', 'envtarget');
+addConfigAlias('env', 'envParam', 'envp', 'envparam');
+addConfigAlias('env', 'envAttack', 'envatt', 'envattack');
+addConfigAlias('env', 'envDecay', 'envdec', 'envdecay');
+addConfigAlias('env', 'envSustain', 'envs', 'envsustain');
+addConfigAlias('env', 'envRelease', 'envr', 'envrelease');
+addConfigAlias('env', 'envDepth', 'envd', 'envdepth');
+addConfigAlias('env', 'envACurve', 'envac', 'envacurve');
+addConfigAlias('env', 'envDCurve', 'envdc', 'envdcurve');
+addConfigAlias('env', 'envRCurve', 'envrc', 'envrcurve');
 
 /**
  * Establishes a signal chain. Can be called in sequence like pat.chain(...).chain(...) and so forth
@@ -3738,12 +3739,17 @@ export const phases = (list) => {
  * @param {Pattern | Pattern[]} patterns Patterns to combine into a single chain
  * @returns Pattern
  */
-Pattern.prototype.chain = function (...pats) {
-  pats = pats.map(reify);
-  return this.withValue((v) => (vEff) => {
-    const currChain = v.chain ?? [];
-    return { ...v, chain: currChain.concat(vEff) };
-  }).appLeft(parray(pats));
+Pattern.prototype.lfo = function (config) {
+  if (config == null || typeof config !== 'object') {
+    return this;
+  }
+  let output = this;
+  for (const [rawKey, value] of Object.entries(config)) {
+    const key = resolveConfigKey('lfo', rawKey);
+    const pat = reify(value);
+    output = output.set(pat.as(key));
+  }
+  return output;
 };
 
-export const chain = (pats) => pure({}).chain(pats);
+export const lfo = (config) => pure({}).lfo(config);
