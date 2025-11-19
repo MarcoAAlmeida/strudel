@@ -126,7 +126,7 @@ export function SoundsTab() {
                 try {
                   // Pre-load the sample by calling onTrigger with a future time
                   // This triggers the loading but schedules playback for later
-                  const time = ctx.currentTime + 0.5; // Give 500ms for loading
+                  const time = ctx.currentTime + 0.05;
                   const ref = await onTrigger(time, params, onended);
                   trigRef.current = ref;
                   if (ref?.node) {
