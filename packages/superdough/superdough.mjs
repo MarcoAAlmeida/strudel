@@ -423,13 +423,13 @@ const targetToParamGuess = {
   pan: 'pan',
   phaser: 'rate',
   post: 'gain',
-  delay: 'time',
+  delay: 'delayTime',
   room: 'size',
   djf: 'value',
   lfo: 'frequency',
   env: 'depth',
   send: 'depth',
-}
+};
 
 function _getTargetParams(nodes, target) {
   let param;
@@ -438,15 +438,14 @@ function _getTargetParams(nodes, target) {
     target = split[0];
     param = split[1];
   } else {
-    param = targetToParamGuess[target];
+    const targetWithoutIndex = target.replace(/(\d+)$/, '');
+    param = targetToParamGuess[targetWithoutIndex];
   }
   const targetNodes = nodes[target];
   if (!targetNodes) {
     const keys = Object.keys(nodes);
     errorLogger(
-      new Error(
-        `Could not connect to target '${target}' — it does not exist. Available targets: ${keys.join(', ')}`,
-      ),
+      new Error(`Could not connect to target '${target}' — it does not exist. Available targets: ${keys.join(', ')}`),
       'superdough',
     );
     return [];
@@ -470,13 +469,7 @@ function _getTargetParams(nodes, target) {
 }
 
 function connectLFO(idx, params, nodeTracker) {
-  const {
-    rate = 1,
-    sync,
-    cps,
-    target,
-    ...filteredParams
-  } = params;
+  const { rate = 1, sync, cps, target, ...filteredParams } = params;
   filteredParams['frequency'] = sync !== undefined ? sync / cps : rate;
   const ac = getAudioContext();
   lfoNode = getLfo(ac, filteredParams);
@@ -506,7 +499,7 @@ function connectSendModulator(params, signal, nodeTracker, pendingConnections) {
   webAudioTimeout(
     ac,
     () => {
-      _getTargetParams(nodeTracker, params.target).forEach(signal.connect);;
+      _getTargetParams(nodeTracker, params.target).forEach(signal.connect);
     },
     0,
     params.begin,
@@ -994,13 +987,32 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       } else {
         connectSendModulator(params, post);
         pendingConnections[p.id] ??= {};
-        pendingConnections[p.id][chainID] = [modulator, p.target, p.param, endWithRelease];
+        pendingConnections[p.id][chainID] = new WeakRef([modulator, p.target, endWithRelease]);
       }
-    });
+    }
   }
-
-  if (applySends) {
-
+  if (value.id in pendingConnections) {
+    for (const data of Object.values(pendingConnections[id])) {
+      const [modulator, target, end] = data.deref();
+      const targets = _getTargetParams(nodes, target);
+      webAudioTimeout(
+        ac,
+        () => {
+          targets.forEach((target) => modulator.connect(target));
+        },
+        0,
+        t,
+      );
+      webAudioTimeout(
+        ac,
+        () => {
+          modulator.disconnect();
+        },
+        0,
+        end,
+      );
+    }
+  }
 };
 
 export const superdoughTrigger = (t, hap, ct, cps) => {
