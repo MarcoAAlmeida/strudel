@@ -256,7 +256,15 @@ export function drywet(dry, wet, wetAmount = 0) {
   let mix = ac.createGain();
   dry_gain.connect(mix);
   wet_gain.connect(mix);
-  return mix;
+  return {
+    node: mix,
+    onended: () => {
+      dry_gain.disconnect(mix);
+      wet_gain.disconnect(mix);
+      dry.disconnect(dry_gain);
+      wet.disconnect(wet_gain);
+    },
+  };
 }
 
 let curves = ['linear', 'exponential'];
@@ -291,6 +299,10 @@ export function getVibratoOscillator(param, value, t) {
     gain.gain.value = vibmod * 100;
     vibratoOscillator.connect(gain);
     gain.connect(param);
+    vibratoOscillator.onended = () => {
+      gain.disconnect(param);
+      vibratoOscillator.disconnect(gain);
+    };
     vibratoOscillator.start(t);
     return vibratoOscillator;
   }
