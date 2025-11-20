@@ -971,13 +971,14 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   }
   if (value.send) {
     for (const p of value.send) {
-      const modNodes = idToNodes[p.id];
+      const modNodes = idToNodes[p.id].deref();
       if (!modNodes) {
         logger(
           `[superdough] Could not connect to pattern ${p.id} -- make sure a pattern with this name exists. Available targets: ${Object.keys(idToNodes).join(', ')}`,
         );
+        delete idToNodes[p.id];
       } else {
-        const modulator = connectSendModulator({ ...p, begin: t, end: endWithRelease }, post, nodes, chainID);
+        const modulator = connectSendModulator({ ...p, begin: t, end: endWithRelease }, post, modNodes, chainID);
         pendingConnections[p.id] ??= {};
         pendingConnections[p.id][chainID] = new WeakRef([modulator, p.target, endWithRelease]);
       }
