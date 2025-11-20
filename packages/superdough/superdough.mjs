@@ -693,7 +693,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   if (delay > 0 && delaytime > 0 && delayfeedback > 0) {
     orbitBus.getDelay(delaytime, delayfeedback, t);
     const send = orbitBus.sendDelay(post, delay);
-    audioNodes.push(send)
+    audioNodes.push(send);
   }
   // reverb
   if (room > 0) {
