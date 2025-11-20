@@ -493,6 +493,7 @@ export function getOscillator(s, t, value, onended) {
   }
 
   o.onended = () => {
+    o.disconnect();
     noiseMix?.node.disconnect();
     onended();
   };
