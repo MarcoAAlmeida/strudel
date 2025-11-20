@@ -3728,7 +3728,6 @@ addConfigAlias('send', 'id');
 addConfigAlias('send', 'target', 't');
 addConfigAlias('send', 'depth', 'dep', 'dp', 'd');
 addConfigAlias('send', 'dc');
-addConfigAlias('send', 'offset', 'off', 'o');
 
 Pattern.prototype.modulate = function (type, config, idx) {
   if (config == null || typeof config !== 'object') {
@@ -3815,7 +3814,6 @@ export const env = (config) => pure({}).env(config);
  * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: target, t
  * @param {number | Pattern} [config.depth] Modulation depth. Aliases:dep, dp, d
  * @param {number | Pattern} [config.dc] DC offset prior to application
- * @param {number | Pattern} [config.offset] Offset to apply to the parameter. Aliases: off, o
  * @param {number | null} idx Index of the send slot to overwrite. Omit to append a new send
  * @returns Pattern
  */

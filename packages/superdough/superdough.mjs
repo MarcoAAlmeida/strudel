@@ -481,14 +481,9 @@ function connectSendModulator(params, signal, nodeTracker, chainID) {
   const ac = getAudioContext();
   const dc = new ConstantSourceNode(ac, { offset: params.dc ?? 0 });
   dc.start(params.begin);
-  const offset = new ConstantSourceNode(ac, { offset: params.offset ?? 0 });
-  offset.start(params.begin);
-  const raw = dc.connect(gainNode(1));
-  const modulator = signal
-    .connect(raw)
-    .connect(gainNode((params.depth ?? 1) / 0.3))
-    .connect(gainNode(1));
-  offset.connect(modulator);
+  const shifted = dc.connect(gainNode(1));
+  signal.connect(shifted);
+  const modulator = shifted.connect(gainNode((params.depth ?? 1) / 0.3));
   webAudioTimeout(
     ac,
     () => {
@@ -506,7 +501,7 @@ function connectSendModulator(params, signal, nodeTracker, chainID) {
     0,
     params.end + 0.05,
   );
-  return modulator;
+  return { modulator, nodes: [dc, shifted, modulator] };
 }
 
 let activeSoundSources = new Map();
@@ -978,7 +973,13 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
         );
         delete idToNodes[p.id];
       } else {
-        const modulator = connectSendModulator({ ...p, begin: t, end: endWithRelease }, post, modNodes, chainID);
+        const { modulator, nodes: nodesToCleanup } = connectSendModulator(
+          { ...p, begin: t, end: endWithRelease },
+          post,
+          modNodes,
+          chainID,
+        );
+        audioNodes = audioNodes.concat(nodesToCleanup);
         pendingConnections[p.id] ??= {};
         pendingConnections[p.id][chainID] = new WeakRef([modulator, p.target, endWithRelease]);
       }
