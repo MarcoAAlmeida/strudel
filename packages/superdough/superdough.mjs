@@ -465,9 +465,14 @@ function connectLFO(idx, params, nodeTracker) {
 }
 
 function connectEnvelope(idx, params, nodeTracker) {
-  const { target, ...filteredParams } = params;
+  const { target, acurve, dcurve, rcurve, ...filteredParams } = params;
   const ac = getAudioContext();
-  const envNode = getEnvelope(ac, filteredParams);
+  const envNode = getEnvelope(ac, {
+    ...filteredParams,
+    attackCurve: acurve,
+    decayCurve: dcurve,
+    releaseCurve: rcurve,
+  });
   nodeTracker[`env${idx}`] = [envNode];
   _getTargetParams(nodeTracker, target).forEach((t) => envNode.connect(t));
 }
