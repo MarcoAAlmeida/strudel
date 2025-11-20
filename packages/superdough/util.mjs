@@ -113,4 +113,14 @@ export function getCommonSampleInfo(hapValue, bank) {
 /** Selects entries from `source` and renames them via `map` */
 export const pickAndRename = (source, map) => {
   return Object.fromEntries(Object.entries(map).map(([newKey, oldKey]) => [newKey, source[oldKey]]));
+}
+
+export const getBaseURL = (url) => {
+  try {
+    // For real URLs
+    return new URL('.', new URL(url)).href.replace(/\/$/, ''); // removes trailing slash
+  } catch {
+    // For pseudo URLS
+    return url.split('/').slice(0, -1).join('/');
+  }
 };
