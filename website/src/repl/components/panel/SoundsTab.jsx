@@ -141,7 +141,6 @@ export function SoundsTab() {
                       break;
                     }
                   } catch (err) {
-                    console.log(err);
                     errMsg = err;
                   }
                   if (attempt == 9) {
