@@ -413,7 +413,6 @@ const targetToParamGuess = {
   phaser: 'rate',
   post: 'gain',
   delay: 'delayTime',
-  room: 'size',
   djf: 'value',
   lfo: 'frequency',
   env: 'depth',
@@ -904,8 +903,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       }
       roomIR = await loadBuffer(url, ac, ir, 0);
     }
-    const reverbNode = orbitBus.getReverb(roomsize, roomfade, roomlp, roomdim, roomIR, irspeed, irbegin);
-    nodes['room'] = [reverbNode];
+    orbitBus.getReverb(roomsize, roomfade, roomlp, roomdim, roomIR, irspeed, irbegin);
     const reverbSend = orbitBus.sendReverb(post, room);
     audioNodes.push(reverbSend);
   }
