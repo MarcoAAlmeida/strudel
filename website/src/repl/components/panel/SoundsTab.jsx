@@ -14,6 +14,10 @@ import { prebake } from '@src/repl/prebake.mjs';
 const getSamples = (samples) =>
   Array.isArray(samples) ? samples.length : typeof samples === 'object' ? Object.values(samples).length : 1;
 
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function SoundsTab() {
   const sounds = useStore(soundMap);
 
@@ -121,19 +125,30 @@ export function SoundsTab() {
                   sustain: 1,
                   duration: 0.5,
                 };
-                soundPreviewIdx++;
                 const onended = () => trigRef.current?.node?.disconnect();
-                try {
-                  // Pre-load the sample by calling onTrigger with a future time
-                  // This triggers the loading but schedules playback for later
-                  const time = ctx.currentTime + 0.5; // Give 500ms for loading
-                  const ref = await onTrigger(time, params, onended);
-                  trigRef.current = ref;
-                  if (ref?.node) {
-                    connectToDestination(ref.node);
+                // Attempt to play the sample and retry every 200ms until 10 attempts have been reached
+                let errMsg;
+                for (let attempt = 0; attempt < 10; attempt++) {
+                  try {
+                    // Pre-load the sample by calling onTrigger with a future time
+                    // This triggers the loading but schedules playback for later
+                    const time = ctx.currentTime + 0.05; // Give 50ms for loading
+                    const ref = await onTrigger(time, params, onended);
+                    trigRef.current = ref;
+                    if (ref?.node) {
+                      connectToDestination(ref.node);
+                      soundPreviewIdx++;
+                      break;
+                    }
+                  } catch (err) {
+                    console.log(err);
+                    errMsg = err;
                   }
-                } catch (err) {
-                  console.warn('Failed to trigger sound:', err);
+                  if (attempt == 9) {
+                    console.warn('Failed to trigger sound after 10 attempts' + (errMsg ? `: ${errMsg}` : ''));
+                  } else {
+                    await wait(200);
+                  }
                 }
               }}
             >
