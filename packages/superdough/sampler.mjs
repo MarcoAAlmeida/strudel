@@ -331,7 +331,7 @@ export async function onTriggerSample(t, value, onended, bank, resolveUrl) {
   const stop = (endTime) => {
     bufferSource.stop(endTime);
   };
-  const handle = { node: out, bufferSource, stop };
+  const handle = { node: out, source: bufferSource, stop };
 
   // cut groups
   if (cut !== undefined) {

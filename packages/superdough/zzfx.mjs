@@ -74,6 +74,7 @@ export const getZZFX = (value, t) => {
   source.start(t);
   return {
     node: source,
+    source,
   };
 };
 

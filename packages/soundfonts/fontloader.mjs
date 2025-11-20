@@ -176,7 +176,7 @@ export function registerSoundfonts() {
           node.disconnect();
           onended();
         };
-        return { node, stop };
+        return { node, stop, source: bufferSource };
       },
       { type: 'soundfont', prebake: true, fonts },
     );

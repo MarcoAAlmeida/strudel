@@ -2320,7 +2320,6 @@ export const { curve } = registerControl('curve');
 export const { deltaSlide } = registerControl('deltaSlide');
 export const { pitchJump } = registerControl('pitchJump');
 export const { pitchJumpTime } = registerControl('pitchJumpTime');
-export const { lfo, repeatTime } = registerControl('lfo', 'repeatTime');
 // noise on the frequency or as bubo calls it "frequency fog" :)
 export const { znoise } = registerControl('znoise');
 export const { zmod } = registerControl('zmod');

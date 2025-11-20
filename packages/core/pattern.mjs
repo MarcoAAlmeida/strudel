@@ -3710,7 +3710,7 @@ addConfigAlias('lfo', 'target', 't');
 addConfigAlias('lfo', 'param', 'p');
 addConfigAlias('lfo', 'rate', 'r');
 addConfigAlias('lfo', 'depth', 'dep', 'dp', 'd');
-addConfigAlias('lfo', 'dc');
+addConfigAlias('lfo', 'dcoffset', 'dc');
 addConfigAlias('lfo', 'shape', 'sh');
 addConfigAlias('lfo', 'skew', 'sk');
 addConfigAlias('lfo', 'curve', 'c');
@@ -3730,7 +3730,7 @@ addConfigAlias('send', 'depth', 'dep', 'dp', 'd');
 addConfigAlias('send', 'dc');
 addConfigAlias('send', 'offset', 'off', 'o');
 
-Pattern.prototype.mod = function (type, config, idx) {
+Pattern.prototype.modulate = function (type, config, idx) {
   if (config == null || typeof config !== 'object') {
     return this;
   }
@@ -3766,7 +3766,7 @@ Pattern.prototype.mod = function (type, config, idx) {
  * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: target, t
  * @param {number | Pattern} [config.rate] Modulation rate. Aliases: rate, r
  * @param {number | Pattern} [config.depth] Modulation depth. Aliases: dep, dp, d
- * @param {number | Pattern} [config.dc] DC offset / bias for the waveform
+ * @param {number | Pattern} [config.dcoffset] DC offset / bias for the waveform. Aliases: dc
  * @param {number | Pattern} [config.shape] Waveform shape index. Aliases: sh
  * @param {number | Pattern} [config.skew] Waveform skew amount. Aliases: sk
  * @param {number | Pattern} [config.curve] Exponential curve amount. Aliases: c
@@ -3775,7 +3775,7 @@ Pattern.prototype.mod = function (type, config, idx) {
  * @returns Pattern
  */
 Pattern.prototype.lfo = function (config, idx) {
-  return this.mod('lfo', config, idx);
+  return this.modulate('lfo', config, idx);
 };
 export const lfo = (config) => pure({}).lfo(config);
 
@@ -3799,7 +3799,7 @@ export const lfo = (config) => pure({}).lfo(config);
  * @returns Pattern
  */
 Pattern.prototype.env = function (config, idx) {
-  return this.mod('env', config, idx);
+  return this.modulate('env', config, idx);
 };
 export const env = (config) => pure({}).env(config);
 
@@ -3820,6 +3820,6 @@ export const env = (config) => pure({}).env(config);
  * @returns Pattern
  */
 Pattern.prototype.send = function (config, idx) {
-  return this.mod('send', config, idx);
+  return this.modulate('send', config, idx);
 };
 export const send = (config) => pure({}).send(config);
