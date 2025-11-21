@@ -532,7 +532,7 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
         const freqVoice = applySemitoneDetuneToFrequency(freq, detuner(n));
         // We must wrap this here because it is passed into sawblep below which
         // has domain [0, 1]
-        const dt = ffrac(freqVoice * INVSR);
+        const dt = frac(freqVoice * INVSR);
         this.phase[n] = this.phase[n] ?? Math.random();
         const v = waveshapes.sawblep(this.phase[n], dt);
 
