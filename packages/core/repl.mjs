@@ -217,6 +217,7 @@ export function repl({
         let patterns = [];
         let soloActive = false;
         for (const [key, value] of Object.entries(pPatterns)) {
+          // handle soloed patterns ex: S$: s("bd!4")
           const isSolod = key.length > 1 && key.startsWith('S');
           if (isSolod && soloActive === false) {
             // first time we see a soloed pattern, clear existing patterns
