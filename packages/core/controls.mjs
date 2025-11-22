@@ -1840,7 +1840,7 @@ export const { octave } = registerControl('octave');
  *   s("~ sd ~ sd").delay(.5).delaytime(.125).orbit(2)
  * )
  */
-export const { orbit } = registerControl('orbit');
+export const { orbit } = registerControl('orbit', 'o');
 // TODO: what is this? not found in tidal doc Answer: gain is limited to maximum of 2. This allows you to go over that
 export const { overgain } = registerControl('overgain');
 // TODO: what is this? not found in tidal doc. Similar to above, but limited to 1
