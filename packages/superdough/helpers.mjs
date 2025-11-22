@@ -238,7 +238,7 @@ export function createFilter(context, start, end, params, cps) {
   if (sync != null) {
     rate = cps * sync;
   }
-  const lfoValues = { depth, dcoffset, skew, shape, frequency: rate };
+  const lfoValues = { depth, dcoffset, skew, shape, frequency: rate, min: 10, max: 20000 };
   getParamLfo(context, frequencyParam, start, end, lfoValues);
   return filter;
 }
