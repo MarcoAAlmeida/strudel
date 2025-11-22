@@ -1288,6 +1288,151 @@ export const { fanchor } = registerControl('fanchor');
  */
 // currently an alias of 'hcutoff' https://codeberg.org/uzu/strudel/issues/496
 // ['hpf'],
+
+/**
+ * Rate of the LFO for the lowpass filter
+ *
+ * @name lprate
+ * @param {number | Pattern} rate rate in hertz
+ */
+export const { lprate } = registerControl('lprate');
+
+/**
+ * Cycle-synced rate of the LFO for the lowpass filter
+ *
+ * @name lpsync
+ * @param {number | Pattern} rate rate in cycles
+ */
+export const { lpsync } = registerControl('lpsync');
+
+/**
+ * Depth of the LFO for the lowpass filter
+ *
+ * @name lpdepth
+ * @param {number | Pattern} depth depth of modulation
+ */
+export const { lpdepth } = registerControl('lpdepth');
+
+/**
+ * Shape of the LFO for the lowpass filter
+ *
+ * @name lpshape
+ * @param {number | Pattern} shape Shape of the lfo (0, 1, 2, ..)
+ */
+export const { lpshape } = registerControl('lpshape');
+
+/**
+ * DC offset of the LFO for the lowpass filter
+ *
+ * @name lpdc
+ * @param {number | Pattern} dcoffset dc offset. set to 0 for unipolar
+ */
+export const { lpdc } = registerControl('lpdc');
+
+/**
+ * Skew of the LFO for the lowpass filter
+ *
+ * @name lpskew
+ * @param {number | Pattern} skew How much to bend the LFO shape
+ */
+export const { lpskew } = registerControl('lpskew');
+
+/**
+ * Rate of the LFO for the bandpass filter
+ *
+ * @name bprate
+ * @param {number | Pattern} rate rate in hertz
+ */
+export const { bprate } = registerControl('bprate');
+
+/**
+ * Cycle-synced rate of the LFO for the bandpass filter
+ *
+ * @name bpsync
+ * @param {number | Pattern} rate rate in cycles
+ */
+export const { bpsync } = registerControl('bpsync');
+
+/**
+ * Depth of the LFO for the bandpass filter
+ *
+ * @name bpdepth
+ * @param {number | Pattern} depth depth of modulation
+ */
+export const { bpdepth } = registerControl('bpdepth');
+
+/**
+ * Shape of the LFO for the bandpass filter
+ *
+ * @name bpshape
+ * @param {number | Pattern} shape Shape of the lfo (0, 1, 2, ..)
+ */
+export const { bpshape } = registerControl('bpshape');
+
+/**
+ * DC offset of the LFO for the bandpass filter
+ *
+ * @name bpdc
+ * @param {number | Pattern} dcoffset dc offset. set to 0 for unipolar
+ */
+export const { bpdc } = registerControl('bpdc');
+
+/**
+ * Skew of the LFO for the bandpass filter
+ *
+ * @name bpskew
+ * @param {number | Pattern} skew How much to bend the LFO shape
+ */
+export const { bpskew } = registerControl('bpskew');
+
+/**
+ * Rate of the LFO for the highpass filter
+ *
+ * @name hprate
+ * @param {number | Pattern} rate rate in hertz
+ */
+export const { hprate } = registerControl('hprate');
+
+/**
+ * Cycle-synced rate of the LFO for the highpass filter
+ *
+ * @name hpsync
+ * @param {number | Pattern} rate rate in cycles
+ */
+export const { hpsync } = registerControl('hpsync');
+
+/**
+ * Depth of the LFO for the highpass filter
+ *
+ * @name hpdepth
+ * @param {number | Pattern} depth depth of modulation
+ */
+export const { hpdepth } = registerControl('hpdepth');
+
+/**
+ * Shape of the LFO for the highpass filter
+ *
+ * @name hpshape
+ * @param {number | Pattern} shape Shape of the lfo (0, 1, 2, ..)
+ */
+export const { hpshape } = registerControl('hpshape');
+
+/**
+ * DC offset of the LFO for the highpass filter
+ *
+ * @name hpdc
+ * @param {number | Pattern} dcoffset dc offset. set to 0 for unipolar
+ */
+export const { hpdc } = registerControl('hpdc');
+
+/**
+ * Skew of the LFO for the highpass filter
+ *
+ * @name hpskew
+ * @param {number | Pattern} skew How much to bend the LFO shape
+ */
+export const { hpskew } = registerControl('hpskew');
+
 /**
  * Applies a vibrato to the frequency of the oscillator.
  *
@@ -1750,17 +1895,64 @@ export const { semitone } = registerControl('semitone');
 // TODO: synth param
 export const { voice } = registerControl('voice');
 // voicings // https://codeberg.org/uzu/strudel/issues/506
-// chord to voice, like C Eb Fm7 G7. the symbols can be defined via addVoicings
+/**
+ * The chord to voice
+ * @name chord
+ * @param {string | Pattern} symbols chord symbols to voice e.g., C, Eb, Fm7, G7. The symbols can be defined via addVoicings
+ * @example
+ * chord("<Am C D F Am E Am E>").voicing()
+ **/
 export const { chord } = registerControl('chord');
-// which dictionary to use for the voicings
+/**
+ * Which dictionary to use for the voicings. This falls back to the default dictionary if not provided
+ *
+ * @name dictionary
+ * @param {string} dictionaryName which dictionary (having been defined with `addVoicings`) to use
+ * @example
+ * addVoicings('house', {
+'': ['7 12 16', '0 7 16', '4 7 12'],
+'m': ['0 3 7']
+})
+chord("<Am C D F Am E Am E>")
+.dict('house').anchor(66)
+.voicing().room(.5)
+ **/
 export const { dictionary, dict } = registerControl('dictionary', 'dict');
-// the top note to align the voicing to, defaults to c5
+/** The top note to align the voicing to. Defaults to c5
+ *
+ * @name anchor
+ * @param {string | Pattern} anchorNote the note to align the voicings to
+ * @example
+ * anchor("<c4 g4 c5 g5>").chord("C").voicing()
+ **/
 export const { anchor } = registerControl('anchor');
-// how the voicing is offset from the anchored position
+/**
+ * Sets how the voicing is offset from the anchored position
+ *
+ * @name offset
+ * @param {number | Pattern} shift the amount to shift the voicing up or down
+ * @example
+ * chord("<Am C D F Am E Am E>").offset("<0 1 2 3 4 5>") // alter the voicing each time
+ **/
 export const { offset } = registerControl('offset');
-// how many octaves are voicing steps spread apart, defaults to 1
+/**
+ *  How many octaves are voicing steps spread apart, defaults to 1
+ *
+ *  @name octaves
+ *  @param {number | Pattern} count the number of octaves
+ *  @example
+ *  chord("<Am C D F Am E Am E>").octaves("<2 4>").voicing()
+ **/
 export const { octaves } = registerControl('octaves');
-// below = anchor note will be removed from the voicing, useful for melody harmonization
+/**
+ * Remove anchor note from the voicing. Useful for melody harmonization
+ *
+ * @name mode
+ * @param {string | Pattern} modeName one of {below | above | duck | root}
+ * @example
+ * mode("<below above duck root>").chord("C").voicing()
+ *
+ **/
 export const { mode } = registerControl(['mode', 'anchor']);
 
 /**
@@ -1887,19 +2079,52 @@ export const { roomsize, size, sz, rsize } = registerControl('roomsize', 'size',
 export const { shape } = registerControl(['shape', 'shapevol']);
 /**
  * Wave shaping distortion. CAUTION: it can get loud.
- * Second option in optional array syntax (ex: ".9:.5") applies a postgain to the output.
+ * Second option in optional array syntax (ex: ".9:.5") applies a postgain to the output. Third option sets the waveshaping type.
  * Most useful values are usually between 0 and 10 (depending on source gain). If you are feeling adventurous, you can turn it up to 11 and beyond ;)
  *
  * @name distort
  * @synonyms dist
- * @param {number | Pattern} distortion
+ * @param {number | Pattern} distortion amount of distortion to apply
+ * @param {number | Pattern} volume linear postgain of the distortion
+ * @param {number | string | Pattern} type type of distortion to apply
  * @example
  * s("bd sd [~ bd] sd,hh*8").distort("<0 2 3 10:.5>")
  * @example
  * note("d1!8").s("sine").penv(36).pdecay(.12).decay(.23).distort("8:.4")
+ * @example
+ * s("bd:4*4").bank("tr808").distort("3:0.5:diode")
  *
  */
-export const { distort, dist } = registerControl(['distort', 'distortvol'], 'dist');
+export const { distort, dist } = registerControl(['distort', 'distortvol', 'distorttype'], 'dist');
+
+/**
+ * Postgain for waveshaping distortion.
+ *
+ * @name distortvol
+ * @synonyms distvol
+ * @param {number | Pattern} volume linear postgain of the distortion
+ * @example
+ * s("bd*4").bank("tr909").distort(2).distortvol(0.8)
+ */
+export const { distortvol } = registerControl('distortvol', 'distvol');
+
+/**
+ * Type of waveshaping distortion to apply.
+ *
+ * @name distorttype
+ * @synonyms disttype
+ * @param {number | string | Pattern} type type of distortion to apply
+ * @example
+ * s("bd*4").bank("tr909").distort(2).distorttype("<0 1 2>")
+ *
+ * @example
+ * s("sine").note("F1*2").release(1)
+ *   .penv(24).pdecay(0.05)
+ *   .distort(rand.range(1, 8))
+ *   .distorttype("<fold chebyshev scurve diode asym sinefold>")
+ */
+export const { distorttype } = registerControl('distorttype', 'disttype');
+
 /**
  * Dynamics Compressor. The params are `compressor("threshold:ratio:knee:attack:release")`
  * More info [here](https://developer.mozilla.org/en-US/docs/Web/API/DynamicsCompressorNode?retiredLocale=de#instance_properties)
@@ -2039,7 +2264,6 @@ export const { tsdelay } = registerControl('tsdelay');
 export const { real } = registerControl('real');
 export const { imag } = registerControl('imag');
 export const { enhance } = registerControl('enhance');
-export const { partials } = registerControl('partials');
 export const { comb } = registerControl('comb');
 export const { smear } = registerControl('smear');
 export const { scram } = registerControl('scram');
@@ -2286,6 +2510,24 @@ export const { miditouch } = registerControl('miditouch');
 
 // TODO: what is this?
 export const { polyTouch } = registerControl('polyTouch');
+
+/**
+ * The host to send open sound control messages to. Requires running the OSC bridge.
+ * @name oschost
+ * @param {string | Pattern} oschost e.g. 'localhost'
+ * @example
+ * note("c4").oschost('127.0.0.1').oscport(57120).osc();
+ */
+export const { oschost } = registerControl('oschost');
+
+/**
+ * The port to send open sound control messages to. Requires running the OSC bridge.
+ * @name oscport
+ * @param {number | Pattern} oscport e.g. 57120
+ * @example
+ * note("c4").oschost('127.0.0.1').oscport(57120).osc();
+ */
+export const { oscport } = registerControl('oscport');
 
 export const getControlName = (alias) => {
   if (controlAlias.has(alias)) {

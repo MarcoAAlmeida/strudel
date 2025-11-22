@@ -78,11 +78,11 @@ export class Orbit {
     return this.reverbNode;
   }
   sendReverb(node, amount) {
-    effectSend(node, this.reverbNode, amount);
+    return effectSend(node, this.reverbNode, amount);
   }
 
   sendDelay(node, amount) {
-    effectSend(node, this.delayNode, amount);
+    return effectSend(node, this.delayNode, amount);
   }
 
   duck(t, onsettime = 0, attacktime = 0.1, depth = 1) {
@@ -135,12 +135,14 @@ export class SuperdoughOutput {
   }
 
   reset() {
+    this.disconnect();
+    this.initializeAudio();
+  }
+  disconnect() {
     this.channelMerger.disconnect();
     this.destinationGain.disconnect();
     this.destinationGain = null;
     this.channelMerger = null;
-    this.nodes = {};
-    this.initializeAudio();
   }
   connectToDestination = (input, channels = [0, 1]) => {
     //This upmix can be removed if correct channel counts are set throughout the app,
@@ -172,6 +174,7 @@ export class SuperdoughAudioController {
     Array.from(this.nodes).forEach((node) => {
       node.disconnect();
     });
+    this.nodes = {};
     this.output.reset();
   }
 
