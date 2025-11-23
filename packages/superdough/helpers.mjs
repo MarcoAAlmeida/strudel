@@ -191,8 +191,10 @@ export function applyParameterModulators(audioContext, param, start, end, envelo
   const lfo = getParamLfo(audioContext, param, start, end, lfoValues);
   return { lfo, disconnect: () => lfo?.disconnect() };
 }
-
-export function createFilter(context, start, end, params, cps) {
+function biloparExponential(x, k) {
+  return Math.sign(x) * 2 ** (Math.abs(x) * k);
+}
+export function createFilter(context, start, end, params, cps, cycle) {
   let {
     frequency,
     anchor,
@@ -231,6 +233,7 @@ export function createFilter(context, start, end, params, cps) {
     const offset = envAbs * anchor;
     let min = clamp(2 ** -offset * frequency, 0, 20000);
     let max = clamp(2 ** (envAbs - offset) * frequency, 0, 20000);
+
     if (env < 0) [min, max] = [max, min];
     getParamADSR(frequencyParam, attack, decay, sustain, release, min, max, start, end, 'exponential');
   }
@@ -238,8 +241,22 @@ export function createFilter(context, start, end, params, cps) {
   if (sync != null) {
     rate = cps * sync;
   }
-  const lfoValues = { depth, dcoffset, skew, shape, frequency: rate, min: 10, max: 20000 };
-  getParamLfo(context, frequencyParam, start, end, lfoValues);
+  const hasLFO = [depth, skew, shape, rate].some((v) => v !== undefined);
+  if (hasLFO) {
+    depth = depth ?? 1
+
+    const mag = Math.abs(depth);
+    const sign = Math.sign(depth);
+
+    const shaped = 2 ** (mag * (1 - dcoffset));
+    const dp = clamp((sign * shaped * frequency) - frequency, -20000, 20000);
+    console.info(dp)
+    const time = cycle / cps;
+    // let d = 2 ** -dcoffset
+    const lfoValues = { depth: dp, dcoffset, skew, shape, frequency: rate, min: 10, max: 20000, time };
+    getParamLfo(context, frequencyParam, start, end, lfoValues);
+  }
+
   return filter;
 }
 
@@ -386,7 +403,7 @@ export function applyFM(param, value, begin) {
     duration,
   } = value;
   let modulator;
-  let stop = () => {};
+  let stop = () => { };
 
   if (fmModulationIndex) {
     const ac = getAudioContext();

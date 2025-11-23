@@ -559,7 +559,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     };
     const lpParams = pickAndRename(value, lpMap);
     lpParams.type = 'lowpass';
-    let lp = () => createFilter(ac, t, end, lpParams, cps);
+    let lp = () => createFilter(ac, t, end, lpParams, cps, cycle);
     chain.push(lp());
     if (ftype === '24db') {
       chain.push(lp());
