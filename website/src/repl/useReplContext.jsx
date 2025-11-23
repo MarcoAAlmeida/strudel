@@ -47,7 +47,7 @@ if (typeof window !== 'undefined') {
     multiChannelOrbits: parseBoolean(multiChannelOrbits),
   });
   modulesLoading = loadModules();
-  // prebakeScript = evaluate(settingsMap.get().startupScript ?? '')
+  // prebakeScript = evaluate(settingsMap.get().prebakeScript ?? '')
   presets = prebake();
   drawContext = getDrawContext();
   clearCanvas = () => drawContext.clearRect(0, 0, drawContext.canvas.height, drawContext.canvas.width);
@@ -64,7 +64,7 @@ async function getModule(name) {
 const initialCode = `// LOADING`;
 
 export function useReplContext() {
-  const { isSyncEnabled, audioEngineTarget, startupScript } = useSettings();
+  const { isSyncEnabled, audioEngineTarget, prebakeScript } = useSettings();
   const shouldUseWebaudio = audioEngineTarget !== audioEngineTargets.osc;
   const defaultOutput = shouldUseWebaudio ? webaudioOutput : superdirtOutput;
   const getTime = shouldUseWebaudio ? getAudioContextCurrentTime : getPerformanceTimeSeconds;
@@ -86,7 +86,7 @@ export function useReplContext() {
       drawContext,
       prebake: async () =>
         Promise.all([modulesLoading, presets]).then(() => {
-          return evaluate(startupScript ?? '');
+          return evaluate(prebakeScript ?? '');
         }),
       onUpdateState: (state) => {
         setReplState({ ...state });

@@ -1,5 +1,5 @@
 import { errorLogger } from '@strudel/core';
-import { useSettings, storeStartupScript } from '../../../settings.mjs';
+import { useSettings, storePrebakeScript } from '../../../settings.mjs';
 import { SpecialActionInput } from '../button/action-button';
 
 async function importScript(script) {
@@ -8,7 +8,7 @@ async function importScript(script) {
 
   reader.onload = () => {
     const text = reader.result;
-    storeStartupScript(text);
+    storePrebakeScript(text);
   };
 
   reader.onerror = () => {

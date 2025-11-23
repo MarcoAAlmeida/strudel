@@ -11,11 +11,6 @@ const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL
 const baseCDN = 'https://strudel.b-cdn.net';
 
 export async function prebake() {
-  // const settings = settingsMap.get()
-
-  // const prebakeScript = settings.startupScript || '';
-  // await  evaluate(prebakeScript);
-
   // https://archive.org/details/SalamanderGrandPianoV3
   // License: CC-by http://creativecommons.org/licenses/by/3.0/ Author: Alexander Holm
   await Promise.all([
