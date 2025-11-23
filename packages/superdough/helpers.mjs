@@ -362,9 +362,9 @@ const mod = (freq, range = 1, type = 'sine') => {
   }
 
   osc.start();
-  const g = new GainNode(ctx, { gain: range });
+  const g = gainNode(range);
   osc.connect(g); // -range, range
-  return { node: g, stop: (t) => osc.stop(t) };
+  return { node: g, stop: (t) => osc.stop(t), osc: osc };
 };
 const fm = (frequencyparam, harmonicityRatio, modulationIndex, wave = 'sine') => {
   const carrfreq = frequencyparam.value;
@@ -416,6 +416,11 @@ export function applyFM(param, value, begin) {
       modulator.connect(envGain);
       envGain.connect(param);
     }
+    fmmod.osc.onended = () => {
+      envGain.disconnect();
+      modulator.disconnect();
+      fmmod.osc.disconnect();
+    };
   }
   return { stop };
 }
