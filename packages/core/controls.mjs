@@ -1294,6 +1294,8 @@ export const { fanchor } = registerControl('fanchor');
  *
  * @name lprate
  * @param {number | Pattern} rate rate in hertz
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lprate("<4 8 2 1>")
  */
 export const { lprate } = registerControl('lprate');
 
@@ -1302,6 +1304,8 @@ export const { lprate } = registerControl('lprate');
  *
  * @name lpsync
  * @param {number | Pattern} rate rate in cycles
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lpsync("<4 8 2 1>")
  */
 export const { lpsync } = registerControl('lpsync');
 
@@ -1310,7 +1314,10 @@ export const { lpsync } = registerControl('lpsync');
  *
  * @name lpdepth
  * @param {number | Pattern} depth depth of modulation
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lpdepth("<1 .5 1.8 0>")
  */
+
 export const { lpdepth } = registerControl('lpdepth');
 
 /**
