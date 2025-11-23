@@ -84,9 +84,10 @@ export function useReplContext() {
       pattern: silence,
       drawTime,
       drawContext,
-      prebake: async () => Promise.all([modulesLoading, presets,]).then(() => {
-        return evaluate(startupScript ?? '')
-      }),
+      prebake: async () =>
+        Promise.all([modulesLoading, presets]).then(() => {
+          return evaluate(startupScript ?? '');
+        }),
       onUpdateState: (state) => {
         setReplState({ ...state });
       },
@@ -201,7 +202,6 @@ export function useReplContext() {
       handleEvaluate();
     }
   };
-
 
   const handleEvaluate = () => {
     editorRef.current.evaluate();

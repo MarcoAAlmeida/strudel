@@ -127,7 +127,7 @@ function PanelContent({ context, tab }) {
     case tabNames.reference:
       return <Reference />;
     case tabNames.settings:
-      return <SettingsTab started={context.started} context={context} />;
+      return <SettingsTab started={context.started} />;
     case tabNames.files:
       return <FilesTab />;
     default:

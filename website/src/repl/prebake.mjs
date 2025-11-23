@@ -1,4 +1,4 @@
-import { Pattern,  noteToMidi, valueToMidi } from '@strudel/core';
+import { Pattern, noteToMidi, valueToMidi } from '@strudel/core';
 import { aliasBank, registerSynthSounds, registerZZFXSounds, samples } from '@strudel/webaudio';
 import { registerSamplesFromDB } from './idbutils.mjs';
 import './piano.mjs';
@@ -11,9 +11,7 @@ const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL
 const baseCDN = 'https://strudel.b-cdn.net';
 
 export async function prebake() {
-
   // const settings = settingsMap.get()
-  
 
   // const prebakeScript = settings.startupScript || '';
   // await  evaluate(prebakeScript);

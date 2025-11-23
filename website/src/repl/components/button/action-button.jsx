@@ -8,27 +8,36 @@ export function ActionButton({ children, label, labelIsHidden, className, ...but
     </button>
   );
 }
-export function ActionInput({ label, className, ...inputProps }) {
+
+export function SpecialActionButton(props) {
+  const { className, ...buttonProps } = props;
+
   return (
-    <label className={cx("hover:opacity-50 cursor-pointer text-nowrap w-fit", className)}>
-      <input
-        style={{ display: 'none' }}
-        {...inputProps}
-      />
-      {label}
+    <ActionButton
+      {...buttonProps}
+      className={cx('bg-background p-2 max-w-[300px] rounded-md hover:opacity-50', className)}
+    />
+  );
+}
+
+export function ActionInput({ label, className, ...props }) {
+  return (
+    <label className={cx('inline-flex items-center cursor-pointer', className)}>
+      <input {...props} className="sr-only peer" />
+
+      <span className="inline-flex items-center transition-opacity peer-hover:opacity-60 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500">
+        {label}
+      </span>
     </label>
   );
 }
 
-export function SpecialActionButton(props) {
-  const { className, ...buttonProps } = props
-
-  return <ActionButton {...buttonProps} className={cx("bg-background p-2 max-w-[300px] rounded-md hover:opacity-50", className)} />
-
+export function SpecialActionInput({ className, ...props }) {
+  return (
+    <ActionInput
+      {...props}
+      className={className}
+      label={<span className="bg-background p-2 max-w-[300px] rounded-md">{props.label}</span>}
+    />
+  );
 }
-export function SpecialActionInput(props) {
-  const { className, ...inputProps } = props
-  return <ActionInput {...inputProps} className={cx("bg-background p-2  max-w-[300px] rounded-md hover:opacity-50", className)} />
-}
-
-

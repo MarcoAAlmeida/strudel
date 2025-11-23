@@ -88,7 +88,7 @@ const fontFamilyOptions = {
 
 const RELOAD_MSG = 'Changing this setting requires the window to reload itself. OK?';
 
-export function SettingsTab({ started,context }) {
+export function SettingsTab({ started }) {
   const {
     theme,
     keybindings,
@@ -208,7 +208,6 @@ export function SettingsTab({ started,context }) {
         </FormItem>
       </div>
       <ImportPrebakeScriptButton />
-      {/* <SpecialActionButton label="edit startup script" onClick={() => context.editStartupScript(startupScript)}></SpecialActionButton> */}
       <FormItem label="Keybindings">
         <ButtonGroup
           value={keybindings}
