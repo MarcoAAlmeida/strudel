@@ -238,8 +238,8 @@ export function repl({
         pattern = eachTransform(pattern);
       }
       if (allTransforms.length) {
-        for (let i in allTransforms) {
-          pattern = allTransforms[i](pattern);
+        for (const transform of allTransforms) {
+          pattern = transform(pattern);
         }
       }
 
