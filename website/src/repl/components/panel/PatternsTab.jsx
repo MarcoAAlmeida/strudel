@@ -83,7 +83,7 @@ function UserPatterns({ context }) {
   const activePattern = useActivePattern();
   const viewingPatternStore = useViewingPatternData();
   const viewingPatternData = parseJSON(viewingPatternStore);
-  const { userPatterns, patternFilter, patternAutoStart } = useSettings();
+  const { userPatterns, patternFilter, patternAutoStart, } = useSettings();
   const viewingPatternID = viewingPatternData?.id;
   return (
     <div className="flex flex-col gap-2 flex-grow overflow-hidden h-full pb-2 ">

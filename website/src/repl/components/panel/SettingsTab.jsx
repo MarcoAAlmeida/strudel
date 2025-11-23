@@ -7,6 +7,8 @@ import { AudioDeviceSelector } from './AudioDeviceSelector.jsx';
 import { AudioEngineTargetSelector } from './AudioEngineTargetSelector.jsx';
 import { confirmDialog } from '../../util.mjs';
 import { DEFAULT_MAX_POLYPHONY, setMaxPolyphony, setMultiChannelOrbits } from '@strudel/webaudio';
+import { ActionButton, SpecialActionButton } from '../button/action-button.jsx';
+import { ImportPrebakeScriptButton } from './ImportPrebakeScriptButton.jsx';
 
 function Checkbox({ label, value, onChange, disabled = false }) {
   return (
@@ -86,7 +88,7 @@ const fontFamilyOptions = {
 
 const RELOAD_MSG = 'Changing this setting requires the window to reload itself. OK?';
 
-export function SettingsTab({ started }) {
+export function SettingsTab({ started,context }) {
   const {
     theme,
     keybindings,
@@ -113,6 +115,7 @@ export function SettingsTab({ started }) {
     isTabIndentationEnabled,
     isMultiCursorEnabled,
     patternAutoStart,
+    startupScript,
   } = useSettings();
   const shouldAlwaysSync = isUdels();
   const canChangeAudioDevice = AudioContext.prototype.setSinkId != null;
@@ -204,6 +207,8 @@ export function SettingsTab({ started }) {
           />
         </FormItem>
       </div>
+      <ImportPrebakeScriptButton />
+      {/* <SpecialActionButton label="edit startup script" onClick={() => context.editStartupScript(startupScript)}></SpecialActionButton> */}
       <FormItem label="Keybindings">
         <ButtonGroup
           value={keybindings}
@@ -313,8 +318,7 @@ export function SettingsTab({ started }) {
       </FormItem>
       <FormItem label="Zen Mode">Try clicking the logo in the top left!</FormItem>
       <FormItem label="Reset Settings">
-        <button
-          className="bg-background p-2 max-w-[300px] rounded-md hover:opacity-50"
+        <SpecialActionButton
           onClick={() => {
             confirmDialog('Sure?').then((r) => {
               if (r) {
@@ -325,7 +329,7 @@ export function SettingsTab({ started }) {
           }}
         >
           restore default settings
-        </button>
+        </SpecialActionButton>
       </FormItem>
     </div>
   );

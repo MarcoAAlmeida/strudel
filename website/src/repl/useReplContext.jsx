@@ -6,7 +6,7 @@ This program is free software: you can redistribute it and/or modify it under th
 
 import { code2hash, getPerformanceTimeSeconds, logger, silence } from '@strudel/core';
 import { getDrawContext } from '@strudel/draw';
-import { transpiler } from '@strudel/transpiler';
+import { evaluate, transpiler } from '@strudel/transpiler';
 import {
   getAudioContextCurrentTime,
   webaudioOutput,
@@ -47,6 +47,7 @@ if (typeof window !== 'undefined') {
     multiChannelOrbits: parseBoolean(multiChannelOrbits),
   });
   modulesLoading = loadModules();
+  // prebakeScript = evaluate(settingsMap.get().startupScript ?? '')
   presets = prebake();
   drawContext = getDrawContext();
   clearCanvas = () => drawContext.clearRect(0, 0, drawContext.canvas.height, drawContext.canvas.width);
@@ -63,11 +64,10 @@ async function getModule(name) {
 const initialCode = `// LOADING`;
 
 export function useReplContext() {
-  const { isSyncEnabled, audioEngineTarget } = useSettings();
+  const { isSyncEnabled, audioEngineTarget, startupScript } = useSettings();
   const shouldUseWebaudio = audioEngineTarget !== audioEngineTargets.osc;
   const defaultOutput = shouldUseWebaudio ? webaudioOutput : superdirtOutput;
   const getTime = shouldUseWebaudio ? getAudioContextCurrentTime : getPerformanceTimeSeconds;
-
   const init = useCallback(() => {
     const drawTime = [-2, 2];
     const drawContext = getDrawContext();
@@ -84,7 +84,9 @@ export function useReplContext() {
       pattern: silence,
       drawTime,
       drawContext,
-      prebake: async () => Promise.all([modulesLoading, presets]),
+      prebake: async () => Promise.all([modulesLoading, presets,]).then(() => {
+        return evaluate(startupScript ?? '')
+      }),
       onUpdateState: (state) => {
         setReplState({ ...state });
       },
@@ -199,6 +201,7 @@ export function useReplContext() {
       handleEvaluate();
     }
   };
+
 
   const handleEvaluate = () => {
     editorRef.current.evaluate();

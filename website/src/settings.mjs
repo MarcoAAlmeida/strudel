@@ -45,6 +45,7 @@ export const defaultSettings = {
   isPanelOpen: true,
   togglePanelTrigger: 'click', //click | hover
   userPatterns: '{}',
+  startupScript: '//edit this script to run code on startup\n',
   audioEngineTarget: audioEngineTargets.webaudio,
   isButtonRowHidden: false,
   isCSSAnimationDisabled: false,
@@ -107,6 +108,8 @@ export function useSettings() {
 export const setActiveFooter = (tab) => settingsMap.setKey('activeFooter', tab);
 export const setPanelPinned = (bool) => settingsMap.setKey('isPanelPinned', bool);
 export const setIsPanelOpened = (bool) => settingsMap.setKey('isPanelOpen', bool);
+
+export const storeStartupScript = (script) => settingsMap.setKey('startupScript', script);
 
 export const setIsZen = (active) => settingsMap.setKey('isZen', !!active);
 
