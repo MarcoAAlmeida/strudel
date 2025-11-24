@@ -1436,7 +1436,7 @@ class TransientProcessor extends AudioWorkletProcessor {
         const x = Math.abs(sample);
         attEnv = lerp(attEnv, x, this.attackCoeff);
         susEnv = lerp(susEnv, x, this.sustainCoeff);
-        const peakiness = clamp((this.scaling * (attEnv - susEnv)) / (susEnv + 1e-6), -1.5, 1.5);
+        const peakiness = clamp((this.scaling * (attEnv - susEnv)) / (susEnv + 1e-6), -1, 1);
         const attScale = peakiness > 0 ? peakiness : 0;
         const susScale = peakiness < 0 ? -peakiness : 0;
         const attackGain = 1 + attScale * this.attackMaxGain;
@@ -1444,7 +1444,7 @@ class TransientProcessor extends AudioWorkletProcessor {
         const gain = clamp(attackGain * sustainGain, 0, 8);
         avgGain = lerp(avgGain, gain, this.gainCoeff);
         const makeup = avgGain > 1e-3 ? 1 / avgGain : 1;
-        const wet = x * gain * makeup;
+        const wet = sample * gain * makeup;
         let y = lerp(sample, wet, this.mix);
         y /= 1 + Math.abs(y); // soft clip
         output[ch][n] = y;
