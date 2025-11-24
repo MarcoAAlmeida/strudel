@@ -11,7 +11,7 @@ const PI = Math.PI;
 const TWO_PI = 2 * PI;
 const INVSR = 1 / sampleRate;
 
-const timeToCoeff = (t) => Math.exp(-INVSR / t);
+const timeToCoeff = (t) => 1 - Math.exp(-INVSR / t);
 const dbToLin = (db) => Math.pow(10, db / 20);
 
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
@@ -1420,17 +1420,16 @@ class TransientProcessor extends AudioWorkletProcessor {
     if (!input || !output) {
       return true;
     }
-    const channels = output.length;
+    const channels = input.length;
     this.attackEnv ??= new Float32Array(channels);
     this.sustainEnv ??= new Float32Array(channels);
     let avgGain = this.avgGain;
     for (let ch = 0; ch < channels; ch++) {
-      const inCh = input[ch];
-      const outCh = output[ch];
       let attEnv = this.attackEnv[ch];
       let susEnv = this.sustainEnv[ch];
-      for (let i = 0; i < blockSize; i++) {
-        const x = Math.abs(inCh[i]);
+      for (let n = 0; n < blockSize; n++) {
+        const sample = input[ch][n];
+        const x = Math.abs(sample);
         attEnv = lerp(attEnv, x, this.attackCoeff);
         susEnv = lerp(susEnv, x, this.sustainCoeff);
         const peakiness = clamp((this.scaling * (attEnv - susEnv)) / (susEnv + 1e-6), -1.5, 1.5);
@@ -1442,7 +1441,7 @@ class TransientProcessor extends AudioWorkletProcessor {
         avgGain = lerp(avgGain, gain, this.gainCoeff);
         const makeup = avgGain > 1e-3 ? 1 / avgGain : 1;
         const wet = x * gain * makeup;
-        outCh[i] = lerp(x, wet, this.mix);
+        output[ch][n] = lerp(sample, wet, this.mix);
       }
       this.attackEnv[ch] = attEnv;
       this.sustainEnv[ch] = susEnv;
