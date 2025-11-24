@@ -665,6 +665,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       curve: 1.5,
     });
     lfo.connect(amGain.gain);
+    audioNodes.push(lfo);
     chain.push(amGain);
   }
 
