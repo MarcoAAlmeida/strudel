@@ -1294,6 +1294,8 @@ export const { fanchor } = registerControl('fanchor');
  *
  * @name lprate
  * @param {number | Pattern} rate rate in hertz
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lprate("<4 8 2 1>")
  */
 export const { lprate } = registerControl('lprate');
 
@@ -1302,6 +1304,8 @@ export const { lprate } = registerControl('lprate');
  *
  * @name lpsync
  * @param {number | Pattern} rate rate in cycles
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lpsync("<4 8 2 1>")
  */
 export const { lpsync } = registerControl('lpsync');
 
@@ -1310,8 +1314,23 @@ export const { lpsync } = registerControl('lpsync');
  *
  * @name lpdepth
  * @param {number | Pattern} depth depth of modulation
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lpdepth("<1 .5 1.8 0>")
  */
+
 export const { lpdepth } = registerControl('lpdepth');
+/**
+ * Depth of the LFO for the lowpass filter, in HZ
+ *
+ * @name lpdepthfrequency
+ * @synonyms
+ * lpdethfreq
+ * @param {number | Pattern} depth depth of modulation
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lpdepthfrequency("<200 500 100 0>")
+ */
+
+export const { lpdepthfrequency } = registerControl('lpdepthfrequency', 'lpdepthfreq');
 
 /**
  * Shape of the LFO for the lowpass filter
@@ -1362,6 +1381,19 @@ export const { bpsync } = registerControl('bpsync');
 export const { bpdepth } = registerControl('bpdepth');
 
 /**
+ * Depth of the LFO for the bandpass filter, in HZ
+ *
+ * @name bpdepthfrequency
+ * @synonyms
+ * bpdethfreq
+ * @param {number | Pattern} depth depth of modulation
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).bpdepthfrequency("<200 500 100 0>")
+ */
+
+export const { bpdepthfrequency } = registerControl('bpdepthfrequency', 'bpdepthfreq');
+
+/**
  * Shape of the LFO for the bandpass filter
  *
  * @name bpshape
@@ -1407,7 +1439,20 @@ export const { hpsync } = registerControl('hpsync');
  * @name hpdepth
  * @param {number | Pattern} depth depth of modulation
  */
-export const { hpdepth } = registerControl('hpdepth');
+export const { hpdepth, hpdepthfreq } = registerControl('hpdepth');
+
+/**
+ * Depth of the LFO for the hipass filter, in hz
+ *
+ * @name hpdepthfrequency
+ * @synonyms
+ * hpdethfreq
+ * @param {number | Pattern} depth depth of modulation
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).hpdepthfrequency("<200 500 100 0>")
+ */
+
+export const { hpdepthfrequency } = registerControl('hpdepthfrequency', 'hpdepthfreq');
 
 /**
  * Shape of the LFO for the highpass filter
