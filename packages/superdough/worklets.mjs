@@ -1446,7 +1446,7 @@ class TransientProcessor extends AudioWorkletProcessor {
         const makeup = avgGain > 1e-3 ? 1 / avgGain : 1;
         const wet = x * gain * makeup;
         let y = lerp(sample, wet, this.mix);
-        y /= (1 + Math.abs(y)); // soft clip
+        y /= 1 + Math.abs(y); // soft clip
         output[ch][n] = y;
       }
       this.attackEnv[ch] = attEnv;
