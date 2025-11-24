@@ -2584,3 +2584,5 @@ export const scrub = register(
   },
   false,
 );
+
+export const { transient } = registerControl(['transient', 'transsustain', 'transattack']);
