@@ -1412,10 +1412,6 @@ class TransientProcessor extends AudioWorkletProcessor {
     this.sustainAmt = clamp(sustain, -1, 1);
     this.scaling = 0.5 + 5 * clamp(sensitivity, 0, 1);
     this.mix = clamp(mix, 0, 1);
-    const maxAttackDb = this.attackAmt * 6;
-    const maxSustainDb = this.sustainAmt * 36;
-    this.attackMaxGain = dbToLin(maxAttackDb) - 1; // increasing from 1
-    this.sustainMaxGain = dbToLin(maxSustainDb) - 1;
   }
 
   process(inputs, outputs, _params) {
@@ -1436,11 +1432,11 @@ class TransientProcessor extends AudioWorkletProcessor {
         const x = Math.abs(sample);
         attEnv = lerp(attEnv, x, this.attackCoeff);
         susEnv = lerp(susEnv, x, this.sustainCoeff);
-        const peakiness = clamp((this.scaling * (attEnv - susEnv)) / (susEnv + 1e-6), -1, 1);
+        const peakiness = clamp((this.scaling * (attEnv - susEnv)) / (susEnv + 1e-6), -1.5, 1.5);
         const attScale = peakiness > 0 ? peakiness : 0;
         const susScale = peakiness < 0 ? -peakiness : 0;
-        const attackGain = 1 + attScale * this.attackMaxGain;
-        const sustainGain = 1 + susScale * this.sustainMaxGain;
+        const attackGain = dbToLin(this.attackAmt * attScale * 18);
+        const sustainGain = dbToLin(this.sustainAmt * susScale * 36);
         const gain = clamp(attackGain * sustainGain, 0, 8);
         avgGain = lerp(avgGain, gain, this.gainCoeff);
         const makeup = avgGain > 1e-3 ? 1 / avgGain : 1;
