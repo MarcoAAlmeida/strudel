@@ -553,6 +553,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       rate: 'lprate',
       sync: 'lpsync',
       depth: 'lpdepth',
+      depthfrequency: 'lpdepthfrequency',
       shape: 'lpshape',
       dcoffset: 'lpdc',
       skew: 'lpskew',
@@ -581,13 +582,14 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       rate: 'hprate',
       sync: 'hpsync',
       depth: 'hpdepth',
+      depthfrequency: 'hpdepthfrequency',
       shape: 'hpshape',
       dcoffset: 'hpdc',
       skew: 'hpskew',
     };
     const hpParams = pickAndRename(value, hpMap);
     hpParams.type = 'highpass';
-    let hp = () => createFilter(ac, t, end, hpParams, cps);
+    let hp = () => createFilter(ac, t, end, hpParams, cps, cycle);
     chain.push(hp());
     if (ftype === '24db') {
       chain.push(hp());
@@ -609,13 +611,14 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       rate: 'bprate',
       sync: 'bpsync',
       depth: 'bpdepth',
+      depthfrequency: 'bpdepthfrequency',
       shape: 'bpshape',
       dcoffset: 'bpdc',
       skew: 'bpskew',
     };
     const bpParams = pickAndRename(value, bpMap);
     bpParams.type = 'bandpass';
-    let bp = () => createFilter(ac, t, end, bpParams, cps);
+    let bp = () => createFilter(ac, t, end, bpParams, cps, cycle);
     chain.push(bp());
     if (ftype === '24db') {
       chain.push(bp());

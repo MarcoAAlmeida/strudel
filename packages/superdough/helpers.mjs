@@ -201,12 +201,14 @@ export function createFilter(context, start, end, params, cps, cycle) {
     q = 1,
     drive = 0.69,
     depth,
+    depthfrequency,
     dcoffset = -0.5,
     skew,
     shape,
     rate,
     sync,
   } = params;
+
   let frequencyParam, filter;
   if (model === 'ladder') {
     filter = getWorklet(context, 'ladder-processor', { frequency, q, drive });
@@ -237,12 +239,13 @@ export function createFilter(context, start, end, params, cps, cycle) {
   if (sync != null) {
     rate = cps * sync;
   }
-  const hasLFO = [depth, skew, shape, rate].some((v) => v !== undefined);
+  const hasLFO = [depth, depthfrequency, skew, shape, rate].some((v) => v !== undefined);
   if (hasLFO) {
     depth = depth ?? 1;
     const time = cycle / cps;
+    const modDepth = depthfrequency ?? (depth ?? 1) * frequency;
     const lfoValues = {
-      depth: (depth ?? 1) * frequency,
+      depth: modDepth,
       dcoffset,
       skew,
       shape,
