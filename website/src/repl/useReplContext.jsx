@@ -47,7 +47,6 @@ if (typeof window !== 'undefined') {
     multiChannelOrbits: parseBoolean(multiChannelOrbits),
   });
   modulesLoading = loadModules();
-  // prebakeScript = evaluate(settingsMap.get().prebakeScript ?? '')
   presets = prebake();
   drawContext = getDrawContext();
   clearCanvas = () => drawContext.clearRect(0, 0, drawContext.canvas.height, drawContext.canvas.width);
@@ -86,7 +85,9 @@ export function useReplContext() {
       drawContext,
       prebake: async () =>
         Promise.all([modulesLoading, presets]).then(() => {
-          return evaluate(prebakeScript ?? '');
+          if (prebakeScript?.length) {
+            return evaluate(prebakeScript ?? '');
+          }
         }),
       onUpdateState: (state) => {
         setReplState({ ...state });
