@@ -238,7 +238,7 @@ export function createFilter(context, start, end, params, cps) {
   if (sync != null) {
     rate = cps * sync;
   }
-  const lfoValues = { depth, dcoffset, skew, shape, frequency: rate };
+  const lfoValues = { depth, dcoffset, skew, shape, frequency: rate, min: 10, max: 20000 };
   getParamLfo(context, frequencyParam, start, end, lfoValues);
   return filter;
 }
@@ -362,9 +362,9 @@ const mod = (freq, range = 1, type = 'sine') => {
   }
 
   osc.start();
-  const g = new GainNode(ctx, { gain: range });
+  const g = gainNode(range);
   osc.connect(g); // -range, range
-  return { node: g, stop: (t) => osc.stop(t) };
+  return { node: g, stop: (t) => osc.stop(t), osc: osc };
 };
 const fm = (frequencyparam, harmonicityRatio, modulationIndex, wave = 'sine') => {
   const carrfreq = frequencyparam.value;
@@ -416,6 +416,11 @@ export function applyFM(param, value, begin) {
       modulator.connect(envGain);
       envGain.connect(param);
     }
+    fmmod.osc.onended = () => {
+      envGain.disconnect();
+      modulator.disconnect();
+      fmmod.osc.disconnect();
+    };
   }
   return { stop };
 }
