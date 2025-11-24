@@ -63,7 +63,7 @@ async function getModule(name) {
 const initialCode = `// LOADING`;
 
 export function useReplContext() {
-  const { isSyncEnabled, audioEngineTarget, prebakeScript } = useSettings();
+  const { isSyncEnabled, audioEngineTarget, prebakeScript, includePrebakeScriptInShare } = useSettings();
   const shouldUseWebaudio = audioEngineTarget !== audioEngineTargets.osc;
   const defaultOutput = shouldUseWebaudio ? webaudioOutput : superdirtOutput;
   const getTime = shouldUseWebaudio ? getAudioContextCurrentTime : getPerformanceTimeSeconds;
@@ -218,7 +218,13 @@ export function useReplContext() {
     editorRef.current.repl.evaluate(code);
   };
 
-  const handleShare = async () => shareCode(replState.code);
+  const handleShare = async () => {
+    let code = replState.code;
+    if (includePrebakeScriptInShare) {
+      code = prebakeScript + '\n' + code;
+    }
+    shareCode(code);
+  };
   const context = {
     started,
     pending,

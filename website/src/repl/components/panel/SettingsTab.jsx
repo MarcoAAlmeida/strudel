@@ -115,7 +115,7 @@ export function SettingsTab({ started }) {
     isTabIndentationEnabled,
     isMultiCursorEnabled,
     patternAutoStart,
-    prebakeScript,
+    includePrebakeScriptInShare,
   } = useSettings();
   const shouldAlwaysSync = isUdels();
   const canChangeAudioDevice = AudioContext.prototype.setSinkId != null;
@@ -207,7 +207,15 @@ export function SettingsTab({ started }) {
           />
         </FormItem>
       </div>
-      <ImportPrebakeScriptButton />
+      <FormItem label="Prebake">
+        <ImportPrebakeScriptButton />
+        <Checkbox
+          label="Include prebake script in share"
+          onChange={(cbEvent) => settingsMap.setKey('includePrebakeScriptInShare', cbEvent.target.checked)}
+          value={includePrebakeScriptInShare}
+        />
+      </FormItem>
+
       <FormItem label="Keybindings">
         <ButtonGroup
           value={keybindings}

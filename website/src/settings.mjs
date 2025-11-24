@@ -51,6 +51,7 @@ export const defaultSettings = {
   isCSSAnimationDisabled: false,
   maxPolyphony: 128,
   multiChannelOrbits: false,
+  includePrebakeScriptInShare: true,
 };
 
 let search = null;
@@ -97,6 +98,7 @@ export function useSettings() {
     isPanelOpen: parseBoolean(state.isPanelOpen),
     userPatterns: userPatterns,
     multiChannelOrbits: parseBoolean(state.multiChannelOrbits),
+    includePrebakeScriptInShare: parseBoolean(state.includePrebakeScriptInShare),
     patternAutoStart: isUdels()
       ? false
       : state.patternAutoStart === undefined
