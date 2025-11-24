@@ -1833,6 +1833,7 @@ export const { octave } = registerControl('octave');
  * An `orbit` is a global parameter context for patterns. Patterns with the same orbit will share the same global effects.
  *
  * @name orbit
+ * @synonyms o
  * @param {number | Pattern} number
  * @example
  * stack(
