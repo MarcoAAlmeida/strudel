@@ -25,9 +25,7 @@ export function ActionInput({ label, className, ...props }) {
     <label className={cx('inline-flex items-center cursor-pointer', className)}>
       <input {...props} className="sr-only peer" />
 
-      <span className="inline-flex items-center peer-hover:opacity-50">
-        {label}
-      </span>
+      <span className="inline-flex items-center peer-hover:opacity-50">{label}</span>
     </label>
   );
 }
