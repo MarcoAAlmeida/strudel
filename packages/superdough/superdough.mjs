@@ -453,7 +453,6 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     compressorRelease,
     transient,
     transsustain,
-    transattack,
   } = value;
 
   delaytime = delaytime ?? cycleToSeconds(delaysync, cps);
@@ -545,7 +544,6 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
           processorOptions: {
             attack: transient,
             sustain: transsustain,
-            attackTime: transattack,
           },
         },
       ),
