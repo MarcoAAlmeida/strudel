@@ -1587,7 +1587,6 @@ export const func = curry((a, b) => reify(b).func(a));
  *
  * @param {string | string[]} name name of the function, or an array of names to be used as synonyms
  * @param {function} func function with 1 or more params, where last is the current pattern
- * @noAutocomplete
  *
  */
 export function register(name, func, patternify = true, preserveSteps = false, join = (x) => x.innerJoin()) {
