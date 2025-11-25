@@ -596,11 +596,11 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     let hp = () => createFilter(ac, t, end, hpParams, cps, cycle);
     const { filter: hpf1, lfo: lfo1 } = hp();
     chain.push(hpf1);
-    lfo1 && audioNodes.push(lfo1)
+    lfo1 && audioNodes.push(lfo1);
     if (ftype === '24db') {
       const { filter: hpf2, lfo: lfo2 } = hp();
       chain.push(hpf2);
-      lfo2 && audioNodes.push(lfo2)
+      lfo2 && audioNodes.push(lfo2);
     }
   }
 
@@ -629,11 +629,11 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     let bp = () => createFilter(ac, t, end, bpParams, cps, cycle);
     const { filter: bpf1, lfo: lfo1 } = bp();
     chain.push(bpf1);
-    lfo1 && audioNodes.push(lfo1)
+    lfo1 && audioNodes.push(lfo1);
     if (ftype === '24db') {
-      const { filter: bpf2, lfo: lfo2 } = hp();
+      const { filter: bpf2, lfo: lfo2 } = bp();
       chain.push(bpf2);
-      lfo2 && audioNodes.push(lfo2)
+      lfo2 && audioNodes.push(lfo2);
     }
   }
 
