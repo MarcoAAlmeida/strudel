@@ -287,7 +287,7 @@ export function connectToDestination(input, channels) {
 
 function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000, sweep = 2000) {
   const ac = getAudioContext();
-  const lfoGain = getLfo(ac, time, end, { frequency, depth: sweep * 2 });
+  const lfo = getLfo(ac, time, end, { frequency, depth: sweep * 2 });
 
   //filters
   const numStages = 2; //num of filters in series
@@ -300,14 +300,14 @@ function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000
     filter.frequency.value = centerFrequency + fOffset;
     filter.Q.value = 2 - Math.min(Math.max(depth * 2, 0), 1.9);
 
-    lfoGain.connect(filter.detune);
+    lfo.connect(filter.detune);
     fOffset += 282;
     if (i > 0) {
       filterChain[i - 1].connect(filter);
     }
     filterChain.push(filter);
   }
-  return filterChain[filterChain.length - 1];
+  return { filter: filterChain[filterChain.length - 1], lfo };
 }
 
 function getFilterType(ftype) {
@@ -561,9 +561,13 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     const lpParams = pickAndRename(value, lpMap);
     lpParams.type = 'lowpass';
     let lp = () => createFilter(ac, t, end, lpParams, cps, cycle);
-    chain.push(lp());
+    const { filter: lpf1, lfo: lfo1 } = lp();
+    chain.push(lpf1);
+    lfo1 && audioNodes.push(lfo1);
     if (ftype === '24db') {
-      chain.push(lp());
+      const { filter: lpf2, lfo: lfo2 } = lp();
+      chain.push(lpf2);
+      lfo2 && audioNodes.push(lfo2);
     }
   }
 
@@ -590,9 +594,13 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     const hpParams = pickAndRename(value, hpMap);
     hpParams.type = 'highpass';
     let hp = () => createFilter(ac, t, end, hpParams, cps, cycle);
-    chain.push(hp());
+    const { filter: hpf1, lfo: lfo1 } = hp();
+    chain.push(hpf1);
+    lfo1 && audioNodes.push(lfo1)
     if (ftype === '24db') {
-      chain.push(hp());
+      const { filter: hpf2, lfo: lfo2 } = hp();
+      chain.push(hpf2);
+      lfo2 && audioNodes.push(lfo2)
     }
   }
 
@@ -619,9 +627,13 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     const bpParams = pickAndRename(value, bpMap);
     bpParams.type = 'bandpass';
     let bp = () => createFilter(ac, t, end, bpParams, cps, cycle);
-    chain.push(bp());
+    const { filter: bpf1, lfo: lfo1 } = bp();
+    chain.push(bpf1);
+    lfo1 && audioNodes.push(lfo1)
     if (ftype === '24db') {
-      chain.push(bp());
+      const { filter: bpf2, lfo: lfo2 } = hp();
+      chain.push(bpf2);
+      lfo2 && audioNodes.push(lfo2)
     }
   }
 
@@ -685,8 +697,9 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   }
   // phaser
   if (phaser !== undefined && phaserdepth > 0) {
-    const phaserFX = getPhaser(t, endWithRelease, phaser, phaserdepth, phasercenter, phasersweep);
-    chain.push(phaserFX);
+    const { phaser, lfo } = getPhaser(t, endWithRelease, phaser, phaserdepth, phasercenter, phasersweep);
+    audioNodes.push(lfo);
+    chain.push(phaser);
   }
 
   // last gain
