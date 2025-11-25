@@ -540,7 +540,7 @@ export const getDistortion = (distort, postgain, algorithm) => {
 };
 
 export const getFrequencyFromValue = (value, defaultNote = 36) => {
-  let { note, freq } = value;
+  let { note, freq, octave = 0 } = value;
   note = note || defaultNote;
   if (typeof note === 'string') {
     note = noteToMidi(note); // e.g. c3 => 48
@@ -549,7 +549,7 @@ export const getFrequencyFromValue = (value, defaultNote = 36) => {
   if (!freq && typeof note === 'number') {
     freq = midiToFreq(note); // + 48);
   }
-
+  freq *= Math.pow(2, octave);
   return Number(freq);
 };
 
