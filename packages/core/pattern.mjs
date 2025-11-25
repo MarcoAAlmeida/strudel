@@ -586,7 +586,6 @@ export class Pattern {
    * inside haps.
    * @param {Function} value_test
    * @returns Pattern
-   * @synonyms filtval
    * @example
    * const drums = s("bd sd bd sd")
    * kick: drums.filterValues((v) => v.s === 'bd').duck(2)
@@ -595,11 +594,6 @@ export class Pattern {
    */
   filterValues(value_test) {
     return new Pattern((state) => this.query(state).filter((hap) => value_test(hap.value))).setSteps(this._steps);
-  }
-
-  // synonym
-  filtval(value_test) {
-    this.filterValues(value_test);
   }
 
   /**
