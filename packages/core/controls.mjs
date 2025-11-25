@@ -1865,11 +1865,12 @@ export const { nudge } = registerControl('nudge');
  * Sets the default octave of a synth.
  *
  * @name octave
+ * @synonyms oct
  * @param {number | Pattern} octave octave number
  * @example
  * n("0,4,7").scale("F:minor").s('supersaw').octave("<0 1 2 3>")
  */
-export const { octave } = registerControl('octave');
+export const { octave, oct } = registerControl('octave', 'oct');
 
 // ['ophatdecay'],
 // TODO: example
