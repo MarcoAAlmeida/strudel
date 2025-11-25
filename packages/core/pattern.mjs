@@ -1587,6 +1587,13 @@ export const func = curry((a, b) => reify(b).func(a));
  *
  * @param {string | string[]} name name of the function, or an array of names to be used as synonyms
  * @param {function} func function with 1 or more params, where last is the current pattern
+ * @param {bool} patternify defaults to true; if set to false, you will have more control over the arguments to `func` as they will be
+ *   in their raw form and it will be up to you to patternify them and/or query them for values
+ * @example
+ * const vlpf = register('vlpf', (freq, pat) => {
+ *   return pat.fmap((v) => ({...v, cutoff: freq * (v.velocity ?? 1) }));
+ * })
+ * s("saw").seg(8).velocity(rand).vlpf(800)
  *
  */
 export function register(name, func, patternify = true, preserveSteps = false, join = (x) => x.innerJoin()) {
