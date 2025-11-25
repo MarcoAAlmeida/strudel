@@ -191,8 +191,7 @@ export function applyParameterModulators(audioContext, param, start, end, envelo
   const lfo = getParamLfo(audioContext, param, start, end, lfoValues);
   return { lfo, disconnect: () => lfo?.disconnect() };
 }
-
-export function createFilter(context, start, end, params, cps) {
+export function createFilter(context, start, end, params, cps, cycle) {
   let {
     frequency,
     anchor,
@@ -202,12 +201,14 @@ export function createFilter(context, start, end, params, cps) {
     q = 1,
     drive = 0.69,
     depth,
+    depthfrequency,
     dcoffset = -0.5,
     skew,
     shape,
     rate,
     sync,
   } = params;
+
   let frequencyParam, filter;
   if (model === 'ladder') {
     filter = getWorklet(context, 'ladder-processor', { frequency, q, drive });
@@ -238,8 +239,25 @@ export function createFilter(context, start, end, params, cps) {
   if (sync != null) {
     rate = cps * sync;
   }
-  const lfoValues = { depth, dcoffset, skew, shape, frequency: rate, min: 10, max: 20000 };
-  getParamLfo(context, frequencyParam, start, end, lfoValues);
+  const hasLFO = [depth, depthfrequency, skew, shape, rate].some((v) => v !== undefined);
+  if (hasLFO) {
+    depth = depth ?? 1;
+    const time = cycle / cps;
+    const modDepth = depthfrequency ?? (depth ?? 1) * frequency;
+    const lfoValues = {
+      depth: modDepth,
+      dcoffset,
+      skew,
+      shape,
+      frequency: rate ?? cps,
+      min: -frequency + 30,
+      max: 20000 - frequency,
+      time,
+      curve: 1,
+    };
+    getParamLfo(context, frequencyParam, start, end, lfoValues);
+  }
+
   return filter;
 }
 
