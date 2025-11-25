@@ -543,8 +543,9 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
         if (pn >= 1.0) pn -= 1.0;
         this.phase[n] = pn;
         // invert right and left gain
+        const tmp = gainL;
         gainL = gainR;
-        gainR = gainL;
+        gainR = tmp;
       }
     }
     return true;
