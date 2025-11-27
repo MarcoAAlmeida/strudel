@@ -62,9 +62,6 @@ export function SoundsTab() {
   const trigRef = useRef();
   const numRef = useRef(0);
 
-  // Used to cycle through sound previews on banks with multiple sounds
-  let soundPreviewIdx = 0;
-
   // stop current sound on mouseup
   useEvent('mouseup', () => {
     const ref = trigRef.current;
