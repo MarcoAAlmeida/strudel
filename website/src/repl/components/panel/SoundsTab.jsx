@@ -146,7 +146,6 @@ export function SoundsTab() {
                     trigRef.current = ref;
                     if (ref?.node) {
                       connectToDestination(ref.node);
-                      // soundPreviewIdx++;
                       break;
                     }
                   } catch (err) {
