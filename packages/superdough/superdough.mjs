@@ -553,13 +553,14 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       rate: 'lprate',
       sync: 'lpsync',
       depth: 'lpdepth',
+      depthfrequency: 'lpdepthfrequency',
       shape: 'lpshape',
       dcoffset: 'lpdc',
       skew: 'lpskew',
     };
     const lpParams = pickAndRename(value, lpMap);
     lpParams.type = 'lowpass';
-    let lp = () => createFilter(ac, t, end, lpParams, cps);
+    let lp = () => createFilter(ac, t, end, lpParams, cps, cycle);
     chain.push(lp());
     if (ftype === '24db') {
       chain.push(lp());
@@ -581,13 +582,14 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       rate: 'hprate',
       sync: 'hpsync',
       depth: 'hpdepth',
+      depthfrequency: 'hpdepthfrequency',
       shape: 'hpshape',
       dcoffset: 'hpdc',
       skew: 'hpskew',
     };
     const hpParams = pickAndRename(value, hpMap);
     hpParams.type = 'highpass';
-    let hp = () => createFilter(ac, t, end, hpParams, cps);
+    let hp = () => createFilter(ac, t, end, hpParams, cps, cycle);
     chain.push(hp());
     if (ftype === '24db') {
       chain.push(hp());
@@ -609,13 +611,14 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       rate: 'bprate',
       sync: 'bpsync',
       depth: 'bpdepth',
+      depthfrequency: 'bpdepthfrequency',
       shape: 'bpshape',
       dcoffset: 'bpdc',
       skew: 'bpskew',
     };
     const bpParams = pickAndRename(value, bpMap);
     bpParams.type = 'bandpass';
-    let bp = () => createFilter(ac, t, end, bpParams, cps);
+    let bp = () => createFilter(ac, t, end, bpParams, cps, cycle);
     chain.push(bp());
     if (ftype === '24db') {
       chain.push(bp());
@@ -665,6 +668,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       curve: 1.5,
     });
     lfo.connect(amGain.gain);
+    audioNodes.push(lfo);
     chain.push(amGain);
   }
 
@@ -692,7 +696,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   // delay
   if (delay > 0 && delaytime > 0 && delayfeedback > 0) {
     orbitBus.getDelay(delaytime, delayfeedback, t);
-    orbitBus.sendDelay(post, delay);
+    const send = orbitBus.sendDelay(post, delay);
+    audioNodes.push(send);
   }
   // reverb
   if (room > 0) {

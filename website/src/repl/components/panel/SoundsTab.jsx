@@ -60,6 +60,7 @@ export function SoundsTab() {
 
   // holds mutable ref to current triggered sound
   const trigRef = useRef();
+  const numRef = useRef(0);
 
   // Used to cycle through sound previews on banks with multiple sounds
   let soundPreviewIdx = 0;
@@ -69,6 +70,14 @@ export function SoundsTab() {
     const ref = trigRef.current;
     trigRef.current = undefined;
     ref?.stop?.(getAudioContext().currentTime + 0.01);
+  });
+  useEvent('keydown', (e) => {
+    if (!isNaN(Number(e.key))) {
+      numRef.current = Number(e.key);
+    }
+  });
+  useEvent('keyup', (e) => {
+    numRef.current = 0;
   });
   return (
     <div id="sounds-tab" className="px-4 flex gap-2 flex-col w-full h-full text-foreground">
@@ -119,7 +128,7 @@ export function SoundsTab() {
                 const params = {
                   note: ['synth', 'soundfont'].includes(data.type) ? 'a3' : undefined,
                   s: name,
-                  n: soundPreviewIdx,
+                  n: numRef.current,
                   clip: 1,
                   release: 0.5,
                   sustain: 1,
@@ -137,7 +146,7 @@ export function SoundsTab() {
                     trigRef.current = ref;
                     if (ref?.node) {
                       connectToDestination(ref.node);
-                      soundPreviewIdx++;
+                      // soundPreviewIdx++;
                       break;
                     }
                   } catch (err) {

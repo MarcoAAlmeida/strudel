@@ -191,8 +191,7 @@ export function applyParameterModulators(audioContext, param, start, end, envelo
   const lfo = getParamLfo(audioContext, param, start, end, lfoValues);
   return { lfo, disconnect: () => lfo?.disconnect() };
 }
-
-export function createFilter(context, start, end, params, cps) {
+export function createFilter(context, start, end, params, cps, cycle) {
   let {
     frequency,
     anchor,
@@ -202,12 +201,14 @@ export function createFilter(context, start, end, params, cps) {
     q = 1,
     drive = 0.69,
     depth,
+    depthfrequency,
     dcoffset = -0.5,
     skew,
     shape,
     rate,
     sync,
   } = params;
+
   let frequencyParam, filter;
   if (model === 'ladder') {
     filter = getWorklet(context, 'ladder-processor', { frequency, q, drive });
@@ -238,8 +239,25 @@ export function createFilter(context, start, end, params, cps) {
   if (sync != null) {
     rate = cps * sync;
   }
-  const lfoValues = { depth, dcoffset, skew, shape, frequency: rate };
-  getParamLfo(context, frequencyParam, start, end, lfoValues);
+  const hasLFO = [depth, depthfrequency, skew, shape, rate].some((v) => v !== undefined);
+  if (hasLFO) {
+    depth = depth ?? 1;
+    const time = cycle / cps;
+    const modDepth = depthfrequency ?? (depth ?? 1) * frequency;
+    const lfoValues = {
+      depth: modDepth,
+      dcoffset,
+      skew,
+      shape,
+      frequency: rate ?? cps,
+      min: -frequency + 30,
+      max: 20000 - frequency,
+      time,
+      curve: 1,
+    };
+    getParamLfo(context, frequencyParam, start, end, lfoValues);
+  }
+
   return filter;
 }
 
@@ -262,7 +280,15 @@ export function drywet(dry, wet, wetAmount = 0) {
   let mix = ac.createGain();
   dry_gain.connect(mix);
   wet_gain.connect(mix);
-  return mix;
+  return {
+    node: mix,
+    onended: () => {
+      dry_gain.disconnect(mix);
+      wet_gain.disconnect(mix);
+      dry.disconnect(dry_gain);
+      wet.disconnect(wet_gain);
+    },
+  };
 }
 
 let curves = ['linear', 'exponential'];
@@ -297,6 +323,10 @@ export function getVibratoOscillator(param, value, t) {
     gain.gain.value = vibmod * 100;
     vibratoOscillator.connect(gain);
     gain.connect(param);
+    vibratoOscillator.onended = () => {
+      gain.disconnect(param);
+      vibratoOscillator.disconnect(gain);
+    };
     vibratoOscillator.start(t);
     return vibratoOscillator;
   }
@@ -350,9 +380,9 @@ const mod = (freq, range = 1, type = 'sine') => {
   }
 
   osc.start();
-  const g = new GainNode(ctx, { gain: range });
+  const g = gainNode(range);
   osc.connect(g); // -range, range
-  return { node: g, stop: (t) => osc.stop(t) };
+  return { node: g, stop: (t) => osc.stop(t), osc: osc };
 };
 const fm = (frequencyparam, harmonicityRatio, modulationIndex, wave = 'sine') => {
   const carrfreq = frequencyparam.value;
@@ -404,6 +434,11 @@ export function applyFM(param, value, begin) {
       modulator.connect(envGain);
       envGain.connect(param);
     }
+    fmmod.osc.onended = () => {
+      envGain.disconnect();
+      modulator.disconnect();
+      fmmod.osc.disconnect();
+    };
   }
   return { stop };
 }
@@ -505,7 +540,7 @@ export const getDistortion = (distort, postgain, algorithm) => {
 };
 
 export const getFrequencyFromValue = (value, defaultNote = 36) => {
-  let { note, freq } = value;
+  let { note, freq, octave = 0 } = value;
   note = note || defaultNote;
   if (typeof note === 'string') {
     note = noteToMidi(note); // e.g. c3 => 48
@@ -514,7 +549,7 @@ export const getFrequencyFromValue = (value, defaultNote = 36) => {
   if (!freq && typeof note === 'number') {
     freq = midiToFreq(note); // + 48);
   }
-
+  freq *= Math.pow(2, octave);
   return Number(freq);
 };
 
