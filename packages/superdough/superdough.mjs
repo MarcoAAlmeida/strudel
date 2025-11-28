@@ -307,7 +307,7 @@ function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000
     }
     filterChain.push(filter);
   }
-  return { filter: filterChain[filterChain.length - 1], lfo };
+  return { phaser: filterChain[filterChain.length - 1], lfo };
 }
 
 function getFilterType(ftype) {
@@ -413,7 +413,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     release = 0,
 
     //phaser
-    phaserrate: phaser,
+    phaserrate,
     phaserdepth = getDefaultValue('phaserdepth'),
     phasersweep,
     phasercenter,
@@ -560,7 +560,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     };
     const lpParams = pickAndRename(value, lpMap);
     lpParams.type = 'lowpass';
-    let lp = () => createFilter(ac, t, end, lpParams, cps, cycle);
+    const lp = () => createFilter(ac, t, end, lpParams, cps, cycle);
     const { filter: lpf1, lfo: lfo1 } = lp();
     chain.push(lpf1);
     lfo1 && audioNodes.push(lfo1);
@@ -593,7 +593,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     };
     const hpParams = pickAndRename(value, hpMap);
     hpParams.type = 'highpass';
-    let hp = () => createFilter(ac, t, end, hpParams, cps, cycle);
+    const hp = () => createFilter(ac, t, end, hpParams, cps, cycle);
     const { filter: hpf1, lfo: lfo1 } = hp();
     chain.push(hpf1);
     lfo1 && audioNodes.push(lfo1);
@@ -626,7 +626,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     };
     const bpParams = pickAndRename(value, bpMap);
     bpParams.type = 'bandpass';
-    let bp = () => createFilter(ac, t, end, bpParams, cps, cycle);
+    const bp = () => createFilter(ac, t, end, bpParams, cps, cycle);
     const { filter: bpf1, lfo: lfo1 } = bp();
     chain.push(bpf1);
     lfo1 && audioNodes.push(lfo1);
@@ -696,8 +696,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     chain.push(panner);
   }
   // phaser
-  if (phaser !== undefined && phaserdepth > 0) {
-    const { phaser, lfo } = getPhaser(t, endWithRelease, phaser, phaserdepth, phasercenter, phasersweep);
+  if (phaserrate !== undefined && phaserdepth > 0) {
+    const { phaser, lfo } = getPhaser(t, endWithRelease, phaserrate, phaserdepth, phasercenter, phasersweep);
     audioNodes.push(lfo);
     chain.push(phaser);
   }
