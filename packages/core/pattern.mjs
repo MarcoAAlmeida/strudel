@@ -25,7 +25,7 @@ import {
   stringifyValues,
 } from './util.mjs';
 import drawLine from './drawLine.mjs';
-import { logger } from './logger.mjs';
+import { errorLogger, logger } from './logger.mjs';
 
 let stringParser;
 
@@ -414,7 +414,7 @@ export class Pattern {
     try {
       return this.query(new State(new TimeSpan(begin, end), controls));
     } catch (err) {
-      logger(`[query]: ${err.message}`, 'error');
+      errorLogger(err, 'query');
       return [];
     }
   }
