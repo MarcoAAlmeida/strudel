@@ -240,6 +240,7 @@ export function createFilter(context, start, end, params, cps, cycle) {
     rate = cps * sync;
   }
   const hasLFO = [depth, depthfrequency, skew, shape, rate].some((v) => v !== undefined);
+  let lfo;
   if (hasLFO) {
     depth = depth ?? 1;
     const time = cycle / cps;
@@ -255,10 +256,10 @@ export function createFilter(context, start, end, params, cps, cycle) {
       time,
       curve: 1,
     };
-    getParamLfo(context, frequencyParam, start, end, lfoValues);
+    lfo = getParamLfo(context, frequencyParam, start, end, lfoValues);
   }
 
-  return filter;
+  return { filter, lfo };
 }
 
 // stays 1 until .5, then fades out
