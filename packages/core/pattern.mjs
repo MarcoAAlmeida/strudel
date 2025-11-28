@@ -2267,9 +2267,9 @@ export const rev = register(
 );
 
 /**
- * Reverse a whole pattern. See also `revv` for reversing each cycle.
+ * Reverse a whole pattern. See also `rev` for reversing each cycle.
  *
- * @name rev
+ * @name revv
  * @memberof Pattern
  * @returns Pattern
  * @example
