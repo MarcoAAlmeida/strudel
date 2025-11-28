@@ -244,8 +244,7 @@ export function repl({
       }
 
       if (!isPattern(pattern)) {
-        const message = `got "${typeof evaluated}" instead of pattern`;
-        throw new Error(message + (typeof evaluated === 'function' ? ', did you forget to call a function?' : '.'));
+        pattern = silence;
       }
       logger(`[eval] code updated`);
       pattern = await setPattern(pattern, autostart);
