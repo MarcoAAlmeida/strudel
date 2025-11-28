@@ -9256,7 +9256,7 @@ exports[`runs examples > example "rev" example index 0 1`] = `
 ]
 `;
 
-exports[`runs examples > example "rev" example index 0 2`] = `
+exports[`runs examples > example "revv" example index 0 1`] = `
 [
   "[ 0/1 → 1/2 | note:g ]",
   "[ 1/2 → 1/1 | note:e ]",
