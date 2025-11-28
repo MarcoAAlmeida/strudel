@@ -263,8 +263,8 @@ let audioReady;
 export async function initAudioOnFirstClick(options) {
   if (!audioReady) {
     audioReady = new Promise((resolve) => {
-      document.addEventListener('click', async function listener() {
-        document.removeEventListener('click', listener);
+      document.addEventListener('mousedown', async function listener() {
+        document.removeEventListener('mousedown', listener);
         await initAudio(options);
         resolve();
       });

@@ -1,5 +1,5 @@
 import { getAudioContext, registerSound } from './index.mjs';
-import { getCommonSampleInfo } from './util.mjs';
+import { getBaseURL, getCommonSampleInfo } from './util.mjs';
 import {
   applyFM,
   applyParameterModulators,
@@ -190,6 +190,7 @@ export const tables = async (url, frameLen, json, options = {}) => {
   if (url.startsWith('local:')) {
     url = `http://localhost:5432`;
   }
+  const base = getBaseURL(url);
   if (typeof fetch !== 'function') {
     // not a browser
     return;
@@ -200,7 +201,7 @@ export const tables = async (url, frameLen, json, options = {}) => {
   }
   return fetch(url)
     .then((res) => res.json())
-    .then((json) => _processTables(json, url, frameLen, options))
+    .then((json) => _processTables(json, base, frameLen, options))
     .catch((error) => {
       console.error(error);
       throw new Error(`error loading "${url}"`);
