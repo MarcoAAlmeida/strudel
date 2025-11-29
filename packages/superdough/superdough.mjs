@@ -274,7 +274,7 @@ export async function initAudioOnFirstClick(options) {
 }
 
 let controller;
-function getSuperdoughAudioController() {
+export function getSuperdoughAudioController() {
   if (controller == null) {
     controller = new SuperdoughAudioController(getAudioContext());
   }
