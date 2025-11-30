@@ -21,6 +21,7 @@ const initCache = JSON.stringify({
   where: [],
   disconnectAll: 0,
   disconnectOne: 0,
+  hasStop: false,
   stopCount: 0,
   ac: null,
   creation: null,
@@ -56,6 +57,7 @@ const lazyRegister = (o) => {
         this._audioid = ++audioid;
         const s = JSON.parse(initCache);
         s.type = this.constructor.name === 'AudiographNode' ? this.constructor._parentClassName : this.constructor.name;
+        s.hasStop = window[s.type].prototype instanceof AudioScheduledSourceNode;
         s.ac = this.context?.constructor.name || 'AudioParam';
         s.creation = s.creation || stackTrace();
         cache.set(this._audioid, s);
@@ -103,7 +105,6 @@ const drawMessage = async function (message) {
 
 const drawDiagram = async function () {
   const element = document.querySelector('.strudel-mermaid');
-
   let code = window.strudelMirror.code;
   code = code.replace(/^await debugAudiograph.*\n?/gm, '');
   code = '// date: ' + new Date().toISOString() + '\n\n' + code;
@@ -140,12 +141,15 @@ const drawDiagram = async function () {
     if (s.ac === 'OfflineAudioContext') lb = '[' + lb + ']';
     return lb;
   };
-  const isLeak = (s) => {
+  const isConnectLeak = (s) => {
     return (
       ['AudioDestinationNode', 'AudioParam'].indexOf(s.type) === -1 &&
       s.disconnectAll === 0 &&
       s.connect.length > s.disconnectOne
     );
+  };
+  const isStopLeak = (s) => {
+    return s.hasStop && s.stopCount === 0;
   };
   do {
     curRelations = relations.length;
@@ -197,6 +201,13 @@ const drawDiagram = async function () {
       });
     });
   } while (relations.length > curRelations /*&& lookup.length < 100*/);
+  // add orphan nodes
+  const inRelation = '-' + relations.join('-') + '-';
+  cache.forEach((v, k) => {
+    if (!inRelation.includes('-' + k + '-')) {
+      gd += '\t\tnode' + k + label(v) + '\n';
+    }
+  });
 
   const codePlaceholder = 'm'.repeat(maxLineLength);
   gd += '\tsubgraph LEGEND\n';
@@ -205,6 +216,7 @@ const drawDiagram = async function () {
   gd += '\t\tlegend3[not disconnected]\n';
   gd += '\t\tlegend4[AudioParam]\n';
   gd += '\t\tlegend5[AudioDestinationNode]\n';
+  gd += '\t\tlegend6[not stopped]\n';
   gd += '\tend\n';
   gd += '\tsubgraph CODE[Strudel Code]\n';
   // we use a codePlaceholder to
@@ -216,13 +228,17 @@ const drawDiagram = async function () {
   gd += '\tend\n';
   gd += '\tclassDef audioparam fill:#6f6;\n';
   gd += '\tclassDef destination fill:#99f;\n';
-  gd += '\tclassDef suspect fill:#f96,stroke:#f00,stroke-width:2px;\n';
-  gd += '\tclass legend3 suspect;\n';
+  gd += '\tclassDef connectleak fill:#f96,stroke:#f00,stroke-width:2px;\n';
+  gd += '\tclassDef stopleak fill:#f55,stroke:#f00,stroke-width:2px;\n';
+  gd += '\tclass legend3 connectleak;\n';
   gd += '\tclass legend4 audioparam;\n';
   gd += '\tclass legend5 destination;\n';
+  gd += '\tclass legend6 stopleak;\n';
   cache.forEach((v, k) => {
-    if (isLeak(v)) {
-      gd += '\tclass node' + k + ' suspect;\n';
+    if (isConnectLeak(v)) {
+      gd += '\tclass node' + k + ' connectleak;\n';
+    } else if (isStopLeak(v)) {
+      gd += '\tclass node' + k + ' stopleak;\n';
     }
     if (v.type === 'AudioParam') {
       gd += '\tclass node' + k + ' audioparam;\n';
@@ -470,7 +486,19 @@ export const debugAudiograph = async (argOptions = {}) => {
       StereoPannerNode,
       WaveShaperNode,
     ];
-    audioNodes.map((n) => audioNodeHook(n));
+    audioNodes.map((n) => {
+      if (n.prototype instanceof AudioScheduledSourceNode) {
+        const stopOrig = n.prototype.stop;
+        n.prototype.stop = function (...args) {
+          // stop called
+          const result = stopOrig.call(this, ...args);
+          const s = cache.get(this.audioid);
+          s.stopCount++;
+          return result;
+        };
+      }
+      audioNodeHook(n);
+    });
 
     // patch BaseAudioContext factory methods
     // to capture the source reference
