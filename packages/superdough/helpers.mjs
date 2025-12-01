@@ -555,6 +555,8 @@ export const getFrequencyFromValue = (value, defaultNote = 36) => {
 };
 
 export const releaseAudioNode = (node) => {
+  if (node == null) return;
+
   // check we received an AudioNode
   if (!(node instanceof AudioNode)) {
     throw new Error('releaseAudioNode can only release an AudioNode');

@@ -343,7 +343,7 @@ export function registerSynthSounds() {
         ac,
         () => {
           releaseAudioNode(o);
-          lfo && releaseAudioNode(lfo);
+          releaseAudioNode(lfo);
           onended();
           fm?.stop();
           vibratoOscillator?.stop();
