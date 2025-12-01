@@ -554,10 +554,33 @@ export const getFrequencyFromValue = (value, defaultNote = 36) => {
   return Number(freq);
 };
 
-export const destroyAudioWorkletNode = (node) => {
-  if (node == null) {
-    return;
+export const releaseAudioNode = (node) => {
+  // check we received an AudioNode
+  if (!(node instanceof AudioNode)) {
+    throw new Error('releaseAudioNode can only release an AudioNode');
   }
+
+  // https://developer.mozilla.org/en-US/docs/Web/API/AudioNode/disconnect
   node.disconnect();
-  node.parameters.get('end')?.setValueAtTime(0, 0);
+
+  // make sure all AudioScheduledSourceNode is in a stopped state
+  // https://developer.mozilla.org/en-US/docs/Web/API/AudioScheduledSourceNode
+  if (node instanceof AudioScheduledSourceNode) {
+    try {
+      node.stop();
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'InvalidStateError') {
+        node.start(node.context.currentTime + 5); // will never happen
+        node.stop();
+      }
+    }
+  }
+
+  // https://www.w3.org/TR/webaudio-1.1/#AudioNode-actively-processing
+  // An AudioWorkletNode is actively processing when its AudioWorkletProcessor's [[callable process]]
+  // returns true and either its active source flag is true or
+  // any AudioNode connected to one of its inputs is actively processing.
+  if (node instanceof AudioWorkletNode) {
+    node.parameters.get('end')?.setValueAtTime(0, 0);
+  }
 };
