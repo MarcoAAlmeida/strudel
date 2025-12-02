@@ -5,7 +5,6 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 // main entry point is `debugAudiograph`
-
 import { logger } from '@strudel/core';
 import { getAudioContext, getSuperdoughAudioController, webaudioOutput } from '@strudel/webaudio';
 
@@ -57,7 +56,12 @@ const lazyRegister = (o) => {
         this._audioid = ++audioid;
         const s = JSON.parse(initCache);
         s.type = this.constructor.name === 'AudiographNode' ? this.constructor._parentClassName : this.constructor.name;
-        s.hasStop = window[s.type].prototype instanceof AudioScheduledSourceNode;
+	// special case for FeedbackDelayNode
+	// it is a subclass of DelayNode created in superdough/feedbackdelay.mjs
+	// it is not an AudioScheduledSourceNode anyway
+	if (s.type !== 'FeedbackDelayNode') {
+          s.hasStop = window[s.type].prototype instanceof AudioScheduledSourceNode;
+        }
         s.ac = this.context?.constructor.name || 'AudioParam';
         s.creation = s.creation || stackTrace();
         cache.set(this._audioid, s);
