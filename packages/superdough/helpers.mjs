@@ -349,20 +349,11 @@ export function webAudioTimeout(audioContext, onComplete, startTime, stopTime) {
   constantNode.connect(zeroGain);
 
   // Schedule the `onComplete` callback to occur at `stopTime`
-  constantNode.onended = () => {
-    // Ensure garbage collection
-    try {
-      zeroGain.disconnect();
-    } catch {
-      // pass
-    }
-    try {
-      constantNode.disconnect();
-    } catch {
-      // pass
-    }
+  onceEnded(constantNode, () => {
+    releaseAudioNode(zeroGain);
+    releaseAudioNode(constantNode);
     onComplete();
-  };
+  });
   constantNode.start(startTime);
   constantNode.stop(stopTime);
   return constantNode;
@@ -554,6 +545,17 @@ export const getFrequencyFromValue = (value, defaultNote = 36) => {
   return Number(freq);
 };
 
+// This helper should be used instead of the `node.onended = callback` pattern
+// It adds a mechanism to help minimize gc retention
+export const onceEnded = (node, callback) => {
+  let onended = callback;
+  node.onended = function cleanup() {
+    onended && onended();
+    onended = null;
+    this.onended = null;
+  };
+};
+
 export const releaseAudioNode = (node) => {
   if (node == null) return;
 
@@ -565,16 +567,24 @@ export const releaseAudioNode = (node) => {
   // https://developer.mozilla.org/en-US/docs/Web/API/AudioNode/disconnect
   node.disconnect();
 
-  // make sure all AudioScheduledSourceNode is in a stopped state
+  // make sure all AudioScheduledSourceNodes are in a stopped state
   // https://developer.mozilla.org/en-US/docs/Web/API/AudioScheduledSourceNode
   if (node instanceof AudioScheduledSourceNode) {
+    if (node.onended && node.onended.name !== 'cleanup') {
+      logger(
+        `[superdough] Deprecation warning: it seems your code path is setting 'node.onended = callback' instead of using the onceEnded helper`,
+      );
+    }
     try {
       node.stop();
     } catch (e) {
-      if (e instanceof DOMException && e.name === 'InvalidStateError') {
-        node.start(node.context.currentTime + 5); // will never happen
-        node.stop();
-      }
+      // At the stage, `start` was not called on the node
+      // but an `onended` callback releasing resources may exist
+      // and we want it to fire :
+      // - we force a start/stop cycle so that `onended` gets called
+      // - we `lock` the node so that no-one can start it
+      node.start(node.context.currentTime + 5); // will never happen
+      node.stop();
     }
   }
 
