@@ -539,7 +539,7 @@ export const debugAudiograph = async (argOptions = {}) => {
         }
       } else {
         logger('WEIRD: node ' + this.audioid + 'called disconnect before any call to connect !');
-        logger(new Error().stack);
+        //logger(new Error().stack);
         console.log(cache);
       }
       return result;
