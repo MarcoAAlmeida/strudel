@@ -56,10 +56,10 @@ const lazyRegister = (o) => {
         this._audioid = ++audioid;
         const s = JSON.parse(initCache);
         s.type = this.constructor.name === 'AudiographNode' ? this.constructor._parentClassName : this.constructor.name;
-	// special case for FeedbackDelayNode
-	// it is a subclass of DelayNode created in superdough/feedbackdelay.mjs
-	// it is not an AudioScheduledSourceNode anyway
-	if (s.type !== 'FeedbackDelayNode') {
+        // special case for FeedbackDelayNode
+        // it is a subclass of DelayNode created in superdough/feedbackdelay.mjs
+        // it is not an AudioScheduledSourceNode anyway
+        if (s.type !== 'FeedbackDelayNode') {
           s.hasStop = window[s.type].prototype instanceof AudioScheduledSourceNode;
         }
         s.ac = this.context?.constructor.name || 'AudioParam';
