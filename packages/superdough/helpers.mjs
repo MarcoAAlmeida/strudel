@@ -372,13 +372,13 @@ const mod = (freq, type = 'sine') => {
     osc.frequency.value = freq;
   }
   osc.start();
-  return { osc, freq };
+  return osc;
 };
 
 const fm = (frequencyparam, harmonicityRatio, wave = 'sine') => {
   const carrfreq = frequencyparam.value;
   const modfreq = carrfreq * harmonicityRatio;
-  return mod(modfreq, wave);
+  return { osc: mod(modfreq, wave), freq: modfreq };
 };
 
 export function applyFM(param, value, begin) {
@@ -434,13 +434,12 @@ export function applyFM(param, value, begin) {
             toCleanup.push(envGain);
             output = osc.connect(envGain);
           }
-          fms[idx] = { input: osc.frequency, output, freq, toCleanup };
-          osc.onended = () => cleanupNodes(fms[idx].toCleanup);
+          fms[idx] = { input: osc.frequency, output, freq, osc, toCleanup };
         }
-        const { input, output, freq, toCleanup } = fms[idx];
+        const { input, output, freq, osc, toCleanup } = fms[idx];
         const g = gainNode(amt * freq);
         io.push(isMod ? output.connect(g) : input);
-        toCleanup.push(g);
+        cleanupOnEnd(osc, [...toCleanup, g]);
       }
       if (!io[1]) {
         logger(
@@ -451,11 +450,6 @@ export function applyFM(param, value, begin) {
       }
       io[0].connect(io[1]);
     }
-    fmmod.osc.onended = () => {
-      envGain.disconnect();
-      modulator.disconnect();
-      fmmod.osc.disconnect();
-    };
   }
   return {
     stop: (t) => toStop.forEach((m) => m?.stop(t)),
@@ -575,10 +569,9 @@ export const getFrequencyFromValue = (value, defaultNote = 36) => {
 // This helper should be used instead of the `node.onended = callback` pattern
 // It adds a mechanism to help minimize gc retention
 export const onceEnded = (node, callback) => {
-  let onended = callback;
+  const onended = callback;
   node.onended = function cleanup() {
     onended && onended();
-    onended = null;
     this.onended = null;
   };
 };
@@ -624,13 +617,10 @@ export const releaseAudioNode = (node) => {
   }
 };
 
-export const cleanupNode = (node, time) => {
-  if (node == null) return;
-  node.disconnect?.();
-  node.parameters?.get('end')?.setValueAtTime(0, 0);
-  node.stop?.(time);
-};
-
-export const cleanupNodes = (nodes, time) => {
-  nodes.forEach((n) => cleanupNode(n, time));
+// Once the `anchor` node has ended, release all nodes in `toCleanup`
+export const cleanupOnEnd = (anchor, toCleanup) => {
+  onceEnded(
+    anchor,
+    () => toCleanup.forEach((n) => releaseAudioNode(n)),
+  );
 };
