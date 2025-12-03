@@ -20,7 +20,7 @@ export function jumpToCharacter(view, character, direction = 1) {
     jumpPos = characterPositions.reverse().find((x) => x < pos + 1) ?? characterPositions.at(0);
   }
 
-  if (!jumpPos) {
+  if (jumpPos == null) {
     return false;
   }
   dispatch({
