@@ -263,8 +263,8 @@ let audioReady;
 export async function initAudioOnFirstClick(options) {
   if (!audioReady) {
     audioReady = new Promise((resolve) => {
-      document.addEventListener('click', async function listener() {
-        document.removeEventListener('click', listener);
+      document.addEventListener('mousedown', async function listener() {
+        document.removeEventListener('mousedown', listener);
         await initAudio(options);
         resolve();
       });
@@ -274,7 +274,7 @@ export async function initAudioOnFirstClick(options) {
 }
 
 let controller;
-function getSuperdoughAudioController() {
+export function getSuperdoughAudioController() {
   if (controller == null) {
     controller = new SuperdoughAudioController(getAudioContext());
   }
@@ -287,7 +287,7 @@ export function connectToDestination(input, channels) {
 
 function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000, sweep = 2000) {
   const ac = getAudioContext();
-  const lfoGain = getLfo(ac, time, end, { frequency, depth: sweep * 2 });
+  const lfo = getLfo(ac, time, end, { frequency, depth: sweep * 2 });
 
   //filters
   const numStages = 2; //num of filters in series
@@ -300,14 +300,14 @@ function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000
     filter.frequency.value = centerFrequency + fOffset;
     filter.Q.value = 2 - Math.min(Math.max(depth * 2, 0), 1.9);
 
-    lfoGain.connect(filter.detune);
+    lfo.connect(filter.detune);
     fOffset += 282;
     if (i > 0) {
       filterChain[i - 1].connect(filter);
     }
     filterChain.push(filter);
   }
-  return filterChain[filterChain.length - 1];
+  return { phaser: filterChain[filterChain.length - 1], lfo };
 }
 
 function getFilterType(ftype) {
@@ -413,7 +413,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     release = 0,
 
     //phaser
-    phaserrate: phaser,
+    phaserrate,
     phaserdepth = getDefaultValue('phaserdepth'),
     phasersweep,
     phasercenter,
@@ -553,16 +553,21 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       rate: 'lprate',
       sync: 'lpsync',
       depth: 'lpdepth',
+      depthfrequency: 'lpdepthfrequency',
       shape: 'lpshape',
       dcoffset: 'lpdc',
       skew: 'lpskew',
     };
     const lpParams = pickAndRename(value, lpMap);
     lpParams.type = 'lowpass';
-    let lp = () => createFilter(ac, t, end, lpParams, cps);
-    chain.push(lp());
+    const lp = () => createFilter(ac, t, end, lpParams, cps, cycle);
+    const { filter: lpf1, lfo: lfo1 } = lp();
+    chain.push(lpf1);
+    lfo1 && audioNodes.push(lfo1);
     if (ftype === '24db') {
-      chain.push(lp());
+      const { filter: lpf2, lfo: lfo2 } = lp();
+      chain.push(lpf2);
+      lfo2 && audioNodes.push(lfo2);
     }
   }
 
@@ -581,16 +586,21 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       rate: 'hprate',
       sync: 'hpsync',
       depth: 'hpdepth',
+      depthfrequency: 'hpdepthfrequency',
       shape: 'hpshape',
       dcoffset: 'hpdc',
       skew: 'hpskew',
     };
     const hpParams = pickAndRename(value, hpMap);
     hpParams.type = 'highpass';
-    let hp = () => createFilter(ac, t, end, hpParams, cps);
-    chain.push(hp());
+    const hp = () => createFilter(ac, t, end, hpParams, cps, cycle);
+    const { filter: hpf1, lfo: lfo1 } = hp();
+    chain.push(hpf1);
+    lfo1 && audioNodes.push(lfo1);
     if (ftype === '24db') {
-      chain.push(hp());
+      const { filter: hpf2, lfo: lfo2 } = hp();
+      chain.push(hpf2);
+      lfo2 && audioNodes.push(lfo2);
     }
   }
 
@@ -609,16 +619,21 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       rate: 'bprate',
       sync: 'bpsync',
       depth: 'bpdepth',
+      depthfrequency: 'bpdepthfrequency',
       shape: 'bpshape',
       dcoffset: 'bpdc',
       skew: 'bpskew',
     };
     const bpParams = pickAndRename(value, bpMap);
     bpParams.type = 'bandpass';
-    let bp = () => createFilter(ac, t, end, bpParams, cps);
-    chain.push(bp());
+    const bp = () => createFilter(ac, t, end, bpParams, cps, cycle);
+    const { filter: bpf1, lfo: lfo1 } = bp();
+    chain.push(bpf1);
+    lfo1 && audioNodes.push(lfo1);
     if (ftype === '24db') {
-      chain.push(bp());
+      const { filter: bpf2, lfo: lfo2 } = bp();
+      chain.push(bpf2);
+      lfo2 && audioNodes.push(lfo2);
     }
   }
 
@@ -665,6 +680,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       curve: 1.5,
     });
     lfo.connect(amGain.gain);
+    audioNodes.push(lfo);
     chain.push(amGain);
   }
 
@@ -680,9 +696,10 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     chain.push(panner);
   }
   // phaser
-  if (phaser !== undefined && phaserdepth > 0) {
-    const phaserFX = getPhaser(t, endWithRelease, phaser, phaserdepth, phasercenter, phasersweep);
-    chain.push(phaserFX);
+  if (phaserrate !== undefined && phaserdepth > 0) {
+    const { phaser, lfo } = getPhaser(t, endWithRelease, phaserrate, phaserdepth, phasercenter, phasersweep);
+    audioNodes.push(lfo);
+    chain.push(phaser);
   }
 
   // last gain
@@ -692,7 +709,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   // delay
   if (delay > 0 && delaytime > 0 && delayfeedback > 0) {
     orbitBus.getDelay(delaytime, delayfeedback, t);
-    orbitBus.sendDelay(post, delay);
+    const send = orbitBus.sendDelay(post, delay);
+    audioNodes.push(send);
   }
   // reverb
   if (room > 0) {

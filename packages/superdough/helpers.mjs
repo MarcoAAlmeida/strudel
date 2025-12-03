@@ -191,8 +191,7 @@ export function applyParameterModulators(audioContext, param, start, end, envelo
   const lfo = getParamLfo(audioContext, param, start, end, lfoValues);
   return { lfo, disconnect: () => lfo?.disconnect() };
 }
-
-export function createFilter(context, start, end, params, cps) {
+export function createFilter(context, start, end, params, cps, cycle) {
   let {
     frequency,
     anchor,
@@ -202,12 +201,14 @@ export function createFilter(context, start, end, params, cps) {
     q = 1,
     drive = 0.69,
     depth,
+    depthfrequency,
     dcoffset = -0.5,
     skew,
     shape,
     rate,
     sync,
   } = params;
+
   let frequencyParam, filter;
   if (model === 'ladder') {
     filter = getWorklet(context, 'ladder-processor', { frequency, q, drive });
@@ -238,9 +239,27 @@ export function createFilter(context, start, end, params, cps) {
   if (sync != null) {
     rate = cps * sync;
   }
-  const lfoValues = { depth, dcoffset, skew, shape, frequency: rate };
-  getParamLfo(context, frequencyParam, start, end, lfoValues);
-  return filter;
+  const hasLFO = [depth, depthfrequency, skew, shape, rate].some((v) => v !== undefined);
+  let lfo;
+  if (hasLFO) {
+    depth = depth ?? 1;
+    const time = cycle / cps;
+    const modDepth = depthfrequency ?? (depth ?? 1) * frequency;
+    const lfoValues = {
+      depth: modDepth,
+      dcoffset,
+      skew,
+      shape,
+      frequency: rate ?? cps,
+      min: -frequency + 30,
+      max: 20000 - frequency,
+      time,
+      curve: 1,
+    };
+    lfo = getParamLfo(context, frequencyParam, start, end, lfoValues);
+  }
+
+  return { filter, lfo };
 }
 
 // stays 1 until .5, then fades out
@@ -262,7 +281,15 @@ export function drywet(dry, wet, wetAmount = 0) {
   let mix = ac.createGain();
   dry_gain.connect(mix);
   wet_gain.connect(mix);
-  return mix;
+  return {
+    node: mix,
+    onended: () => {
+      dry_gain.disconnect(mix);
+      wet_gain.disconnect(mix);
+      dry.disconnect(dry_gain);
+      wet.disconnect(wet_gain);
+    },
+  };
 }
 
 let curves = ['linear', 'exponential'];
@@ -297,6 +324,10 @@ export function getVibratoOscillator(param, value, t) {
     gain.gain.value = vibmod * 100;
     vibratoOscillator.connect(gain);
     gain.connect(param);
+    vibratoOscillator.onended = () => {
+      gain.disconnect(param);
+      vibratoOscillator.disconnect(gain);
+    };
     vibratoOscillator.start(t);
     return vibratoOscillator;
   }
@@ -318,20 +349,11 @@ export function webAudioTimeout(audioContext, onComplete, startTime, stopTime) {
   constantNode.connect(zeroGain);
 
   // Schedule the `onComplete` callback to occur at `stopTime`
-  constantNode.onended = () => {
-    // Ensure garbage collection
-    try {
-      zeroGain.disconnect();
-    } catch {
-      // pass
-    }
-    try {
-      constantNode.disconnect();
-    } catch {
-      // pass
-    }
+  onceEnded(constantNode, () => {
+    releaseAudioNode(zeroGain);
+    releaseAudioNode(constantNode);
     onComplete();
-  };
+  });
   constantNode.start(startTime);
   constantNode.stop(stopTime);
   return constantNode;
@@ -429,6 +451,11 @@ export function applyFM(param, value, begin) {
       }
       io[0].connect(io[1]);
     }
+    fmmod.osc.onended = () => {
+      envGain.disconnect();
+      modulator.disconnect();
+      fmmod.osc.disconnect();
+    };
   }
   return {
     stop: (t) => toStop.forEach((m) => m?.stop(t)),
@@ -532,7 +559,7 @@ export const getDistortion = (distort, postgain, algorithm) => {
 };
 
 export const getFrequencyFromValue = (value, defaultNote = 36) => {
-  let { note, freq } = value;
+  let { note, freq, octave = 0 } = value;
   note = note || defaultNote;
   if (typeof note === 'string') {
     note = noteToMidi(note); // e.g. c3 => 48
@@ -541,16 +568,60 @@ export const getFrequencyFromValue = (value, defaultNote = 36) => {
   if (!freq && typeof note === 'number') {
     freq = midiToFreq(note); // + 48);
   }
-
+  freq *= Math.pow(2, octave);
   return Number(freq);
 };
 
-export const destroyAudioWorkletNode = (node) => {
-  if (node == null) {
-    return;
+// This helper should be used instead of the `node.onended = callback` pattern
+// It adds a mechanism to help minimize gc retention
+export const onceEnded = (node, callback) => {
+  let onended = callback;
+  node.onended = function cleanup() {
+    onended && onended();
+    onended = null;
+    this.onended = null;
+  };
+};
+
+export const releaseAudioNode = (node) => {
+  if (node == null) return;
+
+  // check we received an AudioNode
+  if (!(node instanceof AudioNode)) {
+    throw new Error('releaseAudioNode can only release an AudioNode');
   }
+
+  // https://developer.mozilla.org/en-US/docs/Web/API/AudioNode/disconnect
   node.disconnect();
-  node.parameters.get('end')?.setValueAtTime(0, 0);
+
+  // make sure all AudioScheduledSourceNodes are in a stopped state
+  // https://developer.mozilla.org/en-US/docs/Web/API/AudioScheduledSourceNode
+  if (node instanceof AudioScheduledSourceNode) {
+    if (node.onended && node.onended.name !== 'cleanup') {
+      logger(
+        `[superdough] Deprecation warning: it seems your code path is setting 'node.onended = callback' instead of using the onceEnded helper`,
+      );
+    }
+    try {
+      node.stop();
+    } catch (e) {
+      // At the stage, `start` was not called on the node
+      // but an `onended` callback releasing resources may exist
+      // and we want it to fire :
+      // - we force a start/stop cycle so that `onended` gets called
+      // - we `lock` the node so that no-one can start it
+      node.start(node.context.currentTime + 5); // will never happen
+      node.stop();
+    }
+  }
+
+  // https://www.w3.org/TR/webaudio-1.1/#AudioNode-actively-processing
+  // An AudioWorkletNode is actively processing when its AudioWorkletProcessor's [[callable process]]
+  // returns true and either its active source flag is true or
+  // any AudioNode connected to one of its inputs is actively processing.
+  if (node instanceof AudioWorkletNode) {
+    node.parameters.get('end')?.setValueAtTime(0, 0);
+  }
 };
 
 export const cleanupNode = (node, time) => {

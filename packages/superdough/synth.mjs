@@ -3,7 +3,6 @@ import { registerSound, soundMap } from './superdough.mjs';
 import { getAudioContext } from './audioContext.mjs';
 import {
   applyFM,
-  destroyAudioWorkletNode,
   gainNode,
   getADSRValues,
   getFrequencyFromValue,
@@ -13,6 +12,7 @@ import {
   getVibratoOscillator,
   getWorklet,
   noises,
+  releaseAudioNode,
   webAudioTimeout,
 } from './helpers.mjs';
 import { logger } from './logger.mjs';
@@ -48,19 +48,17 @@ export function registerSynthSounds() {
           [0.001, 0.05, 0.6, 0.01],
         );
 
-        let sound = getOscillator(s, t, value);
-        let { node: o, stop, triggerRelease } = sound;
-
         // turn down
         const g = gainNode(0.3);
 
-        const { duration } = value;
-
-        o.onended = () => {
-          o.disconnect();
+        let sound = getOscillator(s, t, value, () => {
           g.disconnect();
           onended();
-        };
+        });
+
+        let { node: o, stop, triggerRelease } = sound;
+
+        const { duration } = value;
 
         const envGain = gainNode(1);
         let node = o.connect(g).connect(envGain);
@@ -194,8 +192,7 @@ export function registerSynthSounds() {
       let timeoutNode = webAudioTimeout(
         ac,
         () => {
-          destroyAudioWorkletNode(o);
-          envGain.disconnect();
+          releaseAudioNode(o);
           onended();
           fm?.stop();
           vibratoOscillator?.stop();
@@ -272,8 +269,7 @@ export function registerSynthSounds() {
       let timeoutNode = webAudioTimeout(
         ac,
         () => {
-          destroyAudioWorkletNode(o);
-          envGain.disconnect();
+          releaseAudioNode(o);
           onended();
         },
         begin,
@@ -346,9 +342,8 @@ export function registerSynthSounds() {
       let timeoutNode = webAudioTimeout(
         ac,
         () => {
-          destroyAudioWorkletNode(o);
-          destroyAudioWorkletNode(lfo);
-          envGain.disconnect();
+          releaseAudioNode(o);
+          releaseAudioNode(lfo);
           onended();
           fm?.stop();
           vibratoOscillator?.stop();
@@ -460,7 +455,7 @@ export function waveformN(partials, phases, type) {
 }
 
 // expects one of waveforms as s
-export function getOscillator(s, t, value) {
+export function getOscillator(s, t, value, onended) {
   const { duration, noise = 0 } = value;
   const partials = value.partials ?? value.n;
   let o;
@@ -482,7 +477,6 @@ export function getOscillator(s, t, value) {
   }
   // set frequency
   o.frequency.value = getFrequencyFromValue(value);
-  o.start(t);
 
   let vibratoOscillator = getVibratoOscillator(o.detune, value, t);
 
@@ -494,6 +488,13 @@ export function getOscillator(s, t, value) {
   if (noise) {
     noiseMix = getNoiseMix(o, noise, t);
   }
+
+  o.onended = () => {
+    noiseMix || o.disconnect();
+    noiseMix?.node.disconnect();
+    onended();
+  };
+  o.start(t);
 
   return {
     node: noiseMix?.node || o,
