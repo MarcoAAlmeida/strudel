@@ -1,7 +1,7 @@
 import { getAudioContext } from './audioContext.mjs';
-import { clamp, nanFallback, midiToFreq, noteToMidi } from './util.mjs';
-import { getNoiseBuffer } from './noise.mjs';
 import { logger } from './logger.mjs';
+import { getNoiseBuffer } from './noise.mjs';
+import { clamp, nanFallback, midiToFreq, noteToMidi } from './util.mjs';
 
 export const noises = ['pink', 'white', 'brown', 'crackle'];
 
@@ -358,7 +358,8 @@ export function webAudioTimeout(audioContext, onComplete, startTime, stopTime) {
   constantNode.stop(stopTime);
   return constantNode;
 }
-const mod = (freq, range = 1, type = 'sine') => {
+
+const mod = (freq, type = 'sine') => {
   const ctx = getAudioContext();
   let osc;
   if (noises.includes(type)) {
@@ -370,69 +371,89 @@ const mod = (freq, range = 1, type = 'sine') => {
     osc.type = type;
     osc.frequency.value = freq;
   }
-
   osc.start();
-  const g = gainNode(range);
-  osc.connect(g); // -range, range
-  return { node: g, stop: (t) => osc.stop(t), osc: osc };
+  return osc;
 };
-const fm = (frequencyparam, harmonicityRatio, modulationIndex, wave = 'sine') => {
+
+const fm = (frequencyparam, harmonicityRatio, wave = 'sine') => {
   const carrfreq = frequencyparam.value;
   const modfreq = carrfreq * harmonicityRatio;
-  const modgain = modfreq * modulationIndex;
-  return mod(modfreq, modgain, wave);
+  return { osc: mod(modfreq, wave), freq: modfreq };
 };
+
 export function applyFM(param, value, begin) {
-  const {
-    fmh: fmHarmonicity = 1,
-    fmi: fmModulationIndex,
-    fmenv: fmEnvelopeType = 'exp',
-    fmattack: fmAttack,
-    fmdecay: fmDecay,
-    fmsustain: fmSustain,
-    fmrelease: fmRelease,
-    fmvelocity: fmVelocity,
-    fmwave: fmWaveform = 'sine',
-    duration,
-  } = value;
-  let modulator;
-  let stop = () => {};
-
-  if (fmModulationIndex) {
-    const ac = getAudioContext();
-    const envGain = ac.createGain();
-    const fmmod = fm(param, fmHarmonicity, fmModulationIndex, fmWaveform);
-
-    modulator = fmmod.node;
-    stop = fmmod.stop;
-    if (![fmAttack, fmDecay, fmSustain, fmRelease, fmVelocity].some((v) => v !== undefined)) {
-      // no envelope by default
-      modulator.connect(param);
-    } else {
-      const [attack, decay, sustain, release] = getADSRValues([fmAttack, fmDecay, fmSustain, fmRelease]);
-      const holdEnd = begin + duration;
-      getParamADSR(
-        envGain.gain,
-        attack,
-        decay,
-        sustain,
-        release,
-        0,
-        1,
-        begin,
-        holdEnd,
-        fmEnvelopeType === 'exp' ? 'exponential' : 'linear',
-      );
-      modulator.connect(envGain);
-      envGain.connect(param);
+  const ac = getAudioContext();
+  const toStop = []; // fm oscillators we will expose `stop` for
+  const fms = {};
+  // Matrix
+  for (let i = 1; i <= 8; i++) {
+    for (let j = 0; j <= 8; j++) {
+      let control;
+      if (i === j + 1) {
+        // Standard fm3 -> fm2 -> fm1 -> param usage
+        const iS = i === 1 ? '' : i;
+        control = `fmi${iS}`;
+      } else {
+        control = `fmi${i}${j}`;
+      }
+      const amt = value[control];
+      if (!amt) continue;
+      let io = [];
+      for (let [isMod, idx] of [
+        [true, i], // source
+        [false, j], // target
+      ]) {
+        if (idx === 0) {
+          io.push(param);
+          continue;
+        }
+        if (!fms[idx]) {
+          const idxS = idx === 1 ? '' : idx;
+          const { osc, freq } = fm(param, value[`fmh${idxS}`] ?? 1, value[`fmwave${idxS}`] ?? 'sine');
+          toStop.push(osc);
+          const toCleanup = [osc]; // nodes we want to cleanup after oscillator `stop`
+          const adsr = ['attack', 'decay', 'sustain', 'release'].map((s) => value[`fm${s}${idxS}`]);
+          let output = osc;
+          if (adsr.some((v) => v !== undefined)) {
+            const envGain = ac.createGain();
+            const [attack, decay, sustain, release] = getADSRValues(adsr);
+            const holdEnd = begin + value.duration;
+            const fmEnvelopeType = value[`fmenv${idxS}`] ?? 'exp';
+            getParamADSR(
+              envGain.gain,
+              attack,
+              decay,
+              sustain,
+              release,
+              0,
+              1,
+              begin,
+              holdEnd,
+              fmEnvelopeType === 'exp' ? 'exponential' : 'linear',
+            );
+            toCleanup.push(envGain);
+            output = osc.connect(envGain);
+          }
+          fms[idx] = { input: osc.frequency, output, freq, osc, toCleanup };
+        }
+        const { input, output, freq, osc, toCleanup } = fms[idx];
+        const g = gainNode(amt * freq);
+        io.push(isMod ? output.connect(g) : input);
+        cleanupOnEnd(osc, [...toCleanup, g]);
+      }
+      if (!io[1]) {
+        logger(
+          `[superdough] control ${control} failed to connect FM ${i} to target ${j} due to missing frequency parameter (likely because fm${j} is noise)`,
+          'warning',
+        );
+        continue;
+      }
+      io[0].connect(io[1]);
     }
-    fmmod.osc.onended = () => {
-      envGain.disconnect();
-      modulator.disconnect();
-      fmmod.osc.disconnect();
-    };
   }
-  return { stop };
+  return {
+    stop: (t) => toStop.forEach((m) => m?.stop(t)),
+  };
 }
 
 // Saturation curves
@@ -548,10 +569,9 @@ export const getFrequencyFromValue = (value, defaultNote = 36) => {
 // This helper should be used instead of the `node.onended = callback` pattern
 // It adds a mechanism to help minimize gc retention
 export const onceEnded = (node, callback) => {
-  let onended = callback;
+  const onended = callback;
   node.onended = function cleanup() {
     onended && onended();
-    onended = null;
     this.onended = null;
   };
 };
@@ -595,4 +615,9 @@ export const releaseAudioNode = (node) => {
   if (node instanceof AudioWorkletNode) {
     node.parameters.get('end')?.setValueAtTime(0, 0);
   }
+};
+
+// Once the `anchor` node has ended, release all nodes in `toCleanup`
+export const cleanupOnEnd = (anchor, toCleanup) => {
+  onceEnded(anchor, () => toCleanup.forEach((n) => releaseAudioNode(n)));
 };
