@@ -619,8 +619,5 @@ export const releaseAudioNode = (node) => {
 
 // Once the `anchor` node has ended, release all nodes in `toCleanup`
 export const cleanupOnEnd = (anchor, toCleanup) => {
-  onceEnded(
-    anchor,
-    () => toCleanup.forEach((n) => releaseAudioNode(n)),
-  );
+  onceEnded(anchor, () => toCleanup.forEach((n) => releaseAudioNode(n)));
 };
