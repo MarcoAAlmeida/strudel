@@ -458,6 +458,7 @@ registerProcessor('distort-processor', DistortProcessor);
 class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
+    this.isAlive = true; // used internally to prevent multiple death messages
     this.port.onmessage = (e) => {
       const { type, payload } = e.data || {};
       if (type === 'initialize') {
@@ -519,6 +520,10 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
   process(_input, outputs, params) {
     if (currentTime >= params.end[0]) {
       // should terminate
+      if (this.isAlive) {
+        this.port.postMessage({ type: 'died' });
+        this.isAlive = false;
+      }
       return false;
     }
     if (currentTime <= params.begin[0]) {
@@ -1144,6 +1149,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
 
   constructor(options) {
     super(options);
+    this.isAlive = true; // used internally to prevent multiple death messages
     this.port.onmessage = (e) => {
       const { type, payload } = e.data || {};
       if (type === 'initialize') {
@@ -1153,8 +1159,9 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
     this.initialize();
   }
   initialize(options) {
-    this.frameLen = 0;
-    this.numFrames = 0;
+    this.table = null;
+    this.frameLen = null;
+    this.numFrames = null;
     this.phase = [];
     if (options?.frames) {
       const key = options.key;
@@ -1311,6 +1318,10 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
 
   process(_inputs, outputs, parameters) {
     if (currentTime >= parameters.end[0]) {
+      if (this.isAlive) {
+        this.port.postMessage({ type: 'died' });
+        this.isAlive = false;
+      }
       return false;
     }
     if (currentTime <= parameters.begin[0]) {
@@ -1318,7 +1329,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
     }
     const outL = outputs[0][0];
     const outR = outputs[0][1] || outputs[0][0];
-    if (!this.tables) {
+    if (!this.table) {
       outL.fill(0);
       if (outR !== outL) outR.set(outL);
       return true;

@@ -244,8 +244,9 @@ export async function onTriggerSynth(t, value, onended, tables, cps, frameLen) {
     }
   });
   source.port.postMessage({ type: 'initialize', payload });
-  source.port.onMessage = (e) => {
+  source.port.onmessage = (e) => {
     if (e.data.type === 'died') markWorkletAsDead(source);
+    source.port.onmessage = null;
   };
   if (ac.currentTime > t) {
     logger(`[wavetable] still loading sound "${s}:${n}"`, 'highlight');

@@ -38,6 +38,10 @@ export const releaseNodeToPool = (node) => {
     // not reusable
     return;
   }
+  if (node[IS_WORKLET_DEAD]) {
+    // Worklet already terminated, don't pool it
+    return;
+  }
   // Fallback to a type-based key if the node was not created via getNodeFromPool
   const key = node[POOL_KEY];
   if (key == null) return;
