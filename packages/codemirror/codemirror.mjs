@@ -121,11 +121,11 @@ export function initEditor({ initialCode = '', onChange, onEvaluate, onStop, roo
             run: () => onStop?.(),
           },
           {
-            key: 'Alt-]',
+            key: 'Alt-w',
             run: (view) => jumpToCharacter(view, '$', 1),
           },
           {
-            key: 'Alt-[',
+            key: 'Alt-q',
             run: (view) => jumpToCharacter(view, '$', -1),
           },
           /* {
