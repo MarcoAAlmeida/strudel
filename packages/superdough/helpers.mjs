@@ -189,7 +189,7 @@ export function applyParameterModulators(audioContext, param, start, end, envelo
     getParamADSR(param, attack, decay, sustain, release, min, max, start, holdEnd, curve);
   }
   const lfo = getParamLfo(audioContext, param, start, end, lfoValues);
-  return lfo
+  return lfo;
 }
 export function createFilter(context, start, end, params, cps, cycle) {
   let {
