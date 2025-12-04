@@ -42,7 +42,6 @@ export const releaseNodeToPool = (node) => {
     // Worklet already terminated, don't pool it
     return;
   }
-  // Fallback to a type-based key if the node was not created via getNodeFromPool
   const key = node[POOL_KEY];
   if (key == null) return;
   const now = node.context?.currentTime ?? 0;
