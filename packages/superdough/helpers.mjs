@@ -1,7 +1,8 @@
 import { getAudioContext } from './audioContext.mjs';
-import { clamp, nanFallback, midiToFreq, noteToMidi } from './util.mjs';
-import { getNoiseBuffer } from './noise.mjs';
 import { logger } from './logger.mjs';
+import { getNoiseBuffer } from './noise.mjs';
+import { getNodeFromPool } from './nodePools.mjs';
+import { clamp, nanFallback, midiToFreq, noteToMidi } from './util.mjs';
 
 export const noises = ['pink', 'white', 'brown', 'crackle'];
 
@@ -128,6 +129,7 @@ export function getLfo(audioContext, begin, end, properties = {}) {
 }
 
 export function getCompressor(ac, threshold, ratio, knee, attack, release) {
+  const node = getNodeFromPool('compressor', () => new DynamicsCompressorNode(ac, {}));
   const options = {
     threshold: threshold ?? -3,
     ratio: ratio ?? 10,
@@ -135,7 +137,12 @@ export function getCompressor(ac, threshold, ratio, knee, attack, release) {
     attack: attack ?? 0.005,
     release: release ?? 0.05,
   };
-  return new DynamicsCompressorNode(ac, options);
+  node.threshold.value = options.threshold;
+  node.ratio.value = options.ratio;
+  node.knee.value = options.knee;
+  node.attack.value = options.attack;
+  node.release.value = options.release;
+  return node;
 }
 
 // changes the default values of the envelope based on what parameters the user has defined
@@ -214,7 +221,8 @@ export function createFilter(context, start, end, params, cps, cycle) {
     filter = getWorklet(context, 'ladder-processor', { frequency, q, drive });
     frequencyParam = filter.parameters.get('frequency');
   } else {
-    filter = context.createBiquadFilter();
+    const factory = () => context.createBiquadFilter();
+    filter = getNodeFromPool('filter', factory);
     filter.type = type;
     filter.Q.value = q;
     filter.frequency.value = frequency;

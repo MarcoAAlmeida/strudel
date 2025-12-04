@@ -518,16 +518,16 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
     ];
   }
   process(_input, outputs, params) {
-    if (currentTime >= params.end[0]) {
-      // should terminate
+    if (currentTime >= params.end[0] + 0.5) {
+      // Outside of grace period - should terminate
       if (this.isAlive) {
         this.port.postMessage({ type: 'died' });
         this.isAlive = false;
       }
       return false;
     }
-    if (currentTime <= params.begin[0]) {
-      // keep alive
+    if (currentTime >= params.end[0] || currentTime <= params.begin[0]) {
+      // Inside of grace period or not yet started
       return true;
     }
     const output = outputs[0];
@@ -1163,7 +1163,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
     this.frameLen = null;
     this.numFrames = null;
     this.phase = [];
-    if (options?.frames) {
+    if (options?.key) {
       const key = options.key;
       this.frameLen = options.frameLen;
       if (!tablesCache[key]) {
@@ -1317,14 +1317,16 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
   }
 
   process(_inputs, outputs, parameters) {
-    if (currentTime >= parameters.end[0]) {
+    if (currentTime >= parameters.end[0] + 0.5) {
+      // Outside of grace period - should terminate
       if (this.isAlive) {
         this.port.postMessage({ type: 'died' });
         this.isAlive = false;
       }
       return false;
     }
-    if (currentTime <= parameters.begin[0]) {
+    if (currentTime >= parameters.end[0] || currentTime <= parameters.begin[0]) {
+      // Inside of grace period or not yet started
       return true;
     }
     const outL = outputs[0][0];

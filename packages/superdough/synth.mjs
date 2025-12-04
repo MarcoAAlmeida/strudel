@@ -168,7 +168,7 @@ export function registerSynthSounds() {
       const params = {
         frequency,
         begin,
-        end: end + 0.5, // add a grace period for pooling
+        end,
         freqspread: detune,
         voices,
         panspread,

@@ -226,7 +226,7 @@ export async function onTriggerSynth(t, value, onended, tables, cps, frameLen) {
   const envEnd = endWithRelease + 0.01;
   const params = {
     begin: t,
-    end: envEnd + 0.5, // add a grace period for pooling
+    end: envEnd,
     frequency,
     freqspread: value.detune,
     position: value.wt,
