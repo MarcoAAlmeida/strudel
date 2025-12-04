@@ -613,6 +613,8 @@ export const releaseAudioNode = (node) => {
   // returns true and either its active source flag is true or
   // any AudioNode connected to one of its inputs is actively processing.
   if (node instanceof AudioWorkletNode) {
+    // while `end` is not native to the web audio API, it is common practice in superdough
+    // to use that param in the worklets to trigger returning false from the processor
     node.parameters.get('end')?.setValueAtTime(0, 0);
   }
 };
