@@ -291,7 +291,7 @@ function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000
 
   //filters
   const numStages = 1; //num of filters in series
-  let fOffset = 0;
+  let fOffset = 282; //for backward compat in #1800
   const filterChain = [];
   for (let i = 0; i < numStages; i++) {
     const filter = ac.createBiquadFilter();
@@ -304,7 +304,7 @@ function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000
     fOffset += 282;
     filterChain.push(filter);
   }
-  return { phaser: filterChain, lfo };
+  return { filterChain, lfo };
 }
 
 function getFilterType(ftype) {
@@ -694,9 +694,9 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   }
   // phaser
   if (phaserrate !== undefined && phaserdepth > 0) {
-    const { phaser, lfo } = getPhaser(t, endWithRelease, phaserrate, phaserdepth, phasercenter, phasersweep);
+    const { filterChain, lfo } = getPhaser(t, endWithRelease, phaserrate, phaserdepth, phasercenter, phasersweep);
     audioNodes.push(lfo);
-    Array.prototype.push.apply(chain, phaser);
+    chain.push(...filterChain);
   }
 
   // last gain
