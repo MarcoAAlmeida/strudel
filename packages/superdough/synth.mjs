@@ -1,6 +1,5 @@
 import { clamp } from './util.mjs';
 import { registerSound, soundMap } from './superdough.mjs';
-import { onceEnded } from './helpers.mjs';
 import { getAudioContext } from './audioContext.mjs';
 import {
   applyFM,
@@ -13,6 +12,7 @@ import {
   getVibratoOscillator,
   getWorklet,
   noises,
+  onceEnded,
   releaseAudioNode,
   webAudioTimeout,
 } from './helpers.mjs';
@@ -53,7 +53,7 @@ export function registerSynthSounds() {
         const g = gainNode(0.3);
 
         let sound = getOscillator(s, t, value, () => {
-          g.disconnect();
+          releaseAudioNode(g);
           onended();
         });
 
@@ -112,12 +112,12 @@ export function registerSynthSounds() {
       const mix = gainNode(mixGain);
 
       onceEnded(o, () => {
-        o.disconnect();
-        g.disconnect();
-        sat.disconnect();
-        noise.node.disconnect();
-        noiseGain.disconnect();
-        mix.disconnect();
+        releaseAudioNode(o);
+        releaseAudioNode(g);
+        releaseAudioNode(sat);
+        releaseAudioNode(noise.node);
+        releaseAudioNode(noiseGain);
+        releaseAudioNode(mix);
         onended();
       });
 
@@ -386,8 +386,8 @@ export function registerSynthSounds() {
         const { duration } = value;
 
         onceEnded(o, () => {
-          o.disconnect();
-          g.disconnect();
+          releaseAudioNode(o);
+          releaseAudioNode(g);
           onended();
         });
 
@@ -491,8 +491,8 @@ export function getOscillator(s, t, value, onended) {
   }
 
   onceEnded(o, () => {
-    noiseMix || o.disconnect();
-    noiseMix?.node.disconnect();
+    noiseMix || releaseAudioNode(o);
+    releaseAudioNode(noiseMix?.node);
     onended();
   });
   o.start(t);
