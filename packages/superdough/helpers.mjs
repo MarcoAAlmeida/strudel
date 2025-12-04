@@ -324,10 +324,10 @@ export function getVibratoOscillator(param, value, t) {
     gain.gain.value = vibmod * 100;
     vibratoOscillator.connect(gain);
     gain.connect(param);
-    vibratoOscillator.onended = () => {
+    onceEnded(vibratoOscillator, () => {
       gain.disconnect(param);
       vibratoOscillator.disconnect(gain);
-    };
+    });
     vibratoOscillator.start(t);
     return vibratoOscillator;
   }

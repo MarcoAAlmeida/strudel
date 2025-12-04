@@ -1,5 +1,6 @@
 import { clamp } from './util.mjs';
 import { registerSound, soundMap } from './superdough.mjs';
+import { onceEnded } from './helpers.mjs';
 import { getAudioContext } from './audioContext.mjs';
 import {
   applyFM,
@@ -110,7 +111,7 @@ export function registerSynthSounds() {
 
       const mix = gainNode(mixGain);
 
-      o.onended = () => {
+      onceEnded(o, () => {
         o.disconnect();
         g.disconnect();
         sat.disconnect();
@@ -118,7 +119,7 @@ export function registerSynthSounds() {
         noiseGain.disconnect();
         mix.disconnect();
         onended();
-      };
+      });
 
       const node = o.connect(sat).connect(g).connect(mix);
       noise.node.connect(noiseGain).connect(mix);
@@ -384,11 +385,11 @@ export function registerSynthSounds() {
 
         const { duration } = value;
 
-        o.onended = () => {
+        onceEnded(o, () => {
           o.disconnect();
           g.disconnect();
           onended();
-        };
+        });
 
         const envGain = gainNode(1);
         let node = o.connect(g).connect(envGain);
@@ -489,11 +490,11 @@ export function getOscillator(s, t, value, onended) {
     noiseMix = getNoiseMix(o, noise, t);
   }
 
-  o.onended = () => {
+  onceEnded(o, () => {
     noiseMix || o.disconnect();
     noiseMix?.node.disconnect();
     onended();
-  };
+  });
   o.start(t);
 
   return {
