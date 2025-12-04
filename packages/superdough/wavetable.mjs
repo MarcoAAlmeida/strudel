@@ -8,10 +8,9 @@ import {
   getParamADSR,
   getPitchEnvelope,
   getVibratoOscillator,
-  getWorklet,
-  releaseAudioNode,
   webAudioTimeout,
 } from './helpers.mjs';
+import { getNodeFromPool, markWorkletAsDead, releaseNodeToPool } from './nodePools.mjs';
 import { logger } from './logger.mjs';
 
 export const Warpmode = Object.freeze({
@@ -225,24 +224,29 @@ export async function onTriggerSynth(t, value, onended, tables, cps, frameLen) {
   }
   const endWithRelease = holdEnd + release;
   const envEnd = endWithRelease + 0.01;
-  const source = getWorklet(
-    ac,
-    'wavetable-oscillator-processor',
-    {
-      begin: t,
-      end: envEnd,
-      frequency,
-      freqspread: value.detune,
-      position: value.wt,
-      warp: value.warp,
-      warpMode: warpmode,
-      voices: Math.max(value.unison ?? 1, 1),
-      panspread: value.spread,
-      phaserand: (value.wtphaserand ?? value.unison > 1) ? 1 : 0,
-    },
-    { outputChannelCount: [2] },
-  );
-  source.port.postMessage({ type: 'table', payload });
+  const params = {
+    begin: t,
+    end: envEnd + 0.5, // add a grace period for pooling
+    frequency,
+    freqspread: value.detune,
+    position: value.wt,
+    warp: value.warp,
+    warpMode: warpmode,
+    voices: Math.max(value.unison ?? 1, 1),
+    panspread: value.spread,
+    phaserand: (value.wtphaserand ?? value.unison > 1) ? 1 : 0,
+  };
+  const factory = () => new AudioWorkletNode(ac, 'wavetable-oscillator-processor', { outputChannelCount: [2] });
+  const source = getNodeFromPool('wavetable', factory);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined) {
+      source.parameters.get(key).value = value;
+    }
+  });
+  source.port.postMessage({ type: 'initialize', payload });
+  source.port.onMessage = (e) => {
+    if (e.data.type === 'died') markWorkletAsDead(source);
+  };
   if (ac.currentTime > t) {
     logger(`[wavetable] still loading sound "${s}:${n}"`, 'highlight');
     return;
@@ -319,7 +323,7 @@ export async function onTriggerSynth(t, value, onended, tables, cps, frameLen) {
   const timeoutNode = webAudioTimeout(
     ac,
     () => {
-      releaseAudioNode(source);
+      releaseNodeToPool(source);
       vibratoOscillator?.stop();
       fm?.stop();
       wtPosModulators?.disconnect();

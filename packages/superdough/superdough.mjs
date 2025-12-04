@@ -9,7 +9,8 @@ import './reverb.mjs';
 import './vowel.mjs';
 import { nanFallback, _mod, cycleToSeconds, pickAndRename } from './util.mjs';
 import workletsUrl from './worklets.mjs?audioworklet';
-import { createFilter, gainNode, getCompressor, getDistortion, getLfo, getWorklet, effectSend } from './helpers.mjs';
+import { createFilter, effectSend, gainNode, getCompressor, getDistortion, getLfo, getWorklet } from './helpers.mjs';
+import { getNodeFromPool, isPoolable, releaseNodeToPool } from './nodePools.mjs';
 import { map } from 'nanostores';
 import { logger } from './logger.mjs';
 import { loadBuffer } from './sampler.mjs';
@@ -294,7 +295,7 @@ function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000
   let fOffset = 0;
   const filterChain = [];
   for (let i = 0; i < numStages; i++) {
-    const filter = ac.createBiquadFilter();
+    const filter = getNodeFromPool('filter', () => ac.createBiquadFilter());
     filter.type = 'notch';
     filter.gain.value = 1;
     filter.frequency.value = centerFrequency + fOffset;
@@ -506,7 +507,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   } else if (getSound(s)) {
     const { onTrigger } = getSound(s);
     const onEnded = () => {
-      audioNodes.forEach((n) => n?.disconnect());
+      audioNodes.forEach((n) => (isPoolable(n) ? releaseNodeToPool(n) : n?.disconnect()));
       activeSoundSources.delete(chainID);
     };
     const soundHandle = await onTrigger(t, value, onEnded, cps);

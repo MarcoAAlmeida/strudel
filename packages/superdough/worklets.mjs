@@ -458,6 +458,15 @@ registerProcessor('distort-processor', DistortProcessor);
 class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
+    this.port.onmessage = (e) => {
+      const { type, payload } = e.data || {};
+      if (type === 'initialize') {
+        this.initialize(payload);
+      }
+    };
+    this.initialize();
+  }
+  initialize(_options) {
     this.phase = [];
   }
   static get parameterDescriptors() {
@@ -1135,37 +1144,27 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
 
   constructor(options) {
     super(options);
+    this.port.onmessage = (e) => {
+      const { type, payload } = e.data || {};
+      if (type === 'initialize') {
+        this.initialize(payload);
+      }
+    };
+    this.initialize();
+  }
+  initialize(options) {
     this.frameLen = 0;
     this.numFrames = 0;
     this.phase = [];
-
-    this.port.onmessage = (e) => {
-      const { type, payload } = e.data || {};
-      if (type === 'table') {
-        const key = payload.key;
-        this.frameLen = payload.frameLen;
-        if (!tablesCache[key]) {
-          const tables = [payload.frames];
-          let table = tables[0];
-          for (let level = 1; level < 1; level++) {
-            const nextLen = table.length >> 1;
-            const nextTable = table.map((frame) => {
-              const avg = new Float32Array(nextLen);
-              for (let i = 0; i < nextLen; i++) {
-                avg[i] = (frame[2 * i] + frame[2 * i + 1]) / 2;
-              }
-              return avg;
-            });
-            tables.push(nextTable);
-            table = nextTable;
-            if (nextLen <= 32) break;
-          }
-          tablesCache[key] = tables;
-        }
-        this.tables = tablesCache[key];
-        this.numFrames = this.tables[0].length;
+    if (options?.frames) {
+      const key = options.key;
+      this.frameLen = options.frameLen;
+      if (!tablesCache[key]) {
+        tablesCache[key] = options.frames;
       }
-    };
+      this.table = tablesCache[key];
+      this.numFrames = this.table.length;
+    }
   }
 
   _mirror(x) {
@@ -1310,15 +1309,6 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
     return a + (b - a) * frac;
   }
 
-  _chooseMip(dphi) {
-    const approxHarm = clamp(dphi, 1e-6, 64);
-    let level = 0;
-    while (level + 1 < (this.tables?.length || 1) && approxHarm < this.tables[level][0].length / 8) {
-      level++;
-    }
-    return level;
-  }
-
   process(_inputs, outputs, parameters) {
     if (currentTime >= parameters.end[0]) {
       return false;
@@ -1362,14 +1352,12 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
         }
         const fVoice = applySemitoneDetuneToFrequency(f, detuner(n)); // voice detune
         const dPhase = fVoice * INVSR;
-        const level = this._chooseMip(dPhase);
-        const table = this.tables[level];
 
         // warp phase then sample
         this.phase[n] = this.phase[n] ?? Math.random() * phaseRand;
         const ph = this._warpPhase(this.phase[n], warpAmount, warpMode);
-        const s0 = this._sampleFrame(table[fIdx], ph);
-        const s1 = this._sampleFrame(table[Math.min(this.numFrames - 1, fIdx + 1)], ph);
+        const s0 = this._sampleFrame(this.table[fIdx], ph);
+        const s1 = this._sampleFrame(this.table[Math.min(this.numFrames - 1, fIdx + 1)], ph);
         let s = lerp(s0, s1, interpT);
         if (warpMode === WarpMode.FLIP && this.phase[n] < warpAmount) {
           s = -s;

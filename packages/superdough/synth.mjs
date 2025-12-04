@@ -17,6 +17,7 @@ import {
 } from './helpers.mjs';
 import { logger } from './logger.mjs';
 import { getNoiseMix, getNoiseOscillator } from './noise.mjs';
+import { getNodeFromPool, markWorkletAsDead, releaseNodeToPool } from './nodePools.mjs';
 
 const waveforms = ['triangle', 'square', 'sawtooth', 'sine', 'user'];
 const waveformAliases = [
@@ -164,22 +165,25 @@ export function registerSynthSounds() {
       const end = holdend + release + 0.01;
       const voices = clamp(unison, 1, 100);
       let panspread = voices > 1 ? clamp(spread, 0, 1) : 0;
-      let o = getWorklet(
-        ac,
-        'supersaw-oscillator',
-        {
-          frequency,
-          begin,
-          end,
-          freqspread: detune,
-          voices,
-          panspread,
-        },
-        {
-          outputChannelCount: [2],
-        },
-      );
-
+      const params = {
+        frequency,
+        begin,
+        end: end + 0.5, // add a grace period for pooling
+        freqspread: detune,
+        voices,
+        panspread,
+      };
+      const factory = () => new AudioWorkletNode(ac, 'supersaw-oscillator', { outputChannelCount: [2] });
+      const o = getNodeFromPool('supersaw', factory);
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          o.parameters.get(key).value = value;
+        }
+      });
+      o.port.postMessage({ type: 'initialize' });
+      o.port.onMessage = (e) => {
+        if (e.data.type === 'died') markWorkletAsDead(o);
+      };
       const gainAdjustment = 1 / Math.sqrt(voices);
       getPitchEnvelope(o.parameters.get('detune'), value, begin, holdend);
       const vibratoOscillator = getVibratoOscillator(o.parameters.get('detune'), value, begin);
@@ -192,7 +196,7 @@ export function registerSynthSounds() {
       let timeoutNode = webAudioTimeout(
         ac,
         () => {
-          releaseAudioNode(o);
+          releaseNodeToPool(o);
           onended();
           fm?.stop();
           vibratoOscillator?.stop();
