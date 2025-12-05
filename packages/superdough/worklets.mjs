@@ -508,12 +508,13 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
     ];
   }
   process(_input, outputs, params) {
-    if (currentTime <= params.begin[0]) {
-      return true;
-    }
     if (currentTime >= params.end[0]) {
-      // this.port.postMessage({ type: 'onended' });
+      // should terminate
       return false;
+    }
+    if (currentTime <= params.begin[0]) {
+      // keep alive
+      return true;
     }
     const output = outputs[0];
     const voices = params.voices[0]; // k-rate
@@ -532,7 +533,7 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
         const freqVoice = applySemitoneDetuneToFrequency(freq, detuner(n));
         // We must wrap this here because it is passed into sawblep below which
         // has domain [0, 1]
-        const dt = ffrac(freqVoice * INVSR);
+        const dt = frac(freqVoice * INVSR);
         this.phase[n] = this.phase[n] ?? Math.random();
         const v = waveshapes.sawblep(this.phase[n], dt);
 
@@ -543,8 +544,9 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
         if (pn >= 1.0) pn -= 1.0;
         this.phase[n] = pn;
         // invert right and left gain
+        const tmp = gainL;
         gainL = gainR;
-        gainR = gainL;
+        gainR = tmp;
       }
     }
     return true;
@@ -1338,7 +1340,7 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
       const tablePos = clamp(pv(parameters.position, i), 0, 1);
       const idx = tablePos * (this.numFrames - 1);
       const fIdx = idx | 0;
-      const frac = idx - fIdx;
+      const interpT = idx - fIdx;
       const warpAmount = clamp(pv(parameters.warp, i), 0, 1);
       const warpMode = pv(parameters.warpMode, i);
       const phaseRand = clamp(pv(parameters.phaserand, i), 0, 1);
@@ -1368,13 +1370,13 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
         const ph = this._warpPhase(this.phase[n], warpAmount, warpMode);
         const s0 = this._sampleFrame(table[fIdx], ph);
         const s1 = this._sampleFrame(table[Math.min(this.numFrames - 1, fIdx + 1)], ph);
-        let s = s0 + (s1 - s0) * frac;
+        let s = lerp(s0, s1, interpT);
         if (warpMode === WarpMode.FLIP && this.phase[n] < warpAmount) {
           s = -s;
         }
         outL[i] += s * gainL * normalizer;
         outR[i] += s * gainR * normalizer;
-        this.phase[n] = ffrac(this.phase[n] + dPhase);
+        this.phase[n] = frac(this.phase[n] + dPhase);
       }
     }
     return true;
