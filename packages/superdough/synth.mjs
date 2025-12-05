@@ -3,7 +3,6 @@ import { registerSound, soundMap } from './superdough.mjs';
 import { getAudioContext } from './audioContext.mjs';
 import {
   applyFM,
-  destroyAudioWorkletNode,
   gainNode,
   getADSRValues,
   getFrequencyFromValue,
@@ -13,6 +12,7 @@ import {
   getVibratoOscillator,
   getWorklet,
   noises,
+  releaseAudioNode,
   webAudioTimeout,
 } from './helpers.mjs';
 import { logger } from './logger.mjs';
@@ -194,8 +194,7 @@ export function registerSynthSounds() {
       let timeoutNode = webAudioTimeout(
         ac,
         () => {
-          destroyAudioWorkletNode(o);
-          envGain.disconnect();
+          releaseAudioNode(o);
           onended();
           fm?.stop();
           vibratoOscillator?.stop();
@@ -273,8 +272,7 @@ export function registerSynthSounds() {
       let timeoutNode = webAudioTimeout(
         ac,
         () => {
-          destroyAudioWorkletNode(o);
-          envGain.disconnect();
+          releaseAudioNode(o);
           onended();
         },
         begin,
@@ -348,9 +346,8 @@ export function registerSynthSounds() {
       let timeoutNode = webAudioTimeout(
         ac,
         () => {
-          destroyAudioWorkletNode(o);
-          destroyAudioWorkletNode(lfo);
-          envGain.disconnect();
+          releaseAudioNode(o);
+          releaseAudioNode(lfo);
           onended();
           fm?.stop();
           vibratoOscillator?.stop();
@@ -499,7 +496,7 @@ export function getOscillator(s, t, value, onended) {
   }
 
   o.onended = () => {
-    o.disconnect();
+    noiseMix || o.disconnect();
     noiseMix?.node.disconnect();
     onended();
   };

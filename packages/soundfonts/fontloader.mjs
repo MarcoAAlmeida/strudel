@@ -6,6 +6,7 @@ import {
   getADSRValues,
   getPitchEnvelope,
   getVibratoOscillator,
+  onceEnded,
 } from '@strudel/webaudio';
 import gm from './gm.mjs';
 
@@ -170,7 +171,7 @@ export function registerSoundfonts() {
 
         bufferSource.stop(envEnd);
         const stop = (releaseTime) => {};
-        bufferSource.onended = () => {
+        onceEnded(bufferSource, () => {
           bufferSource.disconnect();
           vibratoOscillator?.stop();
           node.disconnect();

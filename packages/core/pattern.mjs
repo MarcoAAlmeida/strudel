@@ -25,7 +25,7 @@ import {
   stringifyValues,
 } from './util.mjs';
 import drawLine from './drawLine.mjs';
-import { logger } from './logger.mjs';
+import { errorLogger, logger } from './logger.mjs';
 
 let stringParser;
 
@@ -414,7 +414,7 @@ export class Pattern {
     try {
       return this.query(new State(new TimeSpan(begin, end), controls));
     } catch (err) {
-      logger(`[query]: ${err.message}`, 'error');
+      errorLogger(err, 'query');
       return [];
     }
   }
@@ -2234,7 +2234,7 @@ export const brak = register('brak', function (pat) {
 });
 
 /**
- * Reverse all haps in a pattern
+ * Reverse all cycles in a pattern. See also `revv` for reversing a whole pattern.
  *
  * @name rev
  * @memberof Pattern
@@ -2265,6 +2265,23 @@ export const rev = register(
   false,
   true,
 );
+
+/**
+ * Reverse a whole pattern. See also `rev` for reversing each cycle.
+ *
+ * @name revv
+ * @memberof Pattern
+ * @returns Pattern
+ * @example
+ * // This is the same as `<[g e] [d c]>`. If `rev()` is used, you get
+ * // the same as `<[d c] [g e]>`, where each cycle reverses, but the order of
+ * // cycles stays the same.
+ * note("<[c d] [e g]>").revv()
+ */
+export const revv = register('revv', function (pat) {
+  const negateSpan = (span) => new TimeSpan(Fraction(0).sub(span.end), Fraction(0).sub(span.begin));
+  return pat.withQuerySpan(negateSpan).withHapSpan(negateSpan);
+});
 
 /** Like press, but allows you to specify the amount by which each
  * event is shifted. pressBy(0.5) is the same as press, while
