@@ -3726,7 +3726,8 @@ const resolveConfigKey = (funcName, key) => {
 addConfigAlias('lfo', 'target', 't');
 addConfigAlias('lfo', 'param', 'p');
 addConfigAlias('lfo', 'rate', 'r');
-addConfigAlias('lfo', 'depth', 'dep', 'dp', 'd');
+addConfigAlias('lfo', 'depth', 'dep', 'dr');
+addConfigAlias('lfo', 'depthabs', 'da');
 addConfigAlias('lfo', 'dcoffset', 'dc');
 addConfigAlias('lfo', 'shape', 'sh');
 addConfigAlias('lfo', 'skew', 'sk');
@@ -3737,21 +3738,23 @@ addConfigAlias('env', 'attack', 'att', 'a');
 addConfigAlias('env', 'decay', 'dec', 'd');
 addConfigAlias('env', 'sustain', 'sus', 's');
 addConfigAlias('env', 'release', 'rel', 'r');
-addConfigAlias('env', 'depth', 'dep', 'dp');
+addConfigAlias('env', 'depth', 'dep', 'dr');
+addConfigAlias('env', 'depthabs', 'da');
 addConfigAlias('env', 'acurve', 'ac');
 addConfigAlias('env', 'dcurve', 'dc');
 addConfigAlias('env', 'rcurve', 'rc');
-addConfigAlias('send', 'id');
-addConfigAlias('send', 'target', 't');
-addConfigAlias('send', 'depth', 'dep', 'dp', 'd');
-addConfigAlias('send', 'dc');
+addConfigAlias('omod', 'orbit', 'o');
+addConfigAlias('omod', 'target', 't');
+addConfigAlias('omod', 'depth', 'dep', 'dr');
+addConfigAlias('omod', 'depthabs', 'da');
+addConfigAlias('omod', 'dc');
 
 Pattern.prototype.modulate = function (type, config, idx) {
   if (config == null || typeof config !== 'object') {
     return this;
   }
-  if (!['lfo', 'send', 'env'].includes(type)) {
-    logger(`[core] Modulation type ${type} not found. Please use one of 'lfo', 'env', 'send'`);
+  if (!['lfo', 'env', 'omod'].includes(type)) {
+    logger(`[core] Modulation type ${type} not found. Please use one of 'lfo', 'env', 'omod'`);
     return this;
   }
   let output = this;
@@ -3775,19 +3778,18 @@ Pattern.prototype.modulate = function (type, config, idx) {
 /**
  * Configures an LFO. Can be called in sequence like pat.lfo(...).lfo(...) to set up multiple LFOs
  *
- *
  * @name lfo
  * @memberof Pattern
  * @param {Object} config LFO configuration.
- * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: target, t
+ * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: t
  * @param {number | Pattern} [config.rate] Modulation rate. Aliases: rate, r
- * @param {number | Pattern} [config.depth] Modulation depth. Aliases: dep, dp, d
+ * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
+ * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
  * @param {number | Pattern} [config.dcoffset] DC offset / bias for the waveform. Aliases: dc
  * @param {number | Pattern} [config.shape] Waveform shape index. Aliases: sh
  * @param {number | Pattern} [config.skew] Waveform skew amount. Aliases: sk
  * @param {number | Pattern} [config.curve] Exponential curve amount. Aliases: c
  * @param {number | Pattern} [config.sync] Tempo-synced modulation rate. Aliases: s
- * @param {number | null} idx Index of the LFO slot to overwrite. Omit to append a new LFO
  * @returns Pattern
  */
 Pattern.prototype.lfo = function (config, idx) {
@@ -3798,12 +3800,12 @@ export const lfo = (config) => pure({}).lfo(config);
 /**
  * Configures an envelope. Can be called in sequence like pat.env(...).env(...) to set up multiple envelopes
  *
- *
  * @name env
  * @memberof Pattern
  * @param {Object} config Envelope configuration.
- * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: target, t
- * @param {number | Pattern} [config.depth] Modulation depth. Aliases: dep, dp
+ * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: t
+ * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
+ * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
  * @param {number | Pattern} [config.attack] Time to reach depth. Aliases: att, a
  * @param {number | Pattern} [config.decay] Time to reach sustain. Aliases: dec, d
  * @param {number | Pattern} [config.sustain] Sustain depth. Aliases: sus, s
@@ -3811,7 +3813,6 @@ export const lfo = (config) => pure({}).lfo(config);
  * @param {number | Pattern} [config.acurve] Snappiness of attack curve (-1 = relaxed, 1 = snappy). Aliases: ac
  * @param {number | Pattern} [config.dcurve] Snappiness of decay curve (-1 = relaxed, 1 = snappy). Aliases: dc
  * @param {number | Pattern} [config.rcurve] Snappiness of release curve (-1 = relaxed, 1 = snappy). Aliases: rc
- * @param {number | null} idx Index of the envelope slot to overwrite. Omit to append a new envelope
  * @returns Pattern
  */
 Pattern.prototype.env = function (config, idx) {
@@ -3820,21 +3821,21 @@ Pattern.prototype.env = function (config, idx) {
 export const env = (config) => pure({}).env(config);
 
 /**
- * Sends the output of this pattern to a parameter on another pattern.
- * Can be called in sequence like pat.send(...).send(...) to send to multiple parameters
+ * Modulates with the output from a given `orbit`
+ * Can be called in sequence like pat.obus(...).obus(...) to set up multiple modulators
  *
- *
- * @name send
+ * @name omod
  * @memberof Pattern
- * @param {Object} config Send configuration.
- * @param {string | Pattern} [config.id] Pattern id to modulate
- * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: target, t
- * @param {number | Pattern} [config.depth] Modulation depth. Aliases:dep, dp, d
+ * @param {Object} config Orbit bus configuration.
+ * @param {string | Pattern} [config.orbit] Orbit to get modulation signal from
+ * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: t
+ * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
+ * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
+ * @param {number | Pattern} [config.ratio] Modulation ratio. Aliases: rat
  * @param {number | Pattern} [config.dc] DC offset prior to application
- * @param {number | null} idx Index of the send slot to overwrite. Omit to append a new send
  * @returns Pattern
  */
-Pattern.prototype.send = function (config, idx) {
-  return this.modulate('send', config, idx);
+Pattern.prototype.omod = function (config, idx) {
+  return this.modulate('omod', config, idx);
 };
-export const send = (config) => pure({}).send(config);
+export const omod = (config) => pure({}).omod(config);

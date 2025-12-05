@@ -176,7 +176,7 @@ export function registerSoundfonts() {
           vibratoOscillator?.stop();
           node.disconnect();
           onended();
-        };
+        });
         return { node, stop, source: bufferSource };
       },
       { type: 'soundfont', prebake: true, fonts },

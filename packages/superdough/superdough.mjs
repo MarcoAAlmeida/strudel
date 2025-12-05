@@ -13,12 +13,10 @@ import {
   createFilter,
   effectSend,
   gainNode,
-  getADSRValues,
   getCompressor,
   getDistortion,
   getEnvelope,
   getLfo,
-  getParamADSR,
   getWorklet,
   webAudioTimeout,
 } from './helpers.mjs';
@@ -365,7 +363,6 @@ export function resetGlobalEffects() {
   controller?.reset();
   analysers = {};
   analysersData = {};
-  idToNodes = {};
 }
 
 function _getNodeParam(node, name) {
@@ -455,12 +452,15 @@ function _getTargetParams(nodes, target) {
 }
 
 function connectLFO(idx, params, nodeTracker) {
-  const { rate = 1, sync, cps, target, ...filteredParams } = params;
+  // TODO: figure out min/max values and how to handle depth and depthabs here.
+  const { rate = 1, sync, cps, cycle, target, ...filteredParams } = params;
   filteredParams['frequency'] = sync !== undefined ? sync / cps : rate;
+  filteredParams['time'] = cycle / cps;
   const ac = getAudioContext();
   const lfoNode = getLfo(ac, filteredParams);
   nodeTracker[`lfo${idx}`] = [lfoNode];
   _getTargetParams(nodeTracker, target).forEach((t) => lfoNode.connect(t));
+  return lfoNode;
 }
 
 function connectEnvelope(idx, params, nodeTracker) {
@@ -474,10 +474,12 @@ function connectEnvelope(idx, params, nodeTracker) {
   });
   nodeTracker[`env${idx}`] = [envNode];
   _getTargetParams(nodeTracker, target).forEach((t) => envNode.connect(t));
+  return envNode;
 }
 
-function connectSendModulator(params, signal, nodeTracker, chainID) {
+function connectOrbitModulator(params, nodeTracker) {
   const ac = getAudioContext();
+  const signal = controller.getOrbit(params.orbit).output;
   const dc = new ConstantSourceNode(ac, { offset: params.dc ?? 0 });
   dc.start(params.begin);
   const shifted = dc.connect(gainNode(1));
@@ -491,15 +493,6 @@ function connectSendModulator(params, signal, nodeTracker, chainID) {
     0,
     params.begin,
   );
-  webAudioTimeout(
-    ac,
-    () => {
-      modulator.disconnect();
-      delete pendingConnections[params.id][chainID];
-    },
-    0,
-    params.end + 0.05,
-  );
   return { modulator, nodes: [dc, shifted, modulator] };
 }
 
@@ -510,8 +503,6 @@ function mapChannelNumbers(channels) {
   return (Array.isArray(channels) ? channels : [channels]).map((ch) => ch - 1);
 }
 
-let idToNodes = {};
-let pendingConnections = {};
 export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) => {
   const nodes = {};
   // new: t is always expected to be the absolute target onset time
@@ -641,7 +632,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     activeSoundSources.delete(chainID);
   }
 
-  let audioNodes = [];
+  const audioNodes = [];
 
   if (['-', '~', '_'].includes(s)) {
     return;
@@ -939,26 +930,28 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
 
   // connect chain elements together
   chain.slice(1).reduce((last, current) => last.connect(current), chain[0]);
-  audioNodes = audioNodes.concat(chain);
+  audioNodes.push(...chain);
 
   // finally, now that `nodes` is populated, set up modulators
   if (value.lfo) {
     for (const [idx, params] of Object.entries(value.lfo)) {
-      connectLFO(
+      const lfo = connectLFO(
         idx,
         {
           ...params,
           cps,
+          cycle,
           begin: t,
           end: endWithRelease,
         },
         nodes,
       );
+      audioNodes.push(lfo);
     }
   }
   if (value.env) {
     for (const [idx, params] of Object.entries(value.env)) {
-      connectEnvelope(
+      const env = connectEnvelope(
         idx,
         {
           ...params,
@@ -967,57 +960,17 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
         },
         nodes,
       );
+      audioNodes.push(env);
     }
   }
-  if (value.id) {
-    idToNodes[value.id] = new WeakRef(nodes);
-  }
-  if (value.send) {
-    for (const p of value.send) {
-      const modNodes = idToNodes[p.id].deref();
-      if (!modNodes) {
-        logger(
-          `[superdough] Could not connect to pattern ${p.id} -- make sure a pattern with this name exists. Available targets: ${Object.keys(idToNodes).join(', ')}`,
-        );
-        delete idToNodes[p.id];
-      } else {
-        const { modulator, nodes: nodesToCleanup } = connectSendModulator(
-          { ...p, begin: t, end: endWithRelease },
-          post,
-          modNodes,
-          chainID,
-        );
-        audioNodes = audioNodes.concat(nodesToCleanup);
-        pendingConnections[p.id] ??= {};
-        pendingConnections[p.id][chainID] = new WeakRef([modulator, p.target, endWithRelease]);
-      }
-    }
-  }
-  if (value.id in pendingConnections) {
-    for (const data of Object.values(pendingConnections[value.id])) {
-      const derefData = data.deref();
-      if (!derefData) {
-        delete pendingConnections[value.id];
-        continue;
-      }
-      const [modulator, target, end] = derefData;
-      const targets = _getTargetParams(nodes, target);
-      webAudioTimeout(
-        ac,
-        () => {
-          targets.forEach((target) => modulator.connect(target));
-        },
-        0,
-        t,
+  if (value.omod) {
+    for (const p of value.omod) {
+      const { nodes: nodesToCleanup } = connectOrbitModulator(
+        { ...p, begin: t, end: endWithRelease },
+        nodes,
+        chainID,
       );
-      webAudioTimeout(
-        ac,
-        () => {
-          modulator.disconnect();
-        },
-        0,
-        end,
-      );
+      audioNodes.push(...nodesToCleanup);
     }
   }
 };

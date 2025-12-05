@@ -111,13 +111,11 @@ export function getEnvelope(audioContext, properties = {}) {
 
 export function getLfo(audioContext, properties = {}) {
   // Extract some params we need for deriving other params
-  const { begin, shape = 0, ...props } = properties;
+  const { shape = 0, ...props } = properties;
   const lfoprops = {
-    time: begin,
     shape: getModulationShapeInput(shape),
     ...props,
   };
-
   return getWorklet(audioContext, 'lfo-processor', lfoprops);
 }
 
