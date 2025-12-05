@@ -238,10 +238,11 @@ export async function onTriggerSynth(t, value, onended, tables, cps, frameLen) {
   };
   const factory = () => new AudioWorkletNode(ac, 'wavetable-oscillator-processor', { outputChannelCount: [2] });
   const source = getNodeFromPool('wavetable', factory);
+  const now = ac.currentTime;
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined) {
-      source.parameters.get(key).value = value;
-    }
+    const param = source.parameters.get(key);
+    const target = value !== undefined ? value : param.defaultValue;
+    param.setValueAtTime(target, now);
   });
   source.port.postMessage({ type: 'initialize', payload });
   source.port.onmessage = (e) => {

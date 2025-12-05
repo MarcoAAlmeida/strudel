@@ -175,10 +175,11 @@ export function registerSynthSounds() {
       };
       const factory = () => new AudioWorkletNode(ac, 'supersaw-oscillator', { outputChannelCount: [2] });
       const o = getNodeFromPool('supersaw', factory);
+      const now = ac.currentTime;
       Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          o.parameters.get(key).value = value;
-        }
+        const param = o.parameters.get(key);
+        const target = value !== undefined ? value : param.defaultValue;
+        param.setValueAtTime(target, now);
       });
       o.port.postMessage({ type: 'initialize' });
       o.port.onmessage = (e) => {
