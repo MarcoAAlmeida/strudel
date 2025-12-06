@@ -282,7 +282,9 @@ The method `n` can also be used for something completely unrelated to notes, in 
 <MiniRepl
   client:idle
   tune={`
-        n("<[0 1 2 3@3 -@2] [3 2 1 0@3 -@2] >").scale("A:minor:pentatonic").s("gm_acoustic_guitar_steel").n("<0 1 2 3>/2")`}
+        n("<[0 1 2 3@3 -@2] [3 2 1 0@3 -@2] >")
+        .scale("A:minor:pentatonic")
+        .s("gm_acoustic_guitar_steel").n("<0 1 2 3>/2")`}
 />
 
 Note that `n` is not the only way that functions use indices, some take numbered patterns instead.
