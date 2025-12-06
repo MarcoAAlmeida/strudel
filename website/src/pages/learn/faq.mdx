@@ -263,8 +263,6 @@ Try adding `.punchcard()` after the `release(.2)` for a visualization.
 
 ## I saw Switch Angel using functions which I cannot find in the reference (e.g. `trancegate`). How do I make it work?
 
-Methods like `trancegate()`, `rlpf()` and `acidenv()` are currently not pattern methods which come natively with strudel.
-
 They are part of a script/prebake for strudel which was written by Switch Angel and published [here](https://github.com/switchangel/strudel-scripts)
 
 You can find the instructions how to use that script in the readme.md there. 
@@ -277,17 +275,20 @@ The method `note` is used to reference a certain note (either as its name, such 
 
 On the other hand, `n` is a way to reference the nth index of something. This something can be a scale (eg `n("0 2 4").scale("C:major")`) , but it can also be a particular note in a chord (see https://strudel.cc/recipes/recipes/#arpeggios for an example) .
 
-The method `n` can also be used for something completely unrelated to notes like the nth sample from a sample map `s("hh*8").bank("RolandTR909").n("0 1 2 3")`. Note that `pick` does _not_ use `n`.
+The method `n` can also be used for something completely unrelated to notes, in particular the nth sample from a sample map `s("hh*8").bank("RolandTR909").n("0 1 2 3")`. 
 
 <MiniRepl
   client:idle
-  tune={`"<0@2 1@2 2@2 3@2>".pickRestart([
-        n("0 1 2 0"),
-        n("2 3 4 ~"),
-        n("[4 5] [4 3] 2 0"),
-        n("0 -3 0 ~")
-      ]).scale("C:major").s("piano")`}
-/>{' '}
+  tune={`
+        n("<[0 1 2 3@3 -@2] [3 2 1 0@3 -@2] >").scale("A:minor:pentatonic").s("gm_acoustic_guitar_steel").n("<0 1 2 3>/2")`}
+/>
+							 
+					 
+									  
+	   
+
+Note that `n` is not the only way that functions use indices, some take numbered patterns instead.
+
 
 ## Is there a cheat sheet for all symbols?
 
@@ -297,29 +298,30 @@ Yes!
 '   marks start and end of strings, is different from "
 "   marks start and end of single line patterns in mini notation, is different from '
 `   marks start and end of patterns with line breaks in mini notation, is different from '
-[]  used for patterns, each item in it has the same length
-<>  used for patterns, alternates each item each cycle
+[]  used for patterns in mini notation, each item in it has the same length
+<>  used for patterns, alternates between items each cycle
 {}  historically used for polyrhythmic patterns. {a b c}%4 is the same as <a b c>*4.
-@3  elongates the item by a factor of 3 (other numbers work too)
+@3  elongates the item by a factor of 3 (other numbers work too, even non-integer, but for numbers between 0 and 1 you need a leading zero like this: @0.5)
 @   after an item: elongates the item once (multiple @ work too c @ @ is the same as c@3)
-_   after an item: also elongates an item once (multiple _ work too c _ _ is the same as c@3)
+_   after an item: also elongates an item once (multiple _ work too c _ _ is the same as c@3), see below for a different usage.
 .   this divides equal parts of a pattern and is called a foot. Can be used instead of [] like this: "1 6 7 8 . 2 . 3 . 4" is the same as "[1 6 7 8] 2 3 4"
 -   silence
 ~   also silence
-x   not silence (for the use in struct, same as 1)
-s   increase a note of a scale by one semitone, i.e. sharp
-b   decrease a note of a scale by one semitone, i.e. flat
-#   used in mondo notation
-#   also used for names of chords, like F#
+x   not silence (for the use in struct, any non-silence symbol works there)
+b   decrease by one semitone, i.e. flat, works for steps of scales, note names (but not midi numbers) and chord names
+s   increase by one semitone, i.e. sharp, works for steps of scales, note names (but not midi numbers) but not chord names
+#   increase by one semitone, i.e. sharp works for steps of scales, note names (but not midi numbers) and chord names
+#   also used in mondo notation
+										  
 *3  play the sample or pattern at thrice the speed, fast(3)
 !3  play the sample or pattern three times
 /2  play the sample or pattern at half speed, slow(2)
 ?   play the pattern sometimes
 |   once per cycle, choose randomly a pattern of those separated by i.e. chooseCycles()
 ,   play all items separated by it at the same time, i.e. stack()
-:   is used to separate multiple parameters, such as adsr(".1:.1:.5:.2")
+:   is used to separate multiple parameters, such as adsr(".1:.1:.5:.2"), this is is an operator which creates a list of these objects. 
 $:  at the start of a line, defines a member of the stack. is the only stack name that should occur multiple names
-_   before a stack name: mutes the stack, i.e. hush(), for example _$: s("bd")
+_   before a stack name: mutes the stack, i.e. hush(), for example _$: s("bd"), see above for a different usage.
 ```
 
 ## Are there more FAQ items?
