@@ -267,7 +267,7 @@ Methods like `trancegate()`, `rlpf()` and `acidenv()` are currently not pattern 
 
 They are part of a script/prebake for strudel which was written by Switch Angel and published [here](https://github.com/switchangel/strudel-scripts)
 
-You can find the instructions how to use that script in the readme.md there. 
+You can find the instructions how to use that script in the readme.md there.
 
 ## Is there difference between `n` and `note`?
 
@@ -277,20 +277,15 @@ The method `note` is used to reference a certain note (either as its name, such 
 
 On the other hand, `n` is a way to reference the nth index of something. This something can be a scale (eg `n("0 2 4").scale("C:major")`) , but it can also be a particular note in a chord (see https://strudel.cc/recipes/recipes/#arpeggios for an example) .
 
-The method `n` can also be used for something completely unrelated to notes, in particular the nth sample from a sample map `s("hh*8").bank("RolandTR909").n("0 1 2 3")`. 
+The method `n` can also be used for something completely unrelated to notes, in particular the nth sample from a sample map `s("hh*8").bank("RolandTR909").n("0 1 2 3")`.
 
 <MiniRepl
   client:idle
   tune={`
         n("<[0 1 2 3@3 -@2] [3 2 1 0@3 -@2] >").scale("A:minor:pentatonic").s("gm_acoustic_guitar_steel").n("<0 1 2 3>/2")`}
 />
-							 
-					 
-									  
-	   
 
 Note that `n` is not the only way that functions use indices, some take numbered patterns instead.
-
 
 ## Is there a cheat sheet for all symbols?
 
@@ -314,14 +309,13 @@ b   decrease by one semitone, i.e. flat, works for steps of scales, note names (
 s   increase by one semitone, i.e. sharp, works for steps of scales, note names (but not midi numbers) but not chord names
 #   increase by one semitone, i.e. sharp works for steps of scales, note names (but not midi numbers) and chord names
 #   also used in mondo notation
-										  
 *3  play the sample or pattern at thrice the speed, fast(3)
 !3  play the sample or pattern three times
 /2  play the sample or pattern at half speed, slow(2)
 ?   play the pattern sometimes
 |   once per cycle, choose randomly a pattern of those separated by i.e. chooseCycles()
 ,   play all items separated by it at the same time, i.e. stack()
-:   is used to separate multiple parameters, such as adsr(".1:.1:.5:.2"), this is is an operator which creates a list of these objects. 
+:   is used to separate multiple parameters, such as adsr(".1:.1:.5:.2"), this is is an operator which creates a list of these objects.
 $:  at the start of a line, defines a member of the stack. is the only stack name that should occur multiple names
 _   before a stack name: mutes the stack, i.e. hush(), for example _$: s("bd"), see above for a different usage.
 ```
