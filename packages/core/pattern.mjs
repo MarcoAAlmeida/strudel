@@ -3758,19 +3758,26 @@ Pattern.prototype.modulate = function (type, config, idx) {
     return this;
   }
   let output = this;
+  let target = config.target;
   for (const [rawKey, value] of Object.entries(config)) {
     const key = resolveConfigKey(type, rawKey);
-    const pat = reify(value);
+    if (key === 'target') continue; // we will set/default it below
+    const valuePat = reify(value);
     output = output
       .fmap((v) => (c) => {
+        if (target == null) {
+          // default target to the control set just before this in the chain
+          // e.g. pat.gain(0.5).lfo({..}) will be a gain-LFO
+          target = Object.keys(v).at(-1);
+        }
         v[type] ??= [];
         const t = v[type];
         idx ??= t.length;
-        t[idx] ??= {};
+        t[idx] ??= { target }; // set target
         t[idx][key] = c;
         return v;
       })
-      .appLeft(pat);
+      .appLeft(valuePat);
   }
   return output;
 };

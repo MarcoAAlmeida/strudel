@@ -121,8 +121,8 @@ class LFOProcessor extends AudioWorkletProcessor {
       { name: 'shape', defaultValue: 0 },
       { name: 'curve', defaultValue: 1 },
       { name: 'dcoffset', defaultValue: 0 },
-      { name: 'min', defaultValue: 0 },
-      { name: 'max', defaultValue: 1 },
+      { name: 'min', defaultValue: -1e9 },
+      { name: 'max', defaultValue: 1e9 },
     ];
   }
 
@@ -160,8 +160,10 @@ class LFOProcessor extends AudioWorkletProcessor {
 
     const dcoffset = parameters['dcoffset'][0];
 
-    const min = dcoffset * depth;
-    const max = dcoffset * depth + depth;
+    const userMin = parameters['min'][0];
+    const userMax = parameters['max'][0];
+    const min = Math.min(userMin, userMax);
+    const max = Math.max(userMin, userMax);
     const shape = waveShapeNames[parameters['shape'][0]];
 
     const blockSize = output[0].length ?? 0;
@@ -967,6 +969,8 @@ class EnvelopeProcessor extends AudioWorkletProcessor {
       { name: 'decayCurve', defaultValue: 0, minValue: -1, maxValue: 1 },
       { name: 'releaseCurve', defaultValue: 0, minValue: -1, maxValue: 1 },
       { name: 'depth', defaultValue: 1 },
+      { name: 'min', defaultValue: -1e9 },
+      { name: 'max', defaultValue: 1e9 },
       { name: 'retrigger', defaultValue: 1, minValue: 0, maxValue: 1 },
     ];
   }
@@ -1029,6 +1033,8 @@ class EnvelopeProcessor extends AudioWorkletProcessor {
       const dCurve = pv(params.decayCurve, i);
       const rCurve = pv(params.releaseCurve, i);
       const depth = pv(params.depth, i);
+      const clampMin = pv(params.min, i);
+      const clampMax = pv(params.max, i);
       const states = [
         { time: Number.POSITIVE_INFINITY, start: 0, target: 0 }, // idle
         { time: attack, start: this.attackStart, target: 1, curve: aCurve },
@@ -1042,7 +1048,8 @@ class EnvelopeProcessor extends AudioWorkletProcessor {
         this.state = (this.state + 1) % states.length;
         time = states[this.state].time;
       }
-      out[i] = this.val * depth;
+      const clamped = clamp(this.val * depth, Math.min(clampMin, clampMax), Math.max(clampMin, clampMax));
+      out[i] = clamped;
     }
     return true;
   }

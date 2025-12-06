@@ -25,6 +25,7 @@ import { errorLogger, logger } from './logger.mjs';
 import { loadBuffer } from './sampler.mjs';
 import { getAudioContext } from './audioContext.mjs';
 import { SuperdoughAudioController } from './superdoughoutput.mjs';
+import { getSuperdoughControlData } from './superdoughdata.mjs';
 
 export const DEFAULT_MAX_POLYPHONY = 128;
 const DEFAULT_AUDIO_DEVICE_NAME = 'System Standard';
@@ -416,6 +417,28 @@ const targetToParamGuess = {
   send: 'depth',
 };
 
+const controlData = getSuperdoughControlData();
+
+// TODO: We would like to use the aliases in `controls` here, but cannot as
+// the modules are independent. We may want to inject that method here in situations
+// where superdough/core are run in tandem
+export let getControlName;
+const _getMainName = (control) => getControlName?.(control) ?? control;
+
+function _getControlData(control) {
+  return controlData[_getMainName(control)];
+}
+
+function _getControlValue(control, value, data) {
+  const main = _getMainName(control);
+  return Number(value[main] ?? data.default);
+}
+
+function _getControlClamp(data, currentValue) {
+  const { min, max } = data;
+  return { min: min - currentValue, max: max - currentValue };
+}
+
 function _getTargetParams(nodes, target) {
   let param;
   if (target.includes('.')) {
@@ -451,49 +474,77 @@ function _getTargetParams(nodes, target) {
   return audioParams;
 }
 
-function connectLFO(idx, params, nodeTracker) {
-  // TODO: figure out min/max values and how to handle depth and depthabs here.
-  const { rate = 1, sync, cps, cycle, target, ...filteredParams } = params;
-  filteredParams['frequency'] = sync !== undefined ? sync / cps : rate;
-  filteredParams['time'] = cycle / cps;
-  const ac = getAudioContext();
-  const lfoNode = getLfo(ac, filteredParams);
+function _getTargetParamsForControl(control, nodes) {
+  const main = _getMainName(control);
+  const data = _getControlData(main);
+  const targetParams = _getTargetParams(nodes, data.param);
+  return { targetParams, data };
+}
+
+function connectLFO(idx, params, nodeTracker, value) {
+  const { rate = 1, sync, cps, cycle, target, depth = 1, depthabs, ...filteredParams } = params;
+  const { targetParams, data } = _getTargetParamsForControl(target, nodeTracker);
+  const currentValue = _getControlValue(target, value, data);
+  const { min, max } = _getControlClamp(data, currentValue);
+  const depthValue = depthabs != null ? depthabs : depth * currentValue;
+  const modParams = {
+    ...filteredParams,
+    frequency: sync !== undefined ? sync / cps : rate,
+    time: cycle / cps,
+    depth: depthValue,
+    min,
+    max,
+  };
+  const lfoNode = getLfo(getAudioContext(), modParams);
   nodeTracker[`lfo${idx}`] = [lfoNode];
-  _getTargetParams(nodeTracker, target).forEach((t) => lfoNode.connect(t));
+  targetParams.forEach((t) => lfoNode.connect(t));
   return lfoNode;
 }
 
-function connectEnvelope(idx, params, nodeTracker) {
-  const { target, acurve, dcurve, rcurve, ...filteredParams } = params;
-  const ac = getAudioContext();
-  const envNode = getEnvelope(ac, {
+function connectEnvelope(idx, params, nodeTracker, value) {
+  const { target, acurve, dcurve, rcurve, depth = 1, depthabs, ...filteredParams } = params;
+  const { targetParams, data } = _getTargetParamsForControl(target, nodeTracker);
+  const currentValue = _getControlValue(target, value, data);
+  const { min, max } = _getControlClamp(data, currentValue);
+  const depthValue = depthabs != null ? depthabs : depth * currentValue;
+  const envNode = getEnvelope(getAudioContext(), {
     ...filteredParams,
+    depth: depthValue,
+    min,
+    max,
     attackCurve: acurve,
     decayCurve: dcurve,
     releaseCurve: rcurve,
   });
   nodeTracker[`env${idx}`] = [envNode];
-  _getTargetParams(nodeTracker, target).forEach((t) => envNode.connect(t));
+  targetParams.forEach((t) => envNode.connect(t));
   return envNode;
 }
 
-function connectOrbitModulator(params, nodeTracker) {
+function connectOrbitModulator(params, nodeTracker, value) {
   const ac = getAudioContext();
+  const { target, depth = 1, depthabs } = params;
   const signal = controller.getOrbit(params.orbit).output;
   const dc = new ConstantSourceNode(ac, { offset: params.dc ?? 0 });
   dc.start(params.begin);
   const shifted = dc.connect(gainNode(1));
   signal.connect(shifted);
-  const modulator = shifted.connect(gainNode((params.depth ?? 1) / 0.3));
+  const { targetParams, data } = _getTargetParamsForControl(target, nodeTracker);
+  const currentValue = _getControlValue(target, value, data);
+  const { min, max } = _getControlClamp(data, currentValue);
+  const depthValue = depthabs != null ? depthabs : depth * currentValue;
+  const maxAbsDepth = Math.min(Math.abs(min), Math.abs(max));
+  const boundedDepth = Math.min(Math.abs(depthValue), maxAbsDepth);
+  const modulator = shifted.connect(gainNode((Math.sign(depthValue) * boundedDepth) / 0.3));
   webAudioTimeout(
     ac,
     () => {
-      _getTargetParams(nodeTracker, params.target).forEach((t) => modulator.connect(t));
+      targetParams.forEach((t) => modulator.connect(t));
     },
     0,
     params.begin,
   );
-  return { modulator, nodes: [dc, shifted, modulator] };
+  return { modulator, toCleanup: [dc, shifted, modulator] };
 }
 
 let activeSoundSources = new Map();
@@ -710,11 +761,13 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     lpParams.type = 'lowpass';
     const { filter: lpf1, lfo: lfo1 } = filt(lpParams);
     nodes['lpf'] = [lpf1];
+    nodes['lpf_lfo'] = [lfo1];
     chain.push(lpf1);
     lfo1 && audioNodes.push(lfo1);
     if (ftype === '24db') {
       const { filter: lpf2, lfo: lfo2 } = filt(lpParams);
       nodes['lpf'].push(lpf2);
+      nodes['lpf_lfo'].push(lfo2);
       chain.push(lpf2);
       lfo2 && audioNodes.push(lfo2);
     }
@@ -744,11 +797,13 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     hpParams.type = 'highpass';
     const { filter: hpf1, lfo: lfo1 } = filt(hpParams);
     nodes['hpf'] = [hpf1];
+    nodes['hpf_lfo'] = [lfo1];
     lfo1 && audioNodes.push(lfo1);
     chain.push(hpf1);
     if (ftype === '24db') {
       const { filter: hpf2, lfo: lfo2 } = filt(hpParams);
       nodes['hpf'].push(hpf2);
+      nodes['hpf_lfo'].push(lfo2);
       chain.push(hpf2);
       lfo2 && audioNodes.push(lfo2);
     }
@@ -777,12 +832,16 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     const bpParams = pickAndRename(value, bpMap);
     bpParams.type = 'bandpass';
     const { filter: bpf1, lfo: lfo1 } = filt(bpParams);
+    nodes['bpf'] = [bpf1];
+    nodes['bpf_lfo'] = [lfo1];
     chain.push(bpf1);
     lfo1 && audioNodes.push(lfo1);
     if (ftype === '24db') {
       const { filter: bpf2, lfo: lfo2 } = filt(bpParams);
       nodes['bpf'].push(bpf2);
+      nodes['bpf_lfo'].push(lfo2);
       chain.push(bpf2);
+      lfo2 && audioNodes.push(lfo2);
     }
   }
 
@@ -847,6 +906,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       begin: t,
       end: endWithRelease,
     });
+    nodes['tremolo'] = [lfo];
+    nodes['tremolo_gain'] = [amGain];
     lfo.connect(amGain.gain);
     audioNodes.push(lfo);
     chain.push(amGain);
@@ -904,7 +965,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       }
       roomIR = await loadBuffer(url, ac, ir, 0);
     }
-    orbitBus.getReverb(roomsize, roomfade, roomlp, roomdim, roomIR, irspeed, irbegin);
+    const roomNode = orbitBus.getReverb(roomsize, roomfade, roomlp, roomdim, roomIR, irspeed, irbegin);
+    nodes['room'] = [roomNode];
     const reverbSend = orbitBus.sendReverb(post, room);
     audioNodes.push(reverbSend);
   }
@@ -945,6 +1007,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
           end: endWithRelease,
         },
         nodes,
+        value,
       );
       audioNodes.push(lfo);
     }
@@ -959,18 +1022,15 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
           end: endWithRelease,
         },
         nodes,
+        value,
       );
       audioNodes.push(env);
     }
   }
   if (value.omod) {
     for (const p of value.omod) {
-      const { nodes: nodesToCleanup } = connectOrbitModulator(
-        { ...p, begin: t, end: endWithRelease },
-        nodes,
-        chainID,
-      );
-      audioNodes.push(...nodesToCleanup);
+      const { toCleanup } = connectOrbitModulator({ ...p, begin: t, end: endWithRelease }, nodes, value);
+      audioNodes.push(...toCleanup);
     }
   }
 };
