@@ -237,3 +237,12 @@ Pattern.prototype.myMethod = function() { /* ... */ };
 ---
 
 **Remember**: Strudel is about making music creation accessible and fun. Keep the API intuitive and well-documented for live coders and musicians!
+
+
+
+For pattern generation, use documentation from strudel site itself
+
+https://strudel.cc/workshop/first-sounds/
+https://strudel.cc/workshop/first-notes/
+https://strudel.cc/recipes/recipes/
+

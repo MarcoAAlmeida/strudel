@@ -1,0 +1,9 @@
+/**
+[22 Common Drum Beats Every Drummer Should Know ](https://www.youtube.com/watch?v=5acGxguFiyo)
+**/
+
+
+// [quarter note](https://www.youtube.com/watch?v=5acGxguFiyo)
+setcpm(120/4)
+$quarter_note: s("[hh hh hh hh],[bd sd bd sd]")
+  .fast(1).bank(`rolandtr909`)
