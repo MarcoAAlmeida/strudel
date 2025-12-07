@@ -5,7 +5,16 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 import { Note, Interval, Scale } from '@tonaljs/tonal';
-import { register, _mod, logger, isNote, noteToMidi, removeUndefineds, getAccidentalsOffset } from '@strudel/core';
+import {
+  _mod,
+  errorLogger,
+  getAccidentalsOffset,
+  isNote,
+  logger,
+  noteToMidi,
+  register,
+  removeUndefineds,
+} from '@strudel/core';
 import { stepInNamedScale, nearestNumberIndex } from './tonleiter.mjs';
 
 const octavesInterval = (octaves) => (octaves <= 0 ? -1 : 1) + octaves * 7 + 'P';
@@ -294,7 +303,7 @@ export const scale = register(
             }
             if (offset != 0) scaleNote = Note.transpose(scaleNote, Interval.fromSemitones(offset));
           } catch (err) {
-            logger(`[tonal] ${err.message}`, 'error');
+            errorLogger(err, 'tonal');
             return; // will be removed
           }
         }
