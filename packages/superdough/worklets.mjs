@@ -508,12 +508,13 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
     ];
   }
   process(_input, outputs, params) {
-    if (currentTime <= params.begin[0]) {
-      return true;
-    }
     if (currentTime >= params.end[0]) {
-      // this.port.postMessage({ type: 'onended' });
+      // should terminate
       return false;
+    }
+    if (currentTime <= params.begin[0]) {
+      // keep alive
+      return true;
     }
     const output = outputs[0];
     const voices = params.voices[0]; // k-rate
@@ -543,8 +544,9 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
         if (pn >= 1.0) pn -= 1.0;
         this.phase[n] = pn;
         // invert right and left gain
+        const tmp = gainL;
         gainL = gainR;
-        gainR = gainL;
+        gainR = tmp;
       }
     }
     return true;

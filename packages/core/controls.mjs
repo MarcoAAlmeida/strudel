@@ -72,6 +72,27 @@ export function registerControl(names, ...aliases) {
   return bag;
 }
 
+export function registerMultiControl(names, maxControls, ...aliases) {
+  names = Array.isArray(names) ? names : [names];
+  let bag = {};
+  for (let i = 1; i <= maxControls; i++) {
+    let theseAliases = [...aliases];
+    let theseNames = [...names];
+    if (i === 1) {
+      // adds e.g. fm1 as an alias for fm
+      const aliases1 = theseAliases.map((a) => `${a}1`);
+      const names1 = theseNames.map((n) => `${n}1`);
+      theseAliases = theseAliases.concat(aliases1).concat(names1);
+    } else {
+      theseAliases = theseAliases.map((a) => `${a}${i}`);
+      theseNames = theseNames.map((n) => `${n}${i}`);
+    }
+    const subBag = registerControl(theseNames, ...theseAliases);
+    bag = { ...bag, ...subBag };
+  }
+  return bag;
+}
+
 /**
  * Select a sound / sample by name. When using mininotation, you can also optionally supply 'n' and 'gain' parameters
  * separated by ':'.
@@ -435,6 +456,9 @@ export const { attack, att } = registerControl('attack', 'att');
  * Whole numbers and simple ratios sound more natural,
  * while decimal numbers and complex ratios sound metallic.
  *
+ * A number may be added afterwards to control the harmonicity of
+ * any of the 8 individual FMs (e.g. `fmh2`)
+ *
  * @name fmh
  * @param {number | Pattern} harmonicity
  * @example
@@ -444,24 +468,39 @@ export const { attack, att } = registerControl('attack', 'att');
  * ._scope()
  *
  */
-export const { fmh } = registerControl(['fmh', 'fmi'], 'fmh');
+export const { fmh, fmh1, fmh2, fmh3, fmh4, fmh5, fmh6, fmh7, fmh8 } = registerMultiControl(['fmh', 'fmi'], 8, 'fmh');
+
 /**
  * Sets the Frequency Modulation of the synth.
  * Controls the modulation index, which defines the brightness of the sound.
  *
- * @name fm
+ * A number may be added afterwards to control the modulation index of
+ * any of the 8 individual FMs (e.g. `fm3`). Also, FMs may be routed into
+ * each other with matrix commands like `fm13`, which would send `fm1` back into
+ * `fm3`
+ *
+ * @name fmi
  * @param {number | Pattern} brightness modulation index
- * @synonyms fmi
+ * @synonyms fm
  * @example
  * note("c e g b g e")
  * .fm("<0 1 2 8 32>")
  * ._scope()
+ * @example
+ * s("sine").note("F1").seg(8)
+ *  .fm(4).fm2(rand.mul(4)).fm3(saw.mul(8).slow(8))
+ *  .fmh(1.06).fmh2(10).fmh3(0.1)
  *
  */
-export const { fmi, fm } = registerControl(['fmi', 'fmh'], 'fm');
+export const { fmi, fmi1, fmi2, fmi3, fmi4, fmi5, fmi6, fmi7, fmi8, fm, fm1, fm2, fm3, fm4, fm5, fm6, fm7, fm8 } =
+  registerMultiControl(['fmi', 'fmh'], 8, 'fm');
+
 // fm envelope
 /**
  * Ramp type of fm envelope. Exp might be a bit broken..
+ *
+ * A number may be added afterwards to control the envelope of
+ * any of the 8 individual FMs (e.g. `fmenv4`)
  *
  * @name fmenv
  * @param {number | Pattern} type lin | exp
@@ -474,11 +513,19 @@ export const { fmi, fm } = registerControl(['fmi', 'fmh'], 'fm');
  * ._scope()
  *
  */
-export const { fmenv } = registerControl('fmenv');
+export const { fmenv, fmenv1, fmenv2, fmenv3, fmenv4, fmenv5, fmenv6, fmenv7, fmenv8 } = registerMultiControl(
+  'fmenv',
+  8,
+);
+
 /**
  * Attack time for the FM envelope: time it takes to reach maximum modulation
  *
+ * A number may be added afterwards to control the attack of the envelope of
+ * any of the 8 individual FMs (e.g. `fmatt5`)
+ *
  * @name fmattack
+ * @synonyms fmatt
  * @param {number | Pattern} time attack time
  * @example
  * note("c e g b g e")
@@ -487,10 +534,32 @@ export const { fmenv } = registerControl('fmenv');
  * ._scope()
  *
  */
-export const { fmattack } = registerControl('fmattack');
+export const {
+  fmattack,
+  fmattack1,
+  fmattack2,
+  fmattack3,
+  fmattack4,
+  fmattack5,
+  fmattack6,
+  fmattack7,
+  fmattack8,
+  fmatt,
+  fmatt1,
+  fmatt2,
+  fmatt3,
+  fmatt4,
+  fmatt5,
+  fmatt6,
+  fmatt7,
+  fmatt8,
+} = registerMultiControl('fmattack', 8, 'fmatt');
 
 /**
  * Waveform of the fm modulator
+ *
+ * A number may be added afterwards to control the waveform
+ * any of the 8 individual FMs (e.g. `fmwave6`)
  *
  * @name fmwave
  * @param {number | Pattern} wave waveform
@@ -500,12 +569,19 @@ export const { fmattack } = registerControl('fmattack');
  * n("0 1 2 3".fast(4)).chord("<Dm Am F G>").voicing().s("sawtooth").fmwave("brown").fm(.6)
  *
  */
-export const { fmwave } = registerControl('fmwave');
+export const { fmwave, fmwave1, fmwave2, fmwave3, fmwave4, fmwave5, fmwave6, fmwave7, fmwave8 } = registerMultiControl(
+  'fmwave',
+  8,
+);
 
 /**
  * Decay time for the FM envelope: seconds until the sustain level is reached after the attack phase.
  *
+ * A number may be added afterwards to control the decay of the envelope of
+ * any of the 8 individual FMs (e.g. `fmdec6`)
+ *
  * @name fmdecay
+ * @synonyms fmdec
  * @param {number | Pattern} time decay time
  * @example
  * note("c e g b g e")
@@ -515,11 +591,35 @@ export const { fmwave } = registerControl('fmwave');
  * ._scope()
  *
  */
-export const { fmdecay } = registerControl('fmdecay');
+export const {
+  fmdecay,
+  fmdecay1,
+  fmdecay2,
+  fmdecay3,
+  fmdecay4,
+  fmdecay5,
+  fmdecay6,
+  fmdecay7,
+  fmdecay8,
+  fmdec,
+  fmdec1,
+  fmdec2,
+  fmdec3,
+  fmdec4,
+  fmdec5,
+  fmdec6,
+  fmdec7,
+  fmdec8,
+} = registerMultiControl('fmdecay', 8, 'fmdec');
+
 /**
  * Sustain level for the FM envelope: how much modulation is applied after the decay phase
  *
+ * A number may be added afterwards to control the sustain of the envelope of
+ * any of the 8 individual FMs (e.g. `fmsus7`)
+ *
  * @name fmsustain
+ * @synonyms fmsus
  * @param {number | Pattern} level sustain level
  * @example
  * note("c e g b g e")
@@ -529,10 +629,69 @@ export const { fmdecay } = registerControl('fmdecay');
  * ._scope()
  *
  */
-export const { fmsustain } = registerControl('fmsustain');
-// these are not really useful... skipping for now
-export const { fmrelease } = registerControl('fmrelease');
-export const { fmvelocity } = registerControl('fmvelocity');
+export const {
+  fmsustain,
+  fmsustain1,
+  fmsustain2,
+  fmsustain3,
+  fmsustain4,
+  fmsustain5,
+  fmsustain6,
+  fmsustain7,
+  fmsustain8,
+  fmsus,
+  fmsus1,
+  fmsus2,
+  fmsus3,
+  fmsus4,
+  fmsus5,
+  fmsus6,
+  fmsus7,
+  fmsus8,
+} = registerMultiControl('fmsustain', 8, 'fmsus');
+
+/**
+ * Release time for the FM envelope: how much modulation is applied after the note is released
+ *
+ * A number may be added afterwards to control the release of the envelope of
+ * any of the 8 individual FMs (e.g. `fmrel8`)
+ *
+ * @name fmrelease
+ * @synonyms fmrel
+ * @param {number | Pattern} time release time
+ *
+ */
+export const {
+  fmrelease,
+  fmrelease1,
+  fmrelease2,
+  fmrelease3,
+  fmrelease4,
+  fmrelease5,
+  fmrelease6,
+  fmrelease7,
+  fmrelease8,
+  fmrel,
+  fmrel1,
+  fmrel2,
+  fmrel3,
+  fmrel4,
+  fmrel5,
+  fmrel6,
+  fmrel7,
+  fmrel8,
+} = registerMultiControl('fmrelease', 8, 'fmrel');
+
+// FM Matrix
+// Note: we do not declare top-level exports here since it would add
+// ~162 more explicit exports. This is likely fine as the most common use-case would be to at least
+// declare one other FM prior to utilizing the matrix functionality, but if we ever decide we need it,
+// TODO to add it explicitly / go with the globalThis approach
+for (let i = 0; i <= 8; i++) {
+  for (let j = 0; j <= 8; j++) {
+    registerControl(`fmi${i}${j}`, `fm${i}${j}`);
+  }
+}
 
 /**
  * Select the sound bank to use. To be used together with `s`. The bank name (+ "_") will be prepended to the value of `s`.
@@ -1294,6 +1453,8 @@ export const { fanchor } = registerControl('fanchor');
  *
  * @name lprate
  * @param {number | Pattern} rate rate in hertz
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lprate("<4 8 2 1>")
  */
 export const { lprate } = registerControl('lprate');
 
@@ -1302,6 +1463,8 @@ export const { lprate } = registerControl('lprate');
  *
  * @name lpsync
  * @param {number | Pattern} rate rate in cycles
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lpsync("<4 8 2 1>")
  */
 export const { lpsync } = registerControl('lpsync');
 
@@ -1310,8 +1473,23 @@ export const { lpsync } = registerControl('lpsync');
  *
  * @name lpdepth
  * @param {number | Pattern} depth depth of modulation
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lpdepth("<1 .5 1.8 0>")
  */
+
 export const { lpdepth } = registerControl('lpdepth');
+/**
+ * Depth of the LFO for the lowpass filter, in HZ
+ *
+ * @name lpdepthfrequency
+ * @synonyms
+ * lpdethfreq
+ * @param {number | Pattern} depth depth of modulation
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lpdepthfrequency("<200 500 100 0>")
+ */
+
+export const { lpdepthfrequency } = registerControl('lpdepthfrequency', 'lpdepthfreq');
 
 /**
  * Shape of the LFO for the lowpass filter
@@ -1362,6 +1540,19 @@ export const { bpsync } = registerControl('bpsync');
 export const { bpdepth } = registerControl('bpdepth');
 
 /**
+ * Depth of the LFO for the bandpass filter, in HZ
+ *
+ * @name bpdepthfrequency
+ * @synonyms
+ * bpdethfreq
+ * @param {number | Pattern} depth depth of modulation
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).bpdepthfrequency("<200 500 100 0>")
+ */
+
+export const { bpdepthfrequency } = registerControl('bpdepthfrequency', 'bpdepthfreq');
+
+/**
  * Shape of the LFO for the bandpass filter
  *
  * @name bpshape
@@ -1407,7 +1598,20 @@ export const { hpsync } = registerControl('hpsync');
  * @name hpdepth
  * @param {number | Pattern} depth depth of modulation
  */
-export const { hpdepth } = registerControl('hpdepth');
+export const { hpdepth, hpdepthfreq } = registerControl('hpdepth');
+
+/**
+ * Depth of the LFO for the hipass filter, in hz
+ *
+ * @name hpdepthfrequency
+ * @synonyms
+ * hpdethfreq
+ * @param {number | Pattern} depth depth of modulation
+ * @example
+ * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).hpdepthfrequency("<200 500 100 0>")
+ */
+
+export const { hpdepthfrequency } = registerControl('hpdepthfrequency', 'hpdepthfreq');
 
 /**
  * Shape of the LFO for the highpass filter
@@ -1820,12 +2024,12 @@ export const { nudge } = registerControl('nudge');
  * Sets the default octave of a synth.
  *
  * @name octave
+ * @synonyms oct
  * @param {number | Pattern} octave octave number
  * @example
- * n("0,4,7").s('supersquare').octave("<3 4 5 6>").osc()
- * @superDirtOnly
+ * n("0,4,7").scale("F:minor").s('supersaw').octave("<0 1 2 3>")
  */
-export const { octave } = registerControl('octave');
+export const { octave, oct } = registerControl('octave', 'oct');
 
 // ['ophatdecay'],
 // TODO: example
@@ -1833,6 +2037,7 @@ export const { octave } = registerControl('octave');
  * An `orbit` is a global parameter context for patterns. Patterns with the same orbit will share the same global effects.
  *
  * @name orbit
+ * @synonyms o
  * @param {number | Pattern} number
  * @example
  * stack(
@@ -1840,7 +2045,7 @@ export const { octave } = registerControl('octave');
  *   s("~ sd ~ sd").delay(.5).delaytime(.125).orbit(2)
  * )
  */
-export const { orbit } = registerControl('orbit');
+export const { orbit } = registerControl('orbit', 'o');
 // TODO: what is this? not found in tidal doc Answer: gain is limited to maximum of 2. This allows you to go over that
 export const { overgain } = registerControl('overgain');
 // TODO: what is this? not found in tidal doc. Similar to above, but limited to 1

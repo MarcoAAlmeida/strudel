@@ -238,14 +238,13 @@ export function repl({
         pattern = eachTransform(pattern);
       }
       if (allTransforms.length) {
-        for (let i in allTransforms) {
-          pattern = allTransforms[i](pattern);
+        for (const transform of allTransforms) {
+          pattern = transform(pattern);
         }
       }
 
       if (!isPattern(pattern)) {
-        const message = `got "${typeof evaluated}" instead of pattern`;
-        throw new Error(message + (typeof evaluated === 'function' ? ', did you forget to call a function?' : '.'));
+        pattern = silence;
       }
       logger(`[eval] code updated`);
       pattern = await setPattern(pattern, autostart);
