@@ -486,8 +486,9 @@ const refsByChan = {};
  *
  * The output is a function that accepts a midi cc value to query as well as (optionally) a midi channel
  * @param {string | number} input MIDI device name or index defaulting to 0
- * @returns {function(number, number=): function(): number} A function from (cc, channel?) to
- *   the most recently received midi cc value through the input (normalized to 0 to 1)
+ * @returns {function(number, number=): Pattern} A function from (cc, channel?) to a pattern.
+ *   When queried, the pattern will produces the most recently received midi value (normalized to 0 to 1)
+ *   that came through that cc number (and channel, if provided)
  * @example
  * const cc = await midin('IAC Driver Bus 1')
  * note("c a f e").lpf(cc(0).range(0, 1000)).lpq(cc(1).range(0, 10)).sound("sawtooth")
