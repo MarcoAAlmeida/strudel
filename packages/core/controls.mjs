@@ -2786,3 +2786,17 @@ export const scrub = register(
   },
   false,
 );
+
+/**
+ * Transient shaper. Gives independent control over the emphasis on transients
+ * and sustains
+ *
+ * @name transient
+ * @param {number | Pattern} attack Emphasis on transients; between -1 (deaccentuate) and 1 (accentuate)
+ * @param {number | Pattern} sustain Emphasis on the sustains; between -1 (deaccentuate) and 1 (accentuate)
+ * @example
+ * s("bd").transient("<-1 -0.5 0 0.5 1>")
+ * @example
+ * s("hh*16").bank("tr909").transient("<-1:1 1:-1>")
+ */
+export const { transient } = registerControl(['transient', 'transsustain']);
