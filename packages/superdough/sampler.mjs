@@ -1,7 +1,14 @@
 import { getBaseURL, getCommonSampleInfo } from './util.mjs';
 import { registerSound, registerWaveTable } from './index.mjs';
 import { getAudioContext } from './audioContext.mjs';
-import { getADSRValues, getParamADSR, getPitchEnvelope, getVibratoOscillator } from './helpers.mjs';
+import {
+  getADSRValues,
+  getParamADSR,
+  getPitchEnvelope,
+  getVibratoOscillator,
+  onceEnded,
+  releaseAudioNode,
+} from './helpers.mjs';
 import { logger } from './logger.mjs';
 
 const bufferCache = {}; // string: Promise<ArrayBuffer>
@@ -286,14 +293,16 @@ export async function onTriggerSample(t, value, onended, bank, resolveUrl) {
 
   const { bufferSource, sliceDuration, offset } = await getSampleBufferSource(value, bank, resolveUrl);
 
-  // asny stuff above took too long?
-  if (ac.currentTime > t) {
-    logger(`[sampler] still loading sound "${s}:${n}"`, 'highlight');
-    // console.warn('sample still loading:', s, n);
-    return;
-  }
   if (!bufferSource) {
     logger(`[sampler] could not load "${s}:${n}"`, 'error');
+    return;
+  }
+
+  // async stuff above took too long?
+  if (ac.currentTime > t) {
+    logger(`[sampler] loading sound "${s}:${n}" took too long`, 'highlight');
+    // AudioBufferSourceNode will never be used. discard it
+    releaseAudioNode(bufferSource);
     return;
   }
 
@@ -319,13 +328,13 @@ export async function onTriggerSample(t, value, onended, bank, resolveUrl) {
 
   const out = ac.createGain(); // we need a separate gain for the cutgroups because firefox...
   node.connect(out);
-  bufferSource.onended = function () {
+  onceEnded(bufferSource, function () {
     bufferSource.disconnect();
     vibratoOscillator?.stop();
     node.disconnect();
     out.disconnect();
     onended();
-  };
+  });
   let envEnd = holdEnd + release + 0.01;
   bufferSource.stop(envEnd);
   const stop = (endTime) => {
