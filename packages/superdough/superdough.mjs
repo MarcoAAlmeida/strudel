@@ -544,6 +544,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
           processorOptions: {
             attack: transient,
             sustain: transsustain,
+            begin: t,
+            end: endWithRelease,
           },
         },
       ),

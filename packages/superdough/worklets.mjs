@@ -1404,6 +1404,8 @@ class TransientProcessor extends AudioWorkletProcessor {
       sustain = 0,
       sensitivity = 0.1,
       mix = 1,
+      begin = 0,
+      end = 0,
     } = options.processorOptions;
     attackTime = clamp(attackTime, 0.0005, 0.05);
     sustainTime = clamp(sustainTime, 0.01, 0.5);
@@ -1413,17 +1415,26 @@ class TransientProcessor extends AudioWorkletProcessor {
     this.sustainAmt = clamp(sustain, -1, 1);
     this.scaling = 0.5 + 5 * clamp(sensitivity, 0, 1);
     this.mix = clamp(mix, 0, 1);
+    this.begin = begin;
+    this.end = end;
+    this.attackEnv = new Float32Array(2); // assume stereo
+    this.sustainEnv = new Float32Array(2);
   }
 
   process(inputs, outputs, _params) {
     const input = inputs[0];
     const output = outputs[0];
-    if (!input || !output) {
+    if (currentTime >= this.end) {
+      return false;
+    }
+    if (currentTime <= this.begin) {
       return true;
     }
     const channels = input.length;
-    this.attackEnv ??= new Float32Array(channels);
-    this.sustainEnv ??= new Float32Array(channels);
+    if (channels > this.attackEnv.length) {
+      this.attackEnv = new Float32Array(channels);
+      this.sustainEnv = new Float32Array(channels);
+    }
     let avgGain = this.avgGain;
     for (let ch = 0; ch < channels; ch++) {
       let attEnv = this.attackEnv[ch];
