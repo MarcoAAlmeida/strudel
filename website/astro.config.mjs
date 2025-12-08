@@ -10,7 +10,7 @@ import bundleAudioWorkletPlugin from 'vite-plugin-bundle-audioworklet';
 import tailwind from '@astrojs/tailwind';
 import AstroPWA from '@vite-pwa/astro';
 
-const site = 'https://marcoaalmeida.codeberg.page';
+const site = 'https://marcoaalmeida.github.io';
 const base = '/strudel'; 
 const baseNoTrailing = base.endsWith('/') ? base.slice(0, -1) : base;
 
