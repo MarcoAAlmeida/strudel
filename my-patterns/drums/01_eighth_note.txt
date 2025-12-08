@@ -1,4 +1,4 @@
-/* "Drum_01 - eighth_note" */
+/* `Drum_01 - eighth_note` */
 /**
 [22 Common Drum Beats Every Drummer Should Know ](https://www.youtube.com/watch?v=5acGxguFiyo)
 **/
@@ -7,5 +7,5 @@
 // [eighth_note](https://www.youtube.com/watch?v=5acGxguFiyo&t=17s)
 setcpm(100/4)
 
-$eighth_note: s("[hh*8],[bd ~ sd ~]*2")
+$eighth_note: s(`[hh*8],[bd ~ sd ~]*2`)
   .fast(1).bank(`rolandtr909`)

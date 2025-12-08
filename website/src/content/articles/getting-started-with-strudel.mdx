@@ -1,0 +1,55 @@
+---
+title: 'Getting Started with Strudel'
+description: 'A beginner-friendly introduction to live coding music with Strudel'
+date: '2025-12-08'
+tags: ['tutorial', 'beginner', 'patterns']
+author: 'Marco A Almeida'
+draft: false
+---
+
+Strudel is a powerful live coding pattern language for creating music in your browser. This article will introduce you to the basics of Strudel and get you making sounds in no time.
+
+## What is Strudel?
+
+Strudel is a JavaScript port of [TidalCycles](https://tidalcycles.org/), bringing the power of algorithmic pattern generation to the web. With Strudel, you can create complex musical patterns using simple, expressive code.
+
+## Your First Pattern
+
+Let's start with a simple drum pattern:
+
+```javascript
+sound("bd sd bd sd")
+```
+
+This pattern plays a kick drum (bd) and snare drum (sd) in alternation. Try it in the [Strudel REPL](/repl)!
+
+## Working with Notes
+
+You can also create melodic patterns:
+
+```javascript
+note("c3 e3 g3 c4").sound("piano")
+```
+
+This plays a C major arpeggio using a piano sound.
+
+## Pattern Transformations
+
+Strudel's real power comes from pattern transformations. You can manipulate patterns in many ways:
+
+```javascript
+note("c3 e3 g3 c4")
+  .sound("piano")
+  .fast(2)
+  .rev()
+```
+
+This pattern plays twice as fast (`.fast(2)`) and in reverse (`.rev()`).
+
+## Next Steps
+
+- Explore the [workshop](/workshop/) for more tutorials
+- Check out the [pattern library](/learn/) for all available functions
+- Join the community on [Discord](https://discord.com/invite/3qVXTJ3Y)
+
+Happy live coding!
