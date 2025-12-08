@@ -1,13 +1,11 @@
-/* "Drum_00 - quarter_note" */
+/* "Drum_01 - eighth_note" */
 /**
 [22 Common Drum Beats Every Drummer Should Know ](https://www.youtube.com/watch?v=5acGxguFiyo)
 **/
 
 
-// [quarter note](https://www.youtube.com/watch?v=5acGxguFiyo)
-setcpm(120/4)
-_$quarter_note: s("[hh hh hh hh],[bd sd bd sd]")
-  .fast(1).bank(`rolandtr909`)
+// [eighth_note](https://www.youtube.com/watch?v=5acGxguFiyo&t=17s)
+setcpm(100/4)
 
-$quarter_note: s("[hh*4],[bd sd]*2")
+$eighth_note: s("[hh*8],[bd ~ sd ~]*2")
   .fast(1).bank(`rolandtr909`)
