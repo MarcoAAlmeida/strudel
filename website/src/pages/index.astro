@@ -1,7 +1,6 @@
 ---
 import HeadCommon from '../components/HeadCommon.astro';
 import { getCollection } from 'astro:content';
-import { compareDesc } from 'date-fns';
 
 const { BASE_URL } = import.meta.env;
 const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
@@ -9,7 +8,7 @@ const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL
 // Get recent articles (limit to 3)
 const recentArticles = (await getCollection('articles'))
   .filter((article) => !article.data.draft)
-  .sort((a, b) => compareDesc(a.data.date, b.data.date))
+  .sort((a, b) => a.slug.localeCompare(b.slug))
   .slice(0, 3);
 ---
 
@@ -31,7 +30,7 @@ const recentArticles = (await getCollection('articles'))
         </div>
         <h1 class="text-6xl font-bold mb-4 text-foreground">Marco´s Strudel Journey</h1>
         <p class="text-lg text-gray-400 max-w-2xl mx-auto mb-12">
-          An amazing experience in learning about musical theory and coding.
+          My fork of <a href="https://codeberg.org/uzu/strudel" target="_blank">amazing strudel.cc</a>: an adventure in musical theory and coding.
         </p>
 
         <!-- CTA Buttons -->
@@ -53,15 +52,16 @@ const recentArticles = (await getCollection('articles'))
         <!-- Quick Links -->
         <div class="flex flex-wrap gap-6 justify-center text-sm">
           <a href="https://strudel.cc/" target="_blank" class="text-blue-400 hover:underline">
-            Official REPL
+            Official Strudel REPL
           </a>
           <a href="https://strudel.cc/workshop/getting-started/" target="_blank" class="text-blue-400 hover:underline">
-            Official Docs
+            Official Strudel Docs
           </a>
         </div>
       </div>
 
       <!-- Resources Section -->
+      <!--
       <div class="mb-16">
         <h2 class="text-3xl font-bold mb-6 text-center text-foreground">Resources</h2>
         <div class="grid md:grid-cols-3 gap-6">
@@ -94,6 +94,7 @@ const recentArticles = (await getCollection('articles'))
           </div>
         </div>
       </div>
+      -->
 
       <!-- Recent Articles -->
       {recentArticles.length > 0 && (

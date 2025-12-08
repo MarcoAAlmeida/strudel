@@ -6,13 +6,12 @@ import LeftSidebar from '../../components/LeftSidebar/LeftSidebar.astro';
 import PageContent from '../../components/PageContent/PageContent.astro';
 import RightSidebar from '../../components/RightSidebar/RightSidebar.astro';
 import { getCollection } from 'astro:content';
-import { compareDesc } from 'date-fns';
 
 const currentPage = Astro.url.pathname;
 
 const articles = (await getCollection('articles'))
   .filter((article) => !article.data.draft)
-  .sort((a, b) => compareDesc(a.data.date, b.data.date));
+  .sort((a, b) => a.slug.localeCompare(b.slug));
 
 const { BASE_URL } = import.meta.env;
 const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
@@ -76,15 +75,6 @@ const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL
               ))}
             </div>
           </PageContent>
-          <aside class="fixed right-0 h-full overflow-auto pr-4 pl-0 pb-16 hidden xl:block" title="Table of Contents">
-            <RightSidebar
-              headings={articles.map((article) => ({
-                depth: 1,
-                slug: article.slug,
-                text: article.data.title,
-              }))}
-            />
-          </aside>
         </div>
       </main>
     </div>
