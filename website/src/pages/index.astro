@@ -22,19 +22,16 @@ const recentArticles = (await getCollection('articles'))
       content="Strudel is a live coding pattern language for music in the browser. Create algorithmic music with simple, expressive code."
     />
   </head>
-  <body class="h-app-height bg-background m-0 flex items-center justify-center">
-    <main class="w-full max-w-6xl px-6 py-12">
+  <body class="min-h-screen bg-background m-0">
+    <main class="w-full max-w-6xl mx-auto px-6 py-12">
       <!-- Hero Section -->
-      <div class="text-center mb-16">
+      <div class="text-center mb-16 mt-8">
         <div class="flex items-center justify-center mb-6">
-          <span class="block rotate-90 text-blue-500 text-6xl">꩜</span>
+          <span class="block rotate-90 text-blue-500" style="font-size: 4rem; line-height: 1;">꩜</span>
         </div>
-        <h1 class="text-6xl font-bold mb-4 text-foreground">strudel</h1>
-        <p class="text-2xl text-gray-300 mb-8">
-          Live coding patterns on the web
-        </p>
+        <h1 class="text-6xl font-bold mb-4 text-foreground">Marco´s Strudel Journey</h1>
         <p class="text-lg text-gray-400 max-w-2xl mx-auto mb-12">
-          Create algorithmic music with simple, expressive code. A JavaScript port of TidalCycles bringing pattern generation to your browser.
+          An amazing experience in learning about musical theory and coding.
         </p>
 
         <!-- CTA Buttons -->
@@ -49,23 +46,17 @@ const recentArticles = (await getCollection('articles'))
             href={`${baseNoTrailing}/swatch`}
             class="px-8 py-4 bg-lineHighlight hover:bg-gray-700 text-white font-bold rounded-lg text-lg transition-colors"
           >
-            Browse Patterns
+            Browse my patterns
           </a>
         </div>
 
         <!-- Quick Links -->
         <div class="flex flex-wrap gap-6 justify-center text-sm">
-          <a href={`${baseNoTrailing}/workshop/`} class="text-blue-400 hover:underline">
-            Workshop
+          <a href="https://strudel.cc/" target="_blank" class="text-blue-400 hover:underline">
+            Official REPL
           </a>
-          <a href={`${baseNoTrailing}/learn/`} class="text-blue-400 hover:underline">
-            Documentation
-          </a>
-          <a href={`${baseNoTrailing}/recipes/`} class="text-blue-400 hover:underline">
-            Recipes
-          </a>
-          <a href={`${baseNoTrailing}/blog`} class="text-blue-400 hover:underline">
-            Blog
+          <a href="https://strudel.cc/workshop/getting-started/" target="_blank" class="text-blue-400 hover:underline">
+            Official Docs
           </a>
         </div>
       </div>

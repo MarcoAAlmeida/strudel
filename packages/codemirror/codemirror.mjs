@@ -62,7 +62,7 @@ export const defaultSettings = {
   isLineWrappingEnabled: false,
   isTabIndentationEnabled: false,
   isMultiCursorEnabled: false,
-  theme: 'CutiePi',
+  theme: 'strudelTheme',
   fontFamily: 'monospace',
   fontSize: 18,
 };
