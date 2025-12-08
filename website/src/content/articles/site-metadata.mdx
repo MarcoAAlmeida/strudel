@@ -1,0 +1,90 @@
+---
+title: 'Site Metadata: Deployment & Content'
+description: 'Quick guide to deployment, writing articles, and adding patterns'
+date: '2025-12-08'
+tags: ['documentation', 'meta']
+author: 'Marco A Almeida'
+draft: false
+---
+
+Technical reference for this Strudel fork: deployment, articles, and patterns.
+
+## Deployment
+
+**GitHub Actions** (`.github/workflows/deploy-github-pages.yml`) deploys on push to `main`:
+1. Installs dependencies (`pnpm install`)
+2. Builds site (`pnpm build` → `website/dist/`)
+3. Deploys to `https://marcoaalmeida.github.io/strudel/`
+
+**Base path:** Configured in `website/astro.config.mjs` as `/strudel` for subdirectory deployment.
+
+## Tech Stack
+
+**Astro**: Static site generator. Pages in `website/src/pages/` become routes. Interactive components (REPL) hydrate on demand.
+
+**MDX**: Markdown + JSX. Write markdown, embed React components.
+
+**Site structure:**
+- `/` - Landing page
+- `/repl` - REPL (React)
+- `/swatch` - Pattern gallery
+- `/articles` - Your articles
+- `/learn`, `/workshop`, `/blog` - Docs
+
+## Writing Articles
+
+### 1. Create file
+
+`website/src/content/articles/my-article.mdx`
+
+### 2. Add frontmatter
+
+```mdx
+---
+title: 'Article Title'
+description: 'Brief description'
+date: '2025-12-08'
+author: 'Your Name'
+tags: ['tag1', 'tag2']
+draft: false
+---
+
+Your content here...
+
+\`\`\`javascript
+sound("bd sd")
+\`\`\`
+```
+
+### 3. Deploy
+
+- Test locally: `pnpm dev` → `localhost:4321/strudel/articles/`
+- Push to `main` → auto-deploys
+- Recent articles (3) appear on landing page
+
+## Adding Patterns
+
+### 1. Create pattern file
+
+`my-patterns/my-pattern.txt`
+
+### 2. Write pattern
+
+```javascript
+sound("bd sd hh cp").fast(2)
+```
+
+### 3. Deploy
+
+Push to `main` → appears at `/swatch`
+
+**How it works:** Astro reads all `.txt` files from `my-patterns/`, creates clickable cards that link to REPL with pattern loaded.
+
+## Key Files
+
+- `.github/workflows/deploy-github-pages.yml` - Deployment
+- `website/astro.config.mjs` - Config
+- `website/src/content/config.ts` - Content schema
+- `website/src/pages/index.astro` - Landing page
+- `website/src/pages/articles/[...slug].astro` - Article template
+- `my-patterns/` - Pattern files
