@@ -158,6 +158,17 @@ pnpm check          # Run format-check, lint, and tests
 3. Run `pnpm test` to ensure tests pass
 4. Or simply run `pnpm check` to do all of the above
 
+### Commit Messages
+
+- Always write commit messages in **past tense**
+- Use imperative mood descriptively: "fixed bug", "added feature", "updated config"
+- Be specific and concise about what changed
+- Examples:
+  - ✅ "fixed github deployment issue, updated site URL"
+  - ✅ "removed stray list.json reference from swatch page"
+  - ❌ "fix github deployment issue" (present tense)
+  - ❌ "fixing bugs" (present continuous)
+
 ### Adding New Packages
 
 - Create package in `packages/` directory
