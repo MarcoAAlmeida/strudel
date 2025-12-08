@@ -491,7 +491,8 @@ export function getOscillator(s, t, value, onended) {
   }
 
   onceEnded(o, () => {
-    noiseMix || releaseAudioNode(o);
+    noiseMix?.teardown();
+    releaseAudioNode(o);
     releaseAudioNode(noiseMix?.node);
     onended();
   });

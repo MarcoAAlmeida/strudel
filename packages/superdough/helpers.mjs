@@ -283,9 +283,12 @@ export function drywet(dry, wet, wetAmount = 0) {
   wet_gain.connect(mix);
   return {
     node: mix,
-    onended: () => {
-      dry_gain.disconnect(mix);
-      wet_gain.disconnect(mix);
+    teardown: () => {
+      releaseAudioNode(dry_gain);
+      releaseAudioNode(wet_gain);
+      // it is not the responsability of drywet
+      // to call `releaseAudioNode` on
+      // the 2 external args dry and wet
       dry.disconnect(dry_gain);
       wet.disconnect(wet_gain);
     },
