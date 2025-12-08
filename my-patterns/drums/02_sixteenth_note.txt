@@ -1,0 +1,11 @@
+/* "Drum_02 - sixteenth_note" */
+/**
+[22 Common Drum Beats Every Drummer Should Know ](https://www.youtube.com/watch?v=5acGxguFiyo)
+**/
+
+
+// [sixteenth_note](https://www.youtube.com/watch?v=5acGxguFiyo&t=33s)
+setcpm(60/4)
+
+$sixteenth_note: s("[hh*16],[bd ~ ~ ~ sd ~ ~ ~]*2")
+  .fast(1).bank(`rolandtr909`)

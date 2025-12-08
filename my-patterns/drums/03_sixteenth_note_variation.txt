@@ -1,0 +1,18 @@
+/* "Drum_03 - sixteenth_note variation  " */
+/**
+[22 Common Drum Beats Every Drummer Should Know ](https://www.youtube.com/watch?v=5acGxguFiyo)
+**/
+
+
+// [sixteenth_note](https://www.youtube.com/watch?v=5acGxguFiyo&t=57s)
+setcpm(20|4)
+
+let wood = s(`bd*4`).sound(`east`);
+
+let sixteenth_note = s("[hh hh hh hh ~ hh hh hh hh hh hh hh ~ hh hh hh],[bd ~ ~ ~ sd ~ ~ ~]*2")
+  .fast(1).bank(`yamahary30`);
+
+arrange (
+  [1, wood],
+  [4, sixteenth_note]
+).room(.1)
