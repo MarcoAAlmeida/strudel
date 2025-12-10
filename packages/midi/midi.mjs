@@ -543,3 +543,75 @@ export async function midin(input) {
   device.addListener('midimessage', listeners[input]);
   return cc;
 }
+
+/**
+ * MIDI keyboard: Opens a MIDI input port to receive MIDI keyboard messages.
+ *
+ * The note length is fixed as Superdough is not currently set up for undetermined
+ * note durations
+ *
+ * @param {string | number} input MIDI device name or index defaulting to 0
+ * @returns {function(): Pattern} A function that produces a pattern.
+ *   When queried, the pattern will produces the most recently played midi notes and velocities,
+ *   lasting for the specified duration
+ * @example
+ * const cc = await midin('IAC Driver Bus 1')
+ * note("c a f e").lpf(cc(0).range(0, 1000)).lpq(cc(1).range(0, 10)).sound("sawtooth")
+ * @example
+ * const allCC = await midin('IAC Driver Bus 1')
+ * const cc = (ccNum) => allCC(ccNum, 2) // just channel 2
+ * note("c a f e").s("saw")
+ *   .when(cc(0).gt(0), x => x.postgain(0))
+ */
+const kHaps = {};
+const kListeners = {};
+export async function keyboard(input, noteLength = 0.5) {
+  const device = await _initialize(input);
+  if (!kHaps[input]) {
+    kHaps[input] = {};
+  }
+  kListeners[input] && device.removeListener('midimessage', kListeners[input]);
+  kListeners[input] = (e) => {
+    const { dataBytes, message } = e;
+    const [cc, v] = dataBytes;
+    const noteoff = message.command === 8;
+    const key = `${input}_${cc}`;
+    const t = getTime() + 0.1; // slight delay so it's not too late for cyclist to catch
+    const span = new TimeSpan(t, t + noteLength);
+    let value = { midikey: key };
+    if (noteoff) {
+      /* TODO: It's a big effort, but we could modify superdough to allow for situations where
+      we don't know the hap duration in advance. This would mean, for example, that if the hap
+      is flagged as such a special note-on event, we have all effects be persistent & all ADSR
+      envelopes stop at the S stage [and store references to them by note+pattern]
+      If this is implemented, then getting full keyboard functionality should be as simple
+      as sending the corresponding note-off event below and triggering `release` on each of those
+      referenced effects/envelopes
+      
+      value = { ...value, noteoff: true };
+  
+      If this is achieved, we can remove the noteLength parameter
+      */
+      return;
+    } else {
+      value = { ...value, note: Math.round(cc), velocity: v / 127 };
+    }
+    kHaps[input][key] = new Hap(span, span, value, {});
+  };
+  device.addListener('midimessage', kListeners[input]);
+  const kb = () => {
+    const query = (state) => {
+      const haps = [];
+      for (const [key, hap] of Object.entries(kHaps[input])) {
+        haps.push(hap);
+      }
+      if (state.controls.cyclist) {
+        // Notes have been sent; clear them
+        kHaps[input] = {};
+      }
+      return haps;
+    };
+    return new Pattern(query);
+  };
+  return kb;
+}
