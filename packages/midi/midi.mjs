@@ -5,7 +5,7 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 import * as _WebMidi from 'webmidi';
-import { Pattern, isPattern, logger, ref } from '@strudel/core';
+import { Hap, Pattern, TimeSpan, getTime, isPattern, logger, ref, reify } from '@strudel/core';
 import { noteToMidi, getControlName } from '@strudel/core';
 import { Note } from 'webmidi';
 import { scheduleAtTime } from '../superdough/helpers.mjs';
@@ -477,14 +477,41 @@ Pattern.prototype.midi = function (midiport, options = {}) {
   });
 };
 
-let listeners = {};
-const refs = {};
-const refsByChan = {};
+/**
+ * Initialize a midi device
+ */
+async function _initialize(input) {
+  if (isPattern(input)) {
+    throw new Error(
+      `[midi] Midi input cannot be a pattern. Make sure to pass device name with single quotes. Example: midin('${
+        WebMidi.outputs?.[0]?.name || 'IAC Driver Bus 1'
+      }')`,
+    );
+  }
+  const initial = await enableWebMidi(); // only returns on first init
+  const device = getDevice(input, WebMidi.inputs);
+  if (!device) {
+    throw new Error(
+      `[midi] Midi device "${input}" not found.. connected devices: ${getMidiDeviceNamesString(WebMidi.inputs)}`,
+    );
+  }
+  if (initial) {
+    const otherInputs = WebMidi.inputs.filter((o) => o.name !== device.name);
+    logger(
+      `[midi] Midi enabled! Using "${device.name}". ${
+        otherInputs?.length ? `Also available: ${getMidiDeviceNamesString(otherInputs)}` : ''
+      }`,
+    );
+  }
+  return device;
+}
 
 /**
  * MIDI input: Opens a MIDI input port to receive MIDI control change messages.
  *
  * The output is a function that accepts a midi cc value to query as well as (optionally) a midi channel
+ *
+ * @name midin
  * @param {string | number} input MIDI device name or index defaulting to 0
  * @returns {function(number, number=): Pattern} A function from (cc, channel?) to a pattern.
  *   When queried, the pattern will produces the most recently received midi value (normalized to 0 to 1)
@@ -498,29 +525,11 @@ const refsByChan = {};
  * note("c a f e").s("saw")
  *   .when(cc(0).gt(0), x => x.postgain(0))
  */
+let listeners = {};
+const refs = {};
+const refsByChan = {};
 export async function midin(input) {
-  if (isPattern(input)) {
-    throw new Error(
-      `midin: does not accept Pattern as input. Make sure to pass device name with single quotes. Example: midin('${
-        WebMidi.outputs?.[0]?.name || 'IAC Driver Bus 1'
-      }')`,
-    );
-  }
-  const initial = await enableWebMidi(); // only returns on first init
-  const device = getDevice(input, WebMidi.inputs);
-  if (!device) {
-    throw new Error(
-      `midiin: device "${input}" not found.. connected devices: ${getMidiDeviceNamesString(WebMidi.inputs)}`,
-    );
-  }
-  if (initial) {
-    const otherInputs = WebMidi.inputs.filter((o) => o.name !== device.name);
-    logger(
-      `Midi enabled! Using "${device.name}". ${
-        otherInputs?.length ? `Also available: ${getMidiDeviceNamesString(otherInputs)}` : ''
-      }`,
-    );
-  }
+  const device = await _initialize(input);
   refs[input] ??= {};
   refsByChan[input] ??= {};
   const cc = (cc, chan) => {
@@ -532,8 +541,7 @@ export async function midin(input) {
 
   listeners[input] && device.removeListener('midimessage', listeners[input]);
   listeners[input] = (e) => {
-    const ccNum = e.dataBytes[0];
-    const v = e.dataBytes[1];
+    const [ccNum, v] = e.dataBytes;
     const chan = e.message.channel;
     const scaled = v / 127;
     refsByChan[input][ccNum] ??= {};
@@ -550,40 +558,42 @@ export async function midin(input) {
  * The note length is fixed as Superdough is not currently set up for undetermined
  * note durations
  *
+ * @name keyboard
  * @param {string | number} input MIDI device name or index defaulting to 0
- * @returns {function(): Pattern} A function that produces a pattern.
+ * @returns {function((number | Pattern)=): Pattern} A function that produces a pattern.
  *   When queried, the pattern will produces the most recently played midi notes and velocities,
  *   lasting for the specified duration
  * @example
- * const cc = await midin('IAC Driver Bus 1')
- * note("c a f e").lpf(cc(0).range(0, 1000)).lpq(cc(1).range(0, 10)).sound("sawtooth")
+ * const kb = await keyboard('Arturia KeyStep 32')
+ * kb().s("tri").lpf(80).lpe(6).lpd(0.1).room(2).delay(0.35)
  * @example
- * const allCC = await midin('IAC Driver Bus 1')
- * const cc = (ccNum) => allCC(ccNum, 2) // just channel 2
- * note("c a f e").s("saw")
- *   .when(cc(0).gt(0), x => x.postgain(0))
+ * const kb = await keyboard('Arturia KeyStep 32')
+ * kb("0.5 1")
+ *   .s("saw")
+ *   .add(note(rand.mul(0.3)))
+ *   .lpf(1000).lpe(2).room(0.5)
  */
 const kHaps = {};
 const kListeners = {};
-export async function keyboard(input, noteLength = 0.5) {
+export async function keyboard(input) {
   const device = await _initialize(input);
   if (!kHaps[input]) {
-    kHaps[input] = {};
+    kHaps[input] = [];
   }
   kListeners[input] && device.removeListener('midimessage', kListeners[input]);
   kListeners[input] = (e) => {
     const { dataBytes, message } = e;
-    const [cc, v] = dataBytes;
+    const [note, velocity] = dataBytes;
     const noteoff = message.command === 8;
-    const key = `${input}_${cc}`;
+    const key = `${input}_${note}`;
     const t = getTime() + 0.1; // slight delay so it's not too late for cyclist to catch
-    const span = new TimeSpan(t, t + noteLength);
+    const span = new TimeSpan(t, t);
     let value = { midikey: key };
     if (noteoff) {
       /* TODO: It's a big effort, but we could modify superdough to allow for situations where
       we don't know the hap duration in advance. This would mean, for example, that if the hap
       is flagged as such a special note-on event, we have all effects be persistent & all ADSR
-      envelopes stop at the S stage [and store references to them by note+pattern]
+      envelopes stop at the S stage [and store references to them by `midikey`]
       If this is implemented, then getting full keyboard functionality should be as simple
       as sending the corresponding note-off event below and triggering `release` on each of those
       referenced effects/envelopes
@@ -594,20 +604,27 @@ export async function keyboard(input, noteLength = 0.5) {
       */
       return;
     } else {
-      value = { ...value, note: Math.round(cc), velocity: v / 127 };
+      value = { ...value, note: Math.round(note), velocity: velocity / 127 };
     }
-    kHaps[input][key] = new Hap(span, span, value, {});
+    kHaps[input].push(new Hap(span, span, value, {}));
   };
   device.addListener('midimessage', kListeners[input]);
-  const kb = () => {
+  const kb = (noteLength = 0.5) => {
+    const nlPat = reify(noteLength);
     const query = (state) => {
-      const haps = [];
-      for (const [key, hap] of Object.entries(kHaps[input])) {
-        haps.push(hap);
-      }
+      const haps = kHaps[input].flatMap((hap) => {
+        const lenHaps = nlPat.query(state.setSpan(hap.wholeOrPart()));
+        return lenHaps.map((lenHap) => {
+          const nl = lenHap.value ?? 0.5;
+          const whole = new TimeSpan(hap.whole.begin, hap.whole.begin.add(nl));
+          const part = new TimeSpan(hap.part.begin, hap.part.begin.add(nl));
+          const context = hap.combineContext(lenHap);
+          return new Hap(whole, part, hap.value, context);
+        });
+      });
       if (state.controls.cyclist) {
         // Notes have been sent; clear them
-        kHaps[input] = {};
+        kHaps[input] = [];
       }
       return haps;
     };
