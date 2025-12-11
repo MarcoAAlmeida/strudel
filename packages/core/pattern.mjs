@@ -3724,8 +3724,8 @@ const resolveConfigKey = (funcName, key) => {
   return aliasMap.get(normalized) ?? key;
 };
 
-addConfigAlias('lfo', 'target', 't');
-addConfigAlias('lfo', 'param', 'p');
+addConfigAlias('lfo', 'control', 'c');
+addConfigAlias('lfo', 'subControl', 'sc');
 addConfigAlias('lfo', 'rate', 'r');
 addConfigAlias('lfo', 'depth', 'dep', 'dr');
 addConfigAlias('lfo', 'depthabs', 'da');
@@ -3734,7 +3734,8 @@ addConfigAlias('lfo', 'shape', 'sh');
 addConfigAlias('lfo', 'skew', 'sk');
 addConfigAlias('lfo', 'curve', 'c');
 addConfigAlias('lfo', 'sync', 's');
-addConfigAlias('env', 'target', 't');
+addConfigAlias('env', 'control', 'c');
+addConfigAlias('env', 'subControl', 'sc');
 addConfigAlias('env', 'attack', 'att', 'a');
 addConfigAlias('env', 'decay', 'dec', 'd');
 addConfigAlias('env', 'sustain', 'sus', 's');
@@ -3745,7 +3746,8 @@ addConfigAlias('env', 'acurve', 'ac');
 addConfigAlias('env', 'dcurve', 'dc');
 addConfigAlias('env', 'rcurve', 'rc');
 addConfigAlias('bmod', 'orbit', 'o');
-addConfigAlias('bmod', 'target', 't');
+addConfigAlias('bmod', 'control', 'c');
+addConfigAlias('bmod', 'subControl', 'sc');
 addConfigAlias('bmod', 'depth', 'dep', 'dr');
 addConfigAlias('bmod', 'depthabs', 'da');
 addConfigAlias('bmod', 'dc');
@@ -3761,27 +3763,31 @@ Pattern.prototype.modulate = function (type, config, idx) {
   }
   let output = this;
   let defaultValue = {};
-  let defaultSet = 'target' in config;
+  let defaultSet = 'control' in config;
   for (const [rawKey, value] of Object.entries(config)) {
     const key = resolveConfigKey(type, rawKey);
     const valuePat = reify(value);
     output = output
       .fmap((v) => (c) => {
         if (!defaultSet) {
-          // default target to the control set just before this in the chain
+          // default control to the control set just before this in the chain
           // e.g. pat.gain(0.5).lfo({..}) will be a gain-LFO
           let control = getControlName(Object.keys(v).at(-1));
           if (modulatorKeys.includes(control)) {
             control = `${control}${v[type].length - 1}`;
           }
-          defaultValue = { target: control };
+          defaultValue = { control };
           defaultSet = true;
         }
         v[type] ??= [];
         const t = v[type];
         idx ??= t.length;
         t[idx] ??= defaultValue;
-        t[idx][key] = key === 'target' ? getControlName(c) : c;
+        if (key === 'control' || key === 'subControl') {
+          t[idx][key] = getControlName(c);
+        } else {
+          t[idx][key] = c;
+        }
         return v;
       })
       .appLeft(valuePat);
@@ -3795,7 +3801,8 @@ Pattern.prototype.modulate = function (type, config, idx) {
  * @name lfo
  * @memberof Pattern
  * @param {Object} config LFO configuration.
- * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: t
+ * @param {string | Pattern} [config.control] Node to modulate. Aliases: t
+ * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc, p
  * @param {number | Pattern} [config.rate] Modulation rate. Aliases: rate, r
  * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
  * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
@@ -3817,7 +3824,8 @@ export const lfo = (config) => pure({}).lfo(config);
  * @name env
  * @memberof Pattern
  * @param {Object} config Envelope configuration.
- * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: t
+ * @param {string | Pattern} [config.control] Node to modulate. Aliases: t
+ * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc, p
  * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
  * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
  * @param {number | Pattern} [config.attack] Time to reach depth. Aliases: att, a
@@ -3844,7 +3852,8 @@ export const env = (config) => pure({}).env(config);
  * @memberof Pattern
  * @param {Object} config Bus modulation configuration.
  * @param {string | Pattern} [config.bus] Bus to get modulation signal from
- * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: t
+ * @param {string | Pattern} [config.control] Node to modulate. Aliases: t
+ * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc, p
  * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
  * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
  * @param {number | Pattern} [config.ratio] Modulation ratio. Aliases: rat

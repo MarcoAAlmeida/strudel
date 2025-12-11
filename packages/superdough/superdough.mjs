@@ -411,14 +411,15 @@ function _getRangeForParam(paramName, targetParams, currentValue) {
   return { min: undefined, max: undefined };
 }
 
-function _getTargetParamsForControl(control, nodes, paramOverride) {
-  const targetInfo = _getControlData(control);
+function _getTargetParamsForControl(control, nodes, subControl) {
+  const lookupKey = subControl ? `${control}_${subControl}` : control;
+  const targetInfo = _getControlData(lookupKey) ?? _getControlData(control);
   if (!targetInfo) {
     errorLogger(`Could not find control data for target '${control}'`, 'superdough');
     return { targetParams: [], paramName: control };
   }
-  const paramName = paramOverride ?? targetInfo.param;
-  const nodeKey = nodes[control] ? control : targetInfo.node;
+  const paramName = targetInfo.param;
+  const nodeKey = nodes[targetInfo.node] ? targetInfo.node : control;
   const targetNodes = nodes[nodeKey];
   if (!targetNodes) {
     const keys = Object.keys(nodes);
@@ -445,9 +446,8 @@ function _getTargetParamsForControl(control, nodes, paramOverride) {
 }
 
 function connectLFO(idx, params, nodeTracker, value) {
-  const { rate = 1, sync, cps, cycle, target = 'lfo', depth = 1, depthabs, param, p, ...filteredParams } = params;
-  const targetParam = param ?? p;
-  const { targetParams, paramName } = _getTargetParamsForControl(target, nodeTracker, targetParam);
+  const { rate = 1, sync, cps, cycle, control = 'lfo', subControl, depth = 1, depthabs, ...filteredParams } = params;
+  const { targetParams, paramName } = _getTargetParamsForControl(control, nodeTracker, subControl);
   const currentValue = targetParams[0].value;
   const { min, max } = _getRangeForParam(paramName, targetParams, currentValue);
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
@@ -466,8 +466,8 @@ function connectLFO(idx, params, nodeTracker, value) {
 }
 
 function connectEnvelope(idx, params, nodeTracker, value) {
-  const { target, acurve, dcurve, rcurve, depth = 1, depthabs, ...filteredParams } = params;
-  const { targetParams, paramName } = _getTargetParamsForControl(target, nodeTracker);
+  const { control, subControl, acurve, dcurve, rcurve, depth = 1, depthabs, ...filteredParams } = params;
+  const { targetParams, paramName } = _getTargetParamsForControl(control, nodeTracker, subControl);
   const currentValue = targetParams[0].value;
   const { min, max } = _getRangeForParam(paramName, targetParams, currentValue);
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
@@ -487,13 +487,13 @@ function connectEnvelope(idx, params, nodeTracker, value) {
 
 function connectBusModulator(params, nodeTracker, value) {
   const ac = getAudioContext();
-  const { target, depth = 1, depthabs } = params;
+  const { control, subControl, depth = 1, depthabs } = params;
   const signal = controller.getBus(params.bus);
   const dc = new ConstantSourceNode(ac, { offset: params.dc ?? 0 });
   dc.start(params.begin);
   const shifted = dc.connect(gainNode(1));
   signal.connect(shifted);
-  const { targetParams, paramName } = _getTargetParamsForControl(target, nodeTracker);
+  const { targetParams, paramName } = _getTargetParamsForControl(control, nodeTracker, subControl);
   const currentValue = targetParams[0].value;
   const { min, max } = _getRangeForParam(paramName, targetParams, currentValue);
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
