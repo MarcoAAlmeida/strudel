@@ -30,15 +30,26 @@ const CONTROL_DATA = {
   // HPF
   hcutoff: { param: 'hpf.frequency', min: 20, max: 24000 },
   hresonance: { param: 'hpf.Q', min: 0.1, max: 30 },
+  hprate: { param: 'hpf_lfo.rate', min: 0, max: 40 },
+  hpsync: { param: 'hpf_lfo.sync', min: 0, max: 8 },
+  hpdepth: { param: 'hpf_lfo.depth', min: 20, max: 24000 },
+  hpdepthfrequency: { param: 'hpf_lfo.depth', min: 20, max: 24000 },
+  hpshape: { param: 'hpf_lfo.shape', min: 0, max: 4 },
+  hpdc: { param: 'hpf_lfo.dcoffset', min: -1, max: 1 },
+  hpskew: { param: 'hpf_lfo.skew', min: 0, max: 1 },
 
   // BPF
   bandf: { param: 'bpf.frequency', min: 20, max: 24000 },
   bandq: { param: 'bpf.Q', min: 0.1, max: 30 },
+  bprate: { param: 'bpf_lfo.rate', min: 0, max: 40 },
+  bpsync: { param: 'bpf_lfo.sync', min: 0, max: 8 },
+  bpdepth: { param: 'bpf_lfo.depth', min: 20, max: 24000 },
+  bpdepthfrequency: { param: 'bpf_lfo.depth', min: 20, max: 24000 },
+  bpshape: { param: 'bpf_lfo.shape', min: 0, max: 4 },
+  bpdc: { param: 'bpf_lfo.dcoffset', min: -1, max: 1 },
+  bpskew: { param: 'bpf_lfo.skew', min: 0, max: 1 },
 
-  // FILTERS
-  // fanchor: { param: ['lpf.anchor', 'hpf.anchor', 'bpf.anchor'], min: 0, max: 1 },
-  // drive: { param: ['lpf.drive', 'hpf.drive', 'bpf.drive'], min: 0, max: 2 },
-  // vowel: { param: 'vowel.frequency', min: 200, max: 4000 },
+  vowel: { param: 'vowel.frequency', min: 200, max: 4000 },
 
   // DISTORTION
   coarse: { param: 'coarse.coarse', min: 1, max: 64 },
@@ -47,7 +58,6 @@ const CONTROL_DATA = {
   shapevol: { param: 'shape.postgain', default: 1, min: 0, max: 1 },
   distort: { param: 'distort.distort', min: 0, max: 5 },
   distortvol: { param: 'distort.postgain', default: 1, min: 0, max: 1 },
-  // distorttype: { param: 'distort.algorithm', default: 0, min: 0, max: 4 },
 
   // COMPRESSOR
   compressor: { param: 'compressor.threshold', default: -3, min: -100, max: 0 },
@@ -63,17 +73,15 @@ const CONTROL_DATA = {
   phasercenter: { param: 'phaser.frequency', min: 20, max: 24000 },
 
   // ORBIT EFFECTS
-  // delay: { param: 'delay.delayTime', default: 0, min: 0, max: 4 },
   delaytime: { param: 'delay.delayTime', min: 0, max: 4 },
-  // delayfeedback: { param: 'delay.feedback', default: 0.5, min: 0, max: 0.98 },
-  // delaysync: { param: 'delay.sync', default: 3 / 16, min: 0, max: 2 },
+  delayfeedback: { param: 'delay.feedback', default: 0.5, min: 0, max: 0.98 },
+  delaysync: { param: 'delay.sync', default: 3 / 16, min: 0, max: 2 },
   dry: { param: 'dry.gain', min: 0, max: 1 },
   room: { param: 'room.wet', min: 0, max: 1 },
-  // roomfade: { param: 'room.fade', min: 0, max: 1 },
+  roomfade: { param: 'room.fade', min: 0, max: 1 },
   roomlp: { param: 'room.lp', min: 20, max: 24000 },
   djf: { param: 'djf.value', min: 0, max: 1 },
   busgain: { param: 'bus.gain', default: 1, min: 0, max: 10 },
-  bgain: { param: 'bus.gain', default: 1, min: 0, max: 10 },
 
   // SYNTHS
   detune: { param: 'source.detune', min: 0, max: 1 },
