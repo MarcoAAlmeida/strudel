@@ -2046,6 +2046,28 @@ export const { octave, oct } = registerControl('octave', 'oct');
  * )
  */
 export const { orbit } = registerControl('orbit', 'o');
+
+/**
+ * A `bus` is a send which can be used for mixing patterns. It combines with..
+ *   s("bus") to play that bus through another pattern (for, say, applying non-linear
+ *   effects like distortion to multiple signals)
+ *
+ *   otherPat.bmod(..) (to modulate another pattern with the bus)
+ *
+ * @name bus
+ * @param {number | Pattern} number
+ */
+export const { bus } = registerControl('bus');
+
+/**
+ * Postgain multiplier prior to sending the signal to the audio bus.
+ *
+ * @name busgain
+ * @synonyms bgain
+ * @param {number | Pattern} number
+ */
+export const { busgain, bgain } = registerControl('busgain', 'bgain');
+
 // TODO: what is this? not found in tidal doc Answer: gain is limited to maximum of 2. This allows you to go over that
 export const { overgain } = registerControl('overgain');
 // TODO: what is this? not found in tidal doc. Similar to above, but limited to 1

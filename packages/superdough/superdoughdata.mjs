@@ -72,6 +72,8 @@ const CONTROL_DATA = {
   // roomfade: { param: 'room.fade', min: 0, max: 1 },
   roomlp: { param: 'room.lp', min: 20, max: 24000 },
   djf: { param: 'djf.value', min: 0, max: 1 },
+  busgain: { param: 'bus.gain', default: 1, min: 0, max: 10 },
+  bgain: { param: 'bus.gain', default: 1, min: 0, max: 10 },
 
   // SYNTHS
   detune: { param: 'source.detune', min: 0, max: 1 },

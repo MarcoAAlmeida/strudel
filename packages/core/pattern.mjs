@@ -3743,18 +3743,18 @@ addConfigAlias('env', 'depthabs', 'da');
 addConfigAlias('env', 'acurve', 'ac');
 addConfigAlias('env', 'dcurve', 'dc');
 addConfigAlias('env', 'rcurve', 'rc');
-addConfigAlias('omod', 'orbit', 'o');
-addConfigAlias('omod', 'target', 't');
-addConfigAlias('omod', 'depth', 'dep', 'dr');
-addConfigAlias('omod', 'depthabs', 'da');
-addConfigAlias('omod', 'dc');
+addConfigAlias('bmod', 'orbit', 'o');
+addConfigAlias('bmod', 'target', 't');
+addConfigAlias('bmod', 'depth', 'dep', 'dr');
+addConfigAlias('bmod', 'depthabs', 'da');
+addConfigAlias('bmod', 'dc');
 
 Pattern.prototype.modulate = function (type, config, idx) {
   if (config == null || typeof config !== 'object') {
     return this;
   }
-  if (!['lfo', 'env', 'omod'].includes(type)) {
-    logger(`[core] Modulation type ${type} not found. Please use one of 'lfo', 'env', 'omod'`);
+  if (!['lfo', 'env', 'bmod'].includes(type)) {
+    logger(`[core] Modulation type ${type} not found. Please use one of 'lfo', 'env', 'bmod'`);
     return this;
   }
   let output = this;
@@ -3828,13 +3828,15 @@ Pattern.prototype.env = function (config, idx) {
 export const env = (config) => pure({}).env(config);
 
 /**
- * Modulates with the output from a given `orbit`
- * Can be called in sequence like pat.obus(...).obus(...) to set up multiple modulators
+ * Modulates with the output from a given `bus`.
+ * Can be called in sequence like pat.bmod(...).bmod(...) to set up multiple modulators
  *
- * @name omod
+ * Send to an audio bus with `otherPat.bus(..)`.
+ *
+ * @name bmod
  * @memberof Pattern
- * @param {Object} config Orbit bus configuration.
- * @param {string | Pattern} [config.orbit] Orbit to get modulation signal from
+ * @param {Object} config Bus modulation configuration.
+ * @param {string | Pattern} [config.bus] Bus to get modulation signal from
  * @param {string | Pattern} [config.target] Node (and parameter if specified like `lpf.frequency`) to modulate. Aliases: t
  * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
  * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
@@ -3842,7 +3844,7 @@ export const env = (config) => pure({}).env(config);
  * @param {number | Pattern} [config.dc] DC offset prior to application
  * @returns Pattern
  */
-Pattern.prototype.omod = function (config, idx) {
-  return this.modulate('omod', config, idx);
+Pattern.prototype.bmod = function (config, idx) {
+  return this.modulate('bmod', config, idx);
 };
-export const omod = (config) => pure({}).omod(config);
+export const bmod = (config) => pure({}).bmod(config);

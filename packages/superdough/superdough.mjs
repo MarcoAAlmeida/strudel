@@ -163,6 +163,7 @@ let defaultDefaultValues = {
   distortvol: 1,
   distorttype: 0,
   delay: 0,
+  busgain: 1,
   byteBeatExpression: '0',
   delayfeedback: 0.5,
   delaysync: 3 / 16,
@@ -521,10 +522,10 @@ function connectEnvelope(idx, params, nodeTracker, value) {
   return envNode;
 }
 
-function connectOrbitModulator(params, nodeTracker, value) {
+function connectBusModulator(params, nodeTracker, value) {
   const ac = getAudioContext();
   const { target, depth = 1, depthabs } = params;
-  const signal = controller.getOrbit(params.orbit).output;
+  const signal = controller.getBus(params.bus).output;
   const dc = new ConstantSourceNode(ac, { offset: params.dc ?? 0 });
   dc.start(params.begin);
   const shifted = dc.connect(gainNode(1));
@@ -628,6 +629,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     delaysync = getDefaultValue('delaysync'),
     delaytime,
     orbit = getDefaultValue('orbit'),
+    bus,
+    busgain = getDefaultValue('busgain'),
     room,
     roomfade,
     roomlp,
@@ -666,6 +669,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   delay = applyGainCurve(delay);
   velocity = applyGainCurve(velocity);
   tremolodepth = applyGainCurve(tremolodepth);
+  busgain = applyGainCurve(busgain);
   gain *= velocity; // velocity currently only multiplies with gain. it might do other things in the future
 
   const end = t + hapDuration;
@@ -970,6 +974,11 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     const reverbSend = orbitBus.sendReverb(post, room);
     audioNodes.push(reverbSend);
   }
+  if (bus != null) {
+    const busNode = audioController.getBus(bus);
+    const busSend = effectSend(post, busNode, busgain);
+    audioNodes.push(busSend);
+  }
 
   if (djf != null) {
     nodes['djf'] = orbitBus.getDjf(djf, t);
@@ -1027,9 +1036,9 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       audioNodes.push(env);
     }
   }
-  if (value.omod) {
-    for (const p of value.omod) {
-      const { toCleanup } = connectOrbitModulator({ ...p, begin: t, end: endWithRelease }, nodes, value);
+  if (value.bmod) {
+    for (const p of value.bmod) {
+      const { toCleanup } = connectBusModulator({ ...p, begin: t, end: endWithRelease }, nodes, value);
       audioNodes.push(...toCleanup);
     }
   }

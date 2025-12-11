@@ -1,5 +1,5 @@
 import { clamp } from './util.mjs';
-import { registerSound, soundMap } from './superdough.mjs';
+import { getSuperdoughAudioController, registerSound, soundMap } from './superdough.mjs';
 import { getAudioContext } from './audioContext.mjs';
 import {
   applyFM,
@@ -365,6 +365,41 @@ export function registerSynthSounds() {
       };
     },
     { prebake: true, type: 'synth' },
+  );
+
+  registerSound(
+    'bus',
+    (begin, value, onended) => {
+      const ac = getAudioContext();
+      const [attack, decay, sustain, release] = getADSRValues(
+        [value.attack, value.decay, value.sustain, value.release],
+        'linear',
+        [0.001, 0.05, 0.6, 0.01],
+      );
+      const holdend = begin + value.duration;
+      const end = holdend + release + 0.01;
+      const bus = getSuperdoughAudioController().getBus(value.n ?? 0);
+      const envGain = bus.connect(gainNode(1));
+      getParamADSR(envGain.gain, attack, decay, sustain, release, 0, 1, begin, holdend, 'linear');
+      const timeoutNode = webAudioTimeout(
+        ac,
+        () => {
+          bus.disconnect(envGain);
+          onended();
+        },
+        begin,
+        end,
+      );
+
+      return {
+        node: envGain,
+        source: bus,
+        stop: (time) => {
+          timeoutNode.stop(time);
+        },
+      };
+    },
+    { prebake: true, type: 'input' },
   );
 
   [...noises].forEach((s) => {
