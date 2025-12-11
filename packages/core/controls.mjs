@@ -2530,15 +2530,6 @@ export const { clip, legato } = registerControl('clip', 'legato');
  */
 export const { duration, dur } = registerControl('duration', 'dur');
 
-/**
- * Sets the ID of the pattern for later reference
- *
- * @name id
- * @param {number | Pattern} id ID of the pattern
- *
- */
-export const { id } = registerControl('id');
-
 // ZZFX
 export const { zrand } = registerControl('zrand');
 export const { curve } = registerControl('curve');

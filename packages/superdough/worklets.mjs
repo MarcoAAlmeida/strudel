@@ -160,10 +160,8 @@ class LFOProcessor extends AudioWorkletProcessor {
 
     const dcoffset = parameters['dcoffset'][0];
 
-    const userMin = parameters['min'][0];
-    const userMax = parameters['max'][0];
-    const min = Math.min(userMin, userMax);
-    const max = Math.max(userMin, userMax);
+    const min = parameters['min'][0];
+    const max = parameters['max'][0];
     const shape = waveShapeNames[parameters['shape'][0]];
 
     const blockSize = output[0].length ?? 0;
