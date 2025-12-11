@@ -1,0 +1,19 @@
+/* `Drum_05 - triplet feel` */
+/**
+[22 Common Drum Beats Every Drummer Should Know ](https://www.youtube.com/watch?v=5acGxguFiyo)
+**/
+
+
+// [triplet feel](https://youtu.be/5acGxguFiyo?t=75)
+setcpm(70/4);
+
+let twelveth_note = s(`[hh*12],[bd sd bd sd]`)
+  .fast(1).bank(`rolandtr909`);
+
+
+let wood = s(`bd*4`).sound(`east`);
+
+arrange (
+  [1, wood],
+  [2, twelveth_note],
+).room(.1)

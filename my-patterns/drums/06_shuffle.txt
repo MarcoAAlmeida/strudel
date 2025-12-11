@@ -1,0 +1,19 @@
+/* `Drum_06 - shuffle` */
+/**
+[22 Common Drum Beats Every Drummer Should Know ](https://www.youtube.com/watch?v=5acGxguFiyo)
+**/
+
+
+// [shuffle](https://www.youtube.com/watch?v=5acGxguFiyo&t=17s)
+setcpm(110/4);
+
+let shuffle = s(`[hh ~ hh]*4,[bd sd]*2,[~ ht]*2`)
+  .fast(1).bank(`rolandtr909`);
+
+
+let wood = s(`bd*4`).sound(`east`);
+
+arrange (
+  [1, wood],
+  [4, shuffle],
+).room(.1)
