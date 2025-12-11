@@ -8,24 +8,48 @@ import { register, reify, Pattern } from './pattern.mjs';
 
 let timelines = {};
 
+export const reset_state = function () {
+  reset_timelines();
+};
+
 export const reset_timelines = function () {
   timelines = {};
 };
+
+/***
+ * Allows you to switch a pattern between different 'timelines'. This is particularly useful when
+ * live coding, for example when you want to cue a pattern up to play from its start.
+ *
+ * Timelines are specified by number, so that if you had a pattern like
+ * `n("<0 1 2 3>").s("num").timeline(1)` playing, then changed the '1'
+ * to '2', it would always align '0' to the nearest cycle. You will likely want to trigger
+ * an evaluation a little bit before the cycle starts, to avoid missing events.
+ *
+ * If you change and evaluate a pattern without changing the timeline, it will stay on that timeline
+ * without resetting.
+ *
+ * Rather than incrementing a timeline to reset it, it's easier to negate it, e.g. by switching between `-2`
+ * and `2`. This is because when you negate a timeline it will always reset.
+ *
+ * You can also pattern the timeline if you want, to create strange resetting patterns.
+ */
 
 export const timeline = register(
   'timeline',
   function (tpat, pat) {
     tpat = reify(tpat);
     const f = function (state) {
-      let scheduler = !!state.controls._cps;
+      // Is this called from the scheduler? (rather than from e.g. the visualiser)
+      const scheduler = !!state.controls._cyclist;
 
       const timehaps = tpat.query(state);
       const result = [];
       for (const timehap of timehaps) {
         const tlid = timehap.value;
-        const ignore = false;
         let offset;
-        if (tlid in timelines) {
+        if (tlid === 0) {
+          offset = 0;
+        } else if (tlid in timelines) {
           offset = timelines[tlid];
         } else {
           const timearc = timehap.wholeOrPart();
@@ -40,9 +64,8 @@ export const timeline = register(
         if (scheduler) {
           // update state
           timelines[tlid] = offset;
-          const negative = 0 - tlid;
-          if (negative in timelines) {
-            delete timelines[negative];
+          if (tlid !== 0) {
+            delete timelines[-tlid];
           }
         }
 
