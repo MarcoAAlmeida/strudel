@@ -10,7 +10,7 @@ Along with many other live coding projects, we have moved from Microsoft's Githu
 
 To get in touch with the community, either
 
-- [join the Tidal Discord Channel](https://discord.com/invite/HGEdXmRkzT) and go to the #strudel channels
+- [join the Uzulang Discord Server](https://discord.com/invite/HGEdXmRkzT) and go to the strudel channels (Uzulangs are a family of live coding languages inspired by each other, including TidalCycles as well as Strudel)
 - Find related discussions on the [tidal club forum](https://club.tidalcycles.org/)
 
 ## Ask a Question
@@ -42,9 +42,9 @@ If you want a specific feature that is not part of strudel yet, feel free to use
 
 ## Contribute a feature
 
-It's generally best to start with discussion rather than do loads of work on something and then find it doesn't fit the collective goals of the project, or something like that.
+Pull requests welcome! Consider starting with discussion or proof-of-concept first, rather than do loads of work on something and then find it doesn't fit the collective goals of the project, or something like that.
 
-## AI/LLM policy
+### AI/LLM policy
 
 Strudel is a project handmade by humans, with a lot of thought and nuance. We are still developing our response to the onslaught of LLM technology.
 
