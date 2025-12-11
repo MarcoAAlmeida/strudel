@@ -25,13 +25,21 @@ export const reset_timelines = function () {
  * to '2', it would always align '0' to the nearest cycle. You will likely want to trigger
  * an evaluation a little bit before the cycle starts, to avoid missing events.
  *
- * If you change and evaluate a pattern without changing the timeline, it will stay on that timeline
- * without resetting.
+ * After the first use, a timeline will continue with the same 'offset'. That is, if you change
+ * a pattern without changing its timeline number, it will stay on that timeline without resetting.
  *
  * Rather than incrementing a timeline to reset it, it's easier to negate it, e.g. by switching between `-2`
  * and `2`. This is because when you negate a timeline it will always reset.
  *
  * You can also pattern the timeline if you want, to create strange resetting patterns.
+ * @param {number | Pattern} timeline The timeline that the pattern should play on.
+ * @example
+ * n("<0 1 2 3>(3,8)")
+ *   .sound("num")
+ *   // resets the timeline every two cycles, by negating the timeline.
+ *   // in a lot of cases this will be edited by a human live coder
+ *   // rather than patterned!
+ *   .timeline("<2 -2>".slow(2))
  */
 
 export const timeline = register(
@@ -40,8 +48,7 @@ export const timeline = register(
     tpat = reify(tpat);
     const f = function (state) {
       // Is this called from the scheduler? (rather than from e.g. the visualiser)
-      const scheduler = !!state.controls._cyclist;
-
+      const scheduler = !!state.controls.cyclist;
       const timehaps = tpat.query(state);
       const result = [];
       for (const timehap of timehaps) {
