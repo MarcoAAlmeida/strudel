@@ -26,6 +26,7 @@ import {
 } from './util.mjs';
 import drawLine from './drawLine.mjs';
 import { errorLogger, logger } from './logger.mjs';
+import { getControlName } from './controls.mjs';
 
 let stringParser;
 
@@ -3753,28 +3754,34 @@ Pattern.prototype.modulate = function (type, config, idx) {
   if (config == null || typeof config !== 'object') {
     return this;
   }
-  if (!['lfo', 'env', 'bmod'].includes(type)) {
+  const modulatorKeys = ['lfo', 'env', 'bmod'];
+  if (!modulatorKeys.includes(type)) {
     logger(`[core] Modulation type ${type} not found. Please use one of 'lfo', 'env', 'bmod'`);
     return this;
   }
   let output = this;
-  let target = config.target;
+  let defaultValue = {};
+  let defaultSet = 'target' in config;
   for (const [rawKey, value] of Object.entries(config)) {
     const key = resolveConfigKey(type, rawKey);
-    if (key === 'target') continue; // we will set/default it below
     const valuePat = reify(value);
     output = output
       .fmap((v) => (c) => {
-        if (target == null) {
+        if (!defaultSet) {
           // default target to the control set just before this in the chain
           // e.g. pat.gain(0.5).lfo({..}) will be a gain-LFO
-          target = Object.keys(v).at(-1);
+          let control = getControlName(Object.keys(v).at(-1));
+          if (modulatorKeys.includes(control)) {
+            control = `${control}${v[type].length - 1}`;
+          }
+          defaultValue = { target: control };
+          defaultSet = true;
         }
         v[type] ??= [];
         const t = v[type];
         idx ??= t.length;
-        t[idx] ??= { target }; // set target
-        t[idx][key] = c;
+        t[idx] ??= defaultValue;
+        t[idx][key] = key === 'target' ? getControlName(c) : c;
         return v;
       })
       .appLeft(valuePat);

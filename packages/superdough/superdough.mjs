@@ -25,7 +25,7 @@ import { errorLogger, logger } from './logger.mjs';
 import { loadBuffer } from './sampler.mjs';
 import { getAudioContext } from './audioContext.mjs';
 import { SuperdoughAudioController } from './superdoughoutput.mjs';
-import { getSuperdoughControlData } from './superdoughdata.mjs';
+import { getSuperdoughControlTargets } from './superdoughdata.mjs';
 
 export const DEFAULT_MAX_POLYPHONY = 128;
 const DEFAULT_AUDIO_DEVICE_NAME = 'System Standard';
@@ -396,97 +396,60 @@ function _getNodeParams(node) {
   return Array.from(params);
 }
 
-const targetToParamGuess = {
-  source: 'detune',
-  lpf: 'frequency',
-  bpf: 'frequency',
-  hpf: 'frequency',
-  distort: 'distort',
-  gain: 'gain',
-  vowel: 'frequency',
-  coarse: 'coarse',
-  crush: 'crush',
-  shape: 'shape',
-  compressor: 'threshold',
-  pan: 'pan',
-  phaser: 'rate',
-  post: 'gain',
-  delay: 'delayTime',
-  djf: 'value',
-  lfo: 'frequency',
-  env: 'depth',
-  send: 'depth',
-};
+const controlTargets = getSuperdoughControlTargets();
 
-const controlData = getSuperdoughControlData();
-
-// TODO: We would like to use the aliases in `controls` here, but cannot as
-// the modules are independent. We may want to inject that method here in situations
-// where superdough/core are run in tandem
-export let getControlName;
-const _getMainName = (control) => getControlName?.(control) ?? control;
-
+const _stripIndex = (control) => control?.replace(/\d+$/, '');
 function _getControlData(control) {
-  return controlData[_getMainName(control)];
+  return controlTargets[_stripIndex(control)];
 }
 
-function _getControlValue(control, value, data) {
-  const main = _getMainName(control);
-  return Number(value[main] ?? data.default);
-}
-
-function _getControlClamp(data, currentValue) {
-  const { min, max } = data;
-  return { min: min - currentValue, max: max - currentValue };
-}
-
-function _getTargetParams(nodes, target) {
-  let param;
-  if (target.includes('.')) {
-    const split = target.split('.');
-    target = split[0];
-    param = split[1];
-  } else {
-    const targetWithoutIndex = target.replace(/(\d+)$/, '');
-    param = targetToParamGuess[targetWithoutIndex];
+function _getRangeForParam(paramName, targetParams, currentValue) {
+  if (paramName === 'frequency') {
+    const liveValue = targetParams?.[0]?.value ?? currentValue ?? 0;
+    return { min: 20 - liveValue, max: 24000 - liveValue };
   }
-  const targetNodes = nodes[target];
+  return { min: undefined, max: undefined };
+}
+
+function _getTargetParamsForControl(control, nodes, paramOverride) {
+  const targetInfo = _getControlData(control);
+  if (!targetInfo) {
+    errorLogger(`Could not find control data for target '${control}'`, 'superdough');
+    return { targetParams: [], paramName: control };
+  }
+  const paramName = paramOverride ?? targetInfo.param;
+  const nodeKey = nodes[control] ? control : targetInfo.node;
+  const targetNodes = nodes[nodeKey];
   if (!targetNodes) {
     const keys = Object.keys(nodes);
     errorLogger(
-      `Could not connect to target '${target}' — it does not exist. Available targets: ${keys.join(', ')}`,
+      `Could not connect to target '${nodeKey}' — it does not exist. Available targets: ${keys.join(', ')}`,
       'superdough',
     );
-    return [];
+    return { targetParams: [], paramName };
   }
   const audioParams = [];
   targetNodes.forEach((targetNode) => {
-    const targetParam = _getNodeParam(targetNode, param);
+    const targetParam = _getNodeParam(targetNode, paramName);
     if (!targetParam) {
       const available = _getNodeParams(targetNode);
       errorLogger(
-        `Could not connect to parameter '${param}' on '${target}'. Available parameters: ${available.join(', ')}`,
+        `Could not connect to parameter '${paramName}' on '${nodeKey}'. Available parameters: ${available.join(', ')}`,
         'superdough',
       );
       return;
     }
     audioParams.push(targetParam);
   });
-  return audioParams;
-}
-
-function _getTargetParamsForControl(control, nodes) {
-  const main = _getMainName(control);
-  const data = _getControlData(main);
-  const targetParams = _getTargetParams(nodes, data.param);
-  return { targetParams, data };
+  return { targetParams: audioParams, paramName };
 }
 
 function connectLFO(idx, params, nodeTracker, value) {
-  const { rate = 1, sync, cps, cycle, target, depth = 1, depthabs, ...filteredParams } = params;
-  const { targetParams, data } = _getTargetParamsForControl(target, nodeTracker);
-  const currentValue = _getControlValue(target, value, data);
-  const { min, max } = _getControlClamp(data, currentValue);
+  const { rate = 1, sync, cps, cycle, target = 'lfo', depth = 1, depthabs, param, p, ...filteredParams } = params;
+  const targetParam = param ?? p;
+  const { targetParams, paramName } = _getTargetParamsForControl(target, nodeTracker, targetParam);
+  const currentValue = targetParams[0].value;
+  const { min, max } = _getRangeForParam(paramName, targetParams, currentValue);
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
   const modParams = {
     ...filteredParams,
@@ -504,9 +467,9 @@ function connectLFO(idx, params, nodeTracker, value) {
 
 function connectEnvelope(idx, params, nodeTracker, value) {
   const { target, acurve, dcurve, rcurve, depth = 1, depthabs, ...filteredParams } = params;
-  const { targetParams, data } = _getTargetParamsForControl(target, nodeTracker);
-  const currentValue = _getControlValue(target, value, data);
-  const { min, max } = _getControlClamp(data, currentValue);
+  const { targetParams, paramName } = _getTargetParamsForControl(target, nodeTracker);
+  const currentValue = targetParams[0].value;
+  const { min, max } = _getRangeForParam(paramName, targetParams, currentValue);
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
   const envNode = getEnvelope(getAudioContext(), {
     ...filteredParams,
@@ -525,17 +488,17 @@ function connectEnvelope(idx, params, nodeTracker, value) {
 function connectBusModulator(params, nodeTracker, value) {
   const ac = getAudioContext();
   const { target, depth = 1, depthabs } = params;
-  const signal = controller.getBus(params.bus).output;
+  const signal = controller.getBus(params.bus);
   const dc = new ConstantSourceNode(ac, { offset: params.dc ?? 0 });
   dc.start(params.begin);
   const shifted = dc.connect(gainNode(1));
   signal.connect(shifted);
-  const { targetParams, data } = _getTargetParamsForControl(target, nodeTracker);
-  const currentValue = _getControlValue(target, value, data);
-  const { min, max } = _getControlClamp(data, currentValue);
+  const { targetParams, paramName } = _getTargetParamsForControl(target, nodeTracker);
+  const currentValue = targetParams[0].value;
+  const { min, max } = _getRangeForParam(paramName, targetParams, currentValue);
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
   const maxAbsDepth = Math.min(Math.abs(min), Math.abs(max));
-  const boundedDepth = Math.min(Math.abs(depthValue), maxAbsDepth);
+  const boundedDepth = Math.min(Math.abs(depthValue), maxAbsDepth) || Math.abs(depthValue);
   const modulator = shifted.connect(gainNode((Math.sign(depthValue) * boundedDepth) / 0.3));
   webAudioTimeout(
     ac,
