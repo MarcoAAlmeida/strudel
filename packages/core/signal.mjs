@@ -882,3 +882,12 @@ export const whenKey = register('whenKey', function (input, func, pat) {
 export const keyDown = register('keyDown', function (pat) {
   return pat.fmap(_keyDown);
 });
+
+/**
+ * A pattern that gives the duration of events that are combined with it.
+ * @example
+ * sound("bd sd [bd bd] sd*4 [- sd] [bd [bd bd]]").note(delta.withValue(x => 1/x + 20))
+ */
+export const delta = new Pattern(function (state) {
+  return [new Hap(undefined, state.span, state.span.duration)];
+});
