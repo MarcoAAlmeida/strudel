@@ -4,7 +4,8 @@ Copyright (C) 2022 Strudel contributors - see <https://codeberg.org/uzu/strudel/
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { Pattern, register, reify } from './pattern.mjs';
+import { logger } from './logger.mjs';
+import { Pattern, pure, register, reify } from './pattern.mjs';
 
 export function createParam(names) {
   let isMulti = Array.isArray(names);
@@ -2808,3 +2809,162 @@ export const scrub = register(
   },
   false,
 );
+
+const configAliases = new Map();
+const addConfigAlias = (funcName, canonical, ...aliases) => {
+  const lowerFunc = String(funcName).toLowerCase();
+  const aliasMap = configAliases.get(lowerFunc) ?? new Map();
+  const allKeys = new Set([canonical, ...aliases]);
+  for (const alias of allKeys) {
+    aliasMap.set(String(alias).toLowerCase(), canonical);
+  }
+  configAliases.set(lowerFunc, aliasMap);
+};
+
+const resolveConfigKey = (funcName, key) => {
+  const aliasMap = configAliases.get(String(funcName).toLowerCase());
+  if (!aliasMap) return key;
+  const normalized = String(key).toLowerCase();
+  return aliasMap.get(normalized) ?? key;
+};
+
+addConfigAlias('lfo', 'control', 'c');
+addConfigAlias('lfo', 'subControl', 'sc');
+addConfigAlias('lfo', 'rate', 'r');
+addConfigAlias('lfo', 'depth', 'dep', 'dr');
+addConfigAlias('lfo', 'depthabs', 'da');
+addConfigAlias('lfo', 'dcoffset', 'dc');
+addConfigAlias('lfo', 'shape', 'sh');
+addConfigAlias('lfo', 'skew', 'sk');
+addConfigAlias('lfo', 'curve');
+addConfigAlias('lfo', 'sync', 's');
+addConfigAlias('env', 'control', 'c');
+addConfigAlias('env', 'subControl', 'sc');
+addConfigAlias('env', 'attack', 'att', 'a');
+addConfigAlias('env', 'decay', 'dec', 'd');
+addConfigAlias('env', 'sustain', 'sus', 's');
+addConfigAlias('env', 'release', 'rel', 'r');
+addConfigAlias('env', 'depth', 'dep', 'dr');
+addConfigAlias('env', 'depthabs', 'da');
+addConfigAlias('env', 'acurve', 'ac');
+addConfigAlias('env', 'dcurve', 'dc');
+addConfigAlias('env', 'rcurve', 'rc');
+addConfigAlias('bmod', 'orbit', 'o');
+addConfigAlias('bmod', 'control', 'c');
+addConfigAlias('bmod', 'subControl', 'sc');
+addConfigAlias('bmod', 'depth', 'dep', 'dr');
+addConfigAlias('bmod', 'depthabs', 'da');
+addConfigAlias('bmod', 'dc');
+
+Pattern.prototype.modulate = function (type, config, idx) {
+  if (config == null || typeof config !== 'object') {
+    return this;
+  }
+  const modulatorKeys = ['lfo', 'env', 'bmod'];
+  if (!modulatorKeys.includes(type)) {
+    logger(`[core] Modulation type ${type} not found. Please use one of 'lfo', 'env', 'bmod'`);
+    return this;
+  }
+  let output = this;
+  let defaultValue = {};
+  let defaultSet = 'control' in config;
+  for (const [rawKey, value] of Object.entries(config)) {
+    const key = resolveConfigKey(type, rawKey);
+    const valuePat = reify(value);
+    output = output
+      .fmap((v) => (c) => {
+        if (!defaultSet) {
+          // default control to the control set just before this in the chain
+          // e.g. pat.gain(0.5).lfo({..}) will be a gain-LFO
+          let control = getControlName(Object.keys(v).at(-1));
+          if (modulatorKeys.includes(control)) {
+            control = `${control}${v[control].length - 1}`;
+          }
+          defaultValue = { control };
+          defaultSet = true;
+        }
+        v[type] ??= [];
+        const t = v[type];
+        idx ??= t.length;
+        t[idx] ??= defaultValue;
+        if (key === 'control' || key === 'subControl') {
+          t[idx][key] = getControlName(c);
+        } else {
+          t[idx][key] = c;
+        }
+        return v;
+      })
+      .appLeft(valuePat);
+  }
+  return output;
+};
+
+/**
+ * Configures an LFO. Can be called in sequence like pat.lfo(...).lfo(...) to set up multiple LFOs
+ *
+ * @name lfo
+ * @memberof Pattern
+ * @param {Object} config LFO configuration.
+ * @param {string | Pattern} [config.control] Node to modulate. Aliases: t
+ * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc, p
+ * @param {number | Pattern} [config.rate] Modulation rate. Aliases: rate, r
+ * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
+ * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
+ * @param {number | Pattern} [config.dcoffset] DC offset / bias for the waveform. Aliases: dc
+ * @param {number | Pattern} [config.shape] Waveform shape index. Aliases: sh
+ * @param {number | Pattern} [config.skew] Waveform skew amount. Aliases: sk
+ * @param {number | Pattern} [config.curve] Exponential curve amount. Aliases: c
+ * @param {number | Pattern} [config.sync] Tempo-synced modulation rate. Aliases: s
+ * @returns Pattern
+ */
+Pattern.prototype.lfo = function (config, idx) {
+  return this.modulate('lfo', config, idx);
+};
+export const lfo = (config) => pure({}).lfo(config);
+
+/**
+ * Configures an envelope. Can be called in sequence like pat.env(...).env(...) to set up multiple envelopes
+ *
+ * @name env
+ * @memberof Pattern
+ * @param {Object} config Envelope configuration.
+ * @param {string | Pattern} [config.control] Node to modulate. Aliases: t
+ * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc, p
+ * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
+ * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
+ * @param {number | Pattern} [config.attack] Time to reach depth. Aliases: att, a
+ * @param {number | Pattern} [config.decay] Time to reach sustain. Aliases: dec, d
+ * @param {number | Pattern} [config.sustain] Sustain depth. Aliases: sus, s
+ * @param {number | Pattern} [config.release] Time to return to nominal value. Aliases: rel, r
+ * @param {number | Pattern} [config.acurve] Snappiness of attack curve (-1 = relaxed, 1 = snappy). Aliases: ac
+ * @param {number | Pattern} [config.dcurve] Snappiness of decay curve (-1 = relaxed, 1 = snappy). Aliases: dc
+ * @param {number | Pattern} [config.rcurve] Snappiness of release curve (-1 = relaxed, 1 = snappy). Aliases: rc
+ * @returns Pattern
+ */
+Pattern.prototype.env = function (config, idx) {
+  return this.modulate('env', config, idx);
+};
+export const env = (config) => pure({}).env(config);
+
+/**
+ * Modulates with the output from a given `bus`.
+ * Can be called in sequence like pat.bmod(...).bmod(...) to set up multiple modulators
+ *
+ * Send to an audio bus with `otherPat.bus(..)`.
+ *
+ * @name bmod
+ * @memberof Pattern
+ * @param {Object} config Bus modulation configuration.
+ * @param {string | Pattern} [config.bus] Bus to get modulation signal from
+ * @param {string | Pattern} [config.control] Node to modulate. Aliases: t
+ * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc, p
+ * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
+ * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
+ * @param {number | Pattern} [config.ratio] Modulation ratio. Aliases: rat
+ * @param {number | Pattern} [config.dc] DC offset prior to application
+ * @returns Pattern
+ */
+Pattern.prototype.bmod = function (config, idx) {
+  return this.modulate('bmod', config, idx);
+};
+export const bmod = (config) => pure({}).bmod(config);
