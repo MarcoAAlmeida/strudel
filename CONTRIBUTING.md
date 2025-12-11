@@ -34,7 +34,7 @@ Use one of the Communication Channels listed above.
 
 ## Improve the Docs
 
-If you find some weak spots in the [docs](https://strudel.cc/workshop/getting-started/), you can edit each file directly on codeburg. There are "Edit this page" links in the right sidebar that take you to the right place.
+If you find some weak spots in the [docs](https://strudel.cc/workshop/getting-started/), you can edit each file directly on codeberg. There are "Edit this page" links in the right sidebar that take you to the right place.
 
 ## Propose a Feature
 
@@ -44,11 +44,13 @@ If you want a specific feature that is not part of strudel yet, feel free to use
 
 Pull requests welcome! Consider starting with discussion or proof-of-concept first, rather than do loads of work on something and then find it doesn't fit the collective goals of the project, or something like that.
 
+At the time of writing we have a PR backlog, and generally prioritise bugfixes and contributions that have arisen through community discussion.
+
 ### AI/LLM policy
 
-Strudel is a project handmade by humans, with a lot of thought and nuance. We are still developing our response to the onslaught of LLM technology.
+Strudel is a project handmade by humans, with thought and nuance. 
 
-If you have used LLMs (so called 'AI'), please make that clear in the pull request. If code is LLM-generated/isn't your own work, then the PR will not be merged, for practical and legal reasons.
+If you have used LLMs (so called 'AI'), please detail that in the pull request. We are still developing our response to the onslaught of LLM technology, but for practical and legal reasons are currently not accepting wholly LLM-generated code. We are also not accepting PRs that add LLM features to strudel itself.
 
 There are #llm-chat and #llm-share channels on our discord. Please do not discuss or share LLM-related things outside of those channels.
 
