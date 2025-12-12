@@ -1,0 +1,19 @@
+/* `Drum_10- reggae` */
+/**
+[22 Common Drum Beats Every Drummer Should Know ](https://www.youtube.com/watch?v=5acGxguFiyo)
+**/ 
+
+
+// [offbeat](https://youtu.be/5acGxguFiyo?t=150)
+setcpm(60);
+
+let reggae = s(`[~ hh cp hh], [~ ~ sd ~]`)
+  .fast(1).bank(`rolandtr909`);
+
+
+let wood = s(`bd*4`).sound(`east`);
+
+arrange (
+  [1, wood],
+  [8, reggae],
+).room(.1)

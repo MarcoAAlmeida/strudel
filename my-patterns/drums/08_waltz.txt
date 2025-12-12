@@ -1,0 +1,19 @@
+/* `Drum_08 - waltz` */
+/**
+[22 Common Drum Beats Every Drummer Should Know ](https://www.youtube.com/watch?v=5acGxguFiyo)
+**/ 
+
+
+// [waltz](https://youtu.be/5acGxguFiyo?t=131)
+setcpm(60|3);
+
+let waltz = s(`[hh ~ ~],[bd sd sd]`)
+  .fast(1).bank(`rolandtr909`);
+
+
+let wood = s(`bd*3`).sound(`east`);
+
+arrange (
+  [1, wood],
+  [4, waltz],
+).room(.1)

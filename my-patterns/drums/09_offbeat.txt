@@ -1,0 +1,19 @@
+/* `Drum_09- offbeat` */
+/**
+[22 Common Drum Beats Every Drummer Should Know ](https://www.youtube.com/watch?v=5acGxguFiyo)
+**/ 
+
+
+// [offbeat](https://youtu.be/5acGxguFiyo?t=133)
+setcpm(60|4);
+
+let offbeat = s(`[bd hh sd hh]`)
+  .fast(1).bank(`rolandtr909`);
+
+
+let wood = s(`bd*4`).sound(`east`);
+
+arrange (
+  [1, wood],
+  [4, offbeat],
+).room(.1)
