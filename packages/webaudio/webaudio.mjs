@@ -5,7 +5,14 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 import * as strudel from '@strudel/core';
-import { superdough, setDefaultAudioContext, getAudioContext, setLogger, doughTrigger, registerWorklet } from 'superdough';
+import {
+  superdough,
+  setDefaultAudioContext,
+  getAudioContext,
+  setLogger,
+  doughTrigger,
+  registerWorklet,
+} from 'superdough';
 import './supradough.mjs';
 import { workletUrl } from 'supradough';
 
