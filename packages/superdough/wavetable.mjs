@@ -3,13 +3,13 @@ import { getBaseURL, getCommonSampleInfo } from './util.mjs';
 import {
   applyFM,
   applyParameterModulators,
-  destroyAudioWorkletNode,
   getADSRValues,
   getFrequencyFromValue,
   getParamADSR,
   getPitchEnvelope,
   getVibratoOscillator,
   getWorklet,
+  releaseAudioNode,
   webAudioTimeout,
 } from './helpers.mjs';
 import { logger } from './logger.mjs';
@@ -319,12 +319,11 @@ export async function onTriggerSynth(t, value, onended, tables, cps, frameLen) {
   const timeoutNode = webAudioTimeout(
     ac,
     () => {
-      destroyAudioWorkletNode(source);
-      vibratoOscillator?.stop();
+      releaseAudioNode(source);
+      releaseAudioNode(vibratoOscillator);
       fm?.stop();
-      node.disconnect();
-      wtPosModulators?.disconnect();
-      wtWarpModulators?.disconnect();
+      releaseAudioNode(wtPosModulators);
+      releaseAudioNode(wtWarpModulators);
       onended();
     },
     t,

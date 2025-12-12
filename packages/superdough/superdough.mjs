@@ -9,7 +9,16 @@ import './reverb.mjs';
 import './vowel.mjs';
 import { nanFallback, _mod, cycleToSeconds, pickAndRename } from './util.mjs';
 import workletsUrl from './worklets.mjs?audioworklet';
-import { createFilter, gainNode, getCompressor, getDistortion, getLfo, getWorklet, effectSend } from './helpers.mjs';
+import {
+  createFilter,
+  gainNode,
+  getCompressor,
+  getDistortion,
+  getLfo,
+  getWorklet,
+  effectSend,
+  releaseAudioNode,
+} from './helpers.mjs';
 import { map } from 'nanostores';
 import { logger } from './logger.mjs';
 import { loadBuffer } from './sampler.mjs';
@@ -274,7 +283,7 @@ export async function initAudioOnFirstClick(options) {
 }
 
 let controller;
-function getSuperdoughAudioController() {
+export function getSuperdoughAudioController() {
   if (controller == null) {
     controller = new SuperdoughAudioController(getAudioContext());
   }
@@ -287,11 +296,11 @@ export function connectToDestination(input, channels) {
 
 function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000, sweep = 2000) {
   const ac = getAudioContext();
-  const lfoGain = getLfo(ac, time, end, { frequency, depth: sweep * 2 });
+  const lfo = getLfo(ac, time, end, { frequency, depth: sweep * 2 });
 
   //filters
-  const numStages = 2; //num of filters in series
-  let fOffset = 0;
+  const numStages = 1; //num of filters in series
+  let fOffset = 282; //for backward compat in #1800
   const filterChain = [];
   for (let i = 0; i < numStages; i++) {
     const filter = ac.createBiquadFilter();
@@ -300,14 +309,11 @@ function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000
     filter.frequency.value = centerFrequency + fOffset;
     filter.Q.value = 2 - Math.min(Math.max(depth * 2, 0), 1.9);
 
-    lfoGain.connect(filter.detune);
+    lfo.connect(filter.detune);
     fOffset += 282;
-    if (i > 0) {
-      filterChain[i - 1].connect(filter);
-    }
     filterChain.push(filter);
   }
-  return filterChain[filterChain.length - 1];
+  return { filterChain, lfo };
 }
 
 function getFilterType(ftype) {
@@ -413,7 +419,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     release = 0,
 
     //phaser
-    phaserrate: phaser,
+    phaserrate,
     phaserdepth = getDefaultValue('phaserdepth'),
     phasersweep,
     phasercenter,
@@ -451,6 +457,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     compressorKnee,
     compressorAttack,
     compressorRelease,
+    transient,
+    transsustain,
   } = value;
 
   delaytime = delaytime ?? cycleToSeconds(delaysync, cps);
@@ -506,7 +514,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   } else if (getSound(s)) {
     const { onTrigger } = getSound(s);
     const onEnded = () => {
-      audioNodes.forEach((n) => n?.disconnect());
+      audioNodes.forEach((n) => releaseAudioNode(n));
       activeSoundSources.delete(chainID);
     };
     const soundHandle = await onTrigger(t, value, onEnded, cps);
@@ -531,6 +539,23 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   const chain = []; // audio nodes that will be connected to each other sequentially
   chain.push(sourceNode);
   stretch !== undefined && chain.push(getWorklet(ac, 'phase-vocoder-processor', { pitchFactor: stretch }));
+
+  transient !== undefined &&
+    chain.push(
+      getWorklet(
+        ac,
+        'transient-processor',
+        {},
+        {
+          processorOptions: {
+            attack: transient,
+            sustain: transsustain,
+            begin: t,
+            end: endWithRelease,
+          },
+        },
+      ),
+    );
 
   // gain stage
   chain.push(gainNode(gain));
@@ -560,10 +585,14 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     };
     const lpParams = pickAndRename(value, lpMap);
     lpParams.type = 'lowpass';
-    let lp = () => createFilter(ac, t, end, lpParams, cps, cycle);
-    chain.push(lp());
+    const lp = () => createFilter(ac, t, end, lpParams, cps, cycle);
+    const { filter: lpf1, lfo: lfo1 } = lp();
+    chain.push(lpf1);
+    lfo1 && audioNodes.push(lfo1);
     if (ftype === '24db') {
-      chain.push(lp());
+      const { filter: lpf2, lfo: lfo2 } = lp();
+      chain.push(lpf2);
+      lfo2 && audioNodes.push(lfo2);
     }
   }
 
@@ -589,10 +618,14 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     };
     const hpParams = pickAndRename(value, hpMap);
     hpParams.type = 'highpass';
-    let hp = () => createFilter(ac, t, end, hpParams, cps, cycle);
-    chain.push(hp());
+    const hp = () => createFilter(ac, t, end, hpParams, cps, cycle);
+    const { filter: hpf1, lfo: lfo1 } = hp();
+    chain.push(hpf1);
+    lfo1 && audioNodes.push(lfo1);
     if (ftype === '24db') {
-      chain.push(hp());
+      const { filter: hpf2, lfo: lfo2 } = hp();
+      chain.push(hpf2);
+      lfo2 && audioNodes.push(lfo2);
     }
   }
 
@@ -618,10 +651,14 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     };
     const bpParams = pickAndRename(value, bpMap);
     bpParams.type = 'bandpass';
-    let bp = () => createFilter(ac, t, end, bpParams, cps, cycle);
-    chain.push(bp());
+    const bp = () => createFilter(ac, t, end, bpParams, cps, cycle);
+    const { filter: bpf1, lfo: lfo1 } = bp();
+    chain.push(bpf1);
+    lfo1 && audioNodes.push(lfo1);
     if (ftype === '24db') {
-      chain.push(bp());
+      const { filter: bpf2, lfo: lfo2 } = bp();
+      chain.push(bpf2);
+      lfo2 && audioNodes.push(lfo2);
     }
   }
 
@@ -684,9 +721,10 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     chain.push(panner);
   }
   // phaser
-  if (phaser !== undefined && phaserdepth > 0) {
-    const phaserFX = getPhaser(t, endWithRelease, phaser, phaserdepth, phasercenter, phasersweep);
-    chain.push(phaserFX);
+  if (phaserrate !== undefined && phaserdepth > 0) {
+    const { filterChain, lfo } = getPhaser(t, endWithRelease, phaserrate, phaserdepth, phasercenter, phasersweep);
+    audioNodes.push(lfo);
+    chain.push(...filterChain);
   }
 
   // last gain
