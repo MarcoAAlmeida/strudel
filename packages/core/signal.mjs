@@ -884,10 +884,45 @@ export const keyDown = register('keyDown', function (pat) {
 });
 
 /**
- * A pattern that gives the duration of events that are combined with it.
+ * A pattern giving the 'looseness' of events, or in other words, the duration of pattern events,
+ * in cycles per event. `loose` doesn't have structure itself, but takes structure, and therefore
+ * event durations, from the pattern that it is combined with.
+ * For example `loose.struct("1 1 [1 1] 1")` would give the same as `"0.25 0.25 [0.125 0.125] 0.25"`.
+ * See also its inverse, `tight`.
  * @example
- * sound("bd sd [bd bd] sd*4 [- sd] [bd [bd bd]]").note(delta.withValue(x => 1/x + 20))
+ * // Shorter events are lower in pitch
+ * sound("saw saw [saw saw] saw")
+ *   .note(loose.range(50, 100))
+ * @example
+ * sound("bd sd [bd bd] sd*4 [- sd] [bd [bd bd]]")
+ *   .note(tight.add(20))
  */
-export const delta = new Pattern(function (state) {
+export const loose = new Pattern(function (state) {
   return [new Hap(undefined, state.span, state.span.duration)];
+});
+
+/**
+ * A pattern giving the 'tightness' of events, or in other words, the duration of pattern events,
+ * in events per cycle. `tight` doesn't have structure itself, but takes structure, and therefore
+ * event durations, from the pattern that it is combined with.
+ * For example `tight.struct("1 1 [1 1] 1")` would give the same as `"4 4 [8 8] 4"`.
+ * See also its inverse, `loose`.
+ * @example
+ * // Shorter events are more distorted
+ * n("0 0*2 0 0*2 0 [0 0 0]@2").sound("bd")
+ *  .distort(tight.div(2))
+ */
+export const tight = new Pattern(function (state) {
+  return [new Hap(undefined, state.span, Fraction(1).div(state.span.duration))];
+});
+
+/**
+ * Like `tight` but gives the tightness of events according to an exponential curve. In
+ * particular, where the event tightness doubles (i.e. where an event duration halves), the
+ * returned value increases by one. `tightx.struct("1 1 1 [1 [1 1]]")` would therefore be
+ * the same as `"3 3 3 [4 [5 5]]"`.
+ */
+export const tightx = new Pattern(function (state) {
+  const n = Fraction(1).div(state.span.duration);
+  return [new Hap(undefined, state.span, Math.log(n) / Math.log(2) + 1)];
 });
