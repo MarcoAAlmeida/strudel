@@ -10,10 +10,15 @@ setcpm(70/4);
 let twelveth_note = s(`[hh*12],[bd sd bd sd]`)
   .fast(1).bank(`rolandtr909`);
 
+let twelveth_note_elongated = s(`[hh*12],[bd@2 sd@2 bd@2 sd@2]`)
+  .fast(1).bank(`rolandtr909`);
 
 let wood = s(`bd*4`).sound(`east`);
+
+// can´t hear the difference
 
 arrange (
   [1, wood],
   [2, twelveth_note],
+  [2, twelveth_note_elongated],
 ).room(.1)
