@@ -1,4 +1,4 @@
-/* "Drum_04 - sixteenth_note variation  " */
+/* "04 - sixteenth_note_variation " */
 /**
 [22 Common Drum Beats Every Drummer Should Know ](https://www.youtube.com/watch?v=5acGxguFiyo)
 **/
