@@ -1,7 +1,7 @@
 let audioContext;
 
-export const setDefaultAudioContext = () => {
-  audioContext = new AudioContext();
+export const setDefaultAudioContext = (existingAudioCtx) => {
+  audioContext = existingAudioCtx ?? new AudioContext();
   return audioContext;
 };
 
