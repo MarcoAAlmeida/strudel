@@ -9,7 +9,7 @@ import Fraction from 'fraction.js';
 import { describe, it, expect, vi } from 'vitest';
 
 import { saw, saw2, isaw, isaw2, tight, tightx, loose } from '../signal.mjs';
-import { fastcat, sequence } from '../pattern.mjs';
+import { fastcat, sequence, State, TimeSpan, Hap } from '../index.mjs';
 
 const st = (begin, end) => new State(ts(begin, end));
 const ts = (begin, end) => new TimeSpan(Fraction(begin), Fraction(end));
