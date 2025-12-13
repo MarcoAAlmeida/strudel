@@ -359,7 +359,7 @@ export const binaryNL = (n, nBits = 16) => {
  *   .partials(randL(8))
  */
 export const randL = (n) => {
-  return signal((t) => (nVal) => timeToRands(t, nVal).map(Math.abs)).appLeft(reify(n));
+  return signal((t) => (nVal) => getRandsAtTime(t, nVal).map(Math.abs)).appLeft(reify(n));
 };
 
 export const randrun = (n) => {
@@ -434,19 +434,6 @@ export const withSeed = (func, pat) => {
  * $: s("bd*4").degrade().seed(1); // Will degrade different events from the hi-hat
  */
 export const seed = register('seed', (n, pat) => {
-  return withSeed((prev) => (prev !== undefined ? randAt(prev, n) * Number.MAX_SAFE_INTEGER : n), pat);
-});
-
-/**
- * Set the seed for random signals. Differs from `seed` in that `seed` can be used
- * multiple times with the final signal depending on all seeds. `setSeed` on the
- * other hand overwrites the previous calls to `seed`.
- *
- * @name setSeed
- * @param {number} n An arbitrary number to be used as the new seed. 0 is the same
- *   as the default random behavior.
- */
-export const setSeed = register('setSeed', (n, pat) => {
   return withSeed(() => n, pat);
 });
 
