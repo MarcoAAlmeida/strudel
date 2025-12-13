@@ -2814,27 +2814,25 @@ export const scrub = register(
 );
 
 const subControlAliases = new Map();
-const registerSubControl = (funcName, main, ...aliases) => {
-  const lowerFunc = String(funcName).toLowerCase();
-  const aliasMap = subControlAliases.get(lowerFunc) ?? new Map();
-  const allKeys = new Set([main, ...aliases]);
+const registerSubControl = (control, subControl, ...aliases) => {
+  const aliasMap = subControlAliases.get(control) ?? new Map();
+  const allKeys = new Set([subControl, ...aliases]);
   for (const alias of allKeys) {
-    aliasMap.set(String(alias).toLowerCase(), main);
+    aliasMap.set(String(alias).toLowerCase(), subControl);
   }
-  subControlAliases.set(lowerFunc, aliasMap);
+  subControlAliases.set(control, aliasMap);
 };
 
-const registerSubControls = (funcName, aliasGroups = []) => {
-  for (const [main, ...aliases] of aliasGroups) {
-    registerSubControl(funcName, main, ...aliases);
+const registerSubControls = (control, subControlAliases = []) => {
+  for (const [subControl, ...aliases] of subControlAliases) {
+    registerSubControl(control, subControl, ...aliases);
   }
 };
 
-const resolveConfigKey = (funcName, key) => {
-  const aliasMap = subControlAliases.get(String(funcName).toLowerCase());
-  if (!aliasMap) return key;
-  const normalized = String(key).toLowerCase();
-  return aliasMap.get(normalized) ?? key;
+const getMainSubcontrolName = (control, subKey) => {
+  const aliasMap = subControlAliases.get(control);
+  if (!aliasMap) return subKey;
+  return aliasMap.get(String(subKey).toLowerCase()) ?? subKey;
 };
 
 registerSubControls('lfo', [
@@ -2884,7 +2882,7 @@ Pattern.prototype.modulate = function (type, config, idx) {
   let defaultValue = {};
   let defaultSet = 'control' in config;
   for (const [rawKey, value] of Object.entries(config)) {
-    const key = resolveConfigKey(type, rawKey);
+    const key = getMainSubcontrolName(type, rawKey);
     const valuePat = reify(value);
     output = output
       .fmap((v) => (c) => {
