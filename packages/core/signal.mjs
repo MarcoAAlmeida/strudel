@@ -287,7 +287,7 @@ export const useRNG = (mode = 'legacy') => (RNG_MODE = mode);
 export const run = (n) => saw.range(0, n).round().segment(n);
 
 /**
- * Creates a pattern from a binary number.
+ * Creates a binary pattern from a number.
  *
  * @name binary
  * @param {number} n - input number to convert to binary
@@ -301,7 +301,7 @@ export const binary = (n) => {
 };
 
 /**
- * Creates a pattern from a binary number, padded to n bits long.
+ * Creates a binary pattern from a number, padded to n bits long.
  *
  * @name binaryN
  * @param {number} n - input number to convert to binary
@@ -315,6 +315,51 @@ export const binaryN = (n, nBits = 16) => {
   // Shift and mask, putting msb on the right-side
   const bitPos = run(nBits).mul(-1).add(nBits.sub(1));
   return reify(n).segment(nBits).brshift(bitPos).band(pure(1));
+};
+
+/**
+ * Creates a binary list pattern from a number.
+ *
+ * @name binaryL
+ * @param {number} n - input number to convert to binary
+ * s("saw").seg(8)
+ *   .partials(binaryL(irand(4096).add(1)))
+ */
+export const binaryL = (n) => {
+  const nBits = reify(n).log2(0).floor().add(1);
+  return binaryNL(n, nBits);
+};
+
+/**
+ * Creates a binary list pattern from a number, padded to n bits long.
+ *
+ * @name binaryNL
+ * @param {number} n - input number to convert to binary
+ * @param {number} nBits - pattern length, defaults to 16
+ */
+export const binaryNL = (n, nBits = 16) => {
+  return reify(n)
+    .withValue((v) => (bits) => {
+      const bList = [];
+      for (let i = bits - 1; i >= 0; i--) {
+        bList.push((v >> i) & 1);
+      }
+      return bList;
+    })
+    .appLeft(reify(nBits));
+};
+
+/**
+ * Creates a list of random numbers of the given length
+ *
+ * @name randL
+ * @param {number} n Number of random numbers to sample
+ * @example
+ * s("saw").seg(16).n(irand(12)).scale("F1:minor")
+ *   .partials(randL(8))
+ */
+export const randL = (n) => {
+  return signal((t) => (nVal) => timeToRands(t, nVal).map(Math.abs)).appLeft(reify(n));
 };
 
 export const randrun = (n) => {
@@ -582,7 +627,7 @@ export const wchoose = (...pairs) => wchooseWith(rand, ...pairs);
  * @example
  * wchooseCycles(["bd",10], ["hh",1], ["sd",1]).s().fast(8)
  * @example
- * wchooseCycles(["bd bd bd",5], ["hh hh hh",3], ["sd sd sd",1]).fast(4).s()
+ * wchooseCycles(["c c c",5], ["a a a",3], ["f f f",1]).fast(4).note()
  * @example
  * // The probability can itself be a pattern
  * wchooseCycles(["bd(3,8)","<5 0>"], ["hh hh hh",3]).fast(4).s()
@@ -935,4 +980,13 @@ export const whenKey = register('whenKey', function (input, func, pat) {
 
 export const keyDown = register('keyDown', function (pat) {
   return pat.fmap(_keyDown);
+});
+
+/**
+ * A pattern that gives the duration of events that are combined with it.
+ * @example
+ * sound("bd sd [bd bd] sd*4 [- sd] [bd [bd bd]]").note(delta.withValue(x => 1/x + 20))
+ */
+export const delta = new Pattern(function (state) {
+  return [new Hap(undefined, state.span, state.span.duration)];
 });
