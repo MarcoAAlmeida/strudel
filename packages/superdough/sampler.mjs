@@ -243,12 +243,6 @@ export async function fetchSampleMap(url) {
  *  sd: '808sd/SD0010.WAV'
  *  }, 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/');
  * s("[bd ~]*2, [~ hh]*2, ~ sd")
- * @example
- * samples('shabda:noise,chimp:2')
- * s("noise <chimp:0*2 chimp:1>")
- * @example
- * samples('shabda/speech/fr-FR/f:chocolat')
- * s("chocolat*4")
  */
 
 export const samples = async (sampleMap, baseUrl = sampleMap._base || '', options = {}) => {
@@ -329,10 +323,10 @@ export async function onTriggerSample(t, value, onended, bank, resolveUrl) {
   const out = ac.createGain(); // we need a separate gain for the cutgroups because firefox...
   node.connect(out);
   onceEnded(bufferSource, function () {
-    bufferSource.disconnect();
-    vibratoOscillator?.stop();
-    node.disconnect();
-    out.disconnect();
+    releaseAudioNode(bufferSource);
+    releaseAudioNode(vibratoOscillator);
+    releaseAudioNode(node);
+    releaseAudioNode(out);
     onended();
   });
   let envEnd = holdEnd + release + 0.01;

@@ -18,6 +18,7 @@ import {
   getEnvelope,
   getLfo,
   getWorklet,
+  releaseAudioNode,
   webAudioTimeout,
 } from './helpers.mjs';
 import { map } from 'nanostores';
@@ -303,8 +304,8 @@ function getPhaser(begin, end, frequency = 1, depth = 0.5, centerFrequency = 100
   const lfo = getLfo(ac, { frequency, depth: sweep * 2, begin, end });
 
   //filters
-  const numStages = 2; //num of filters in series
-  let fOffset = 0;
+  const numStages = 1; //num of filters in series
+  let fOffset = 282; //for backward compat in #1800
   const filterChain = [];
   for (let i = 0; i < numStages; i++) {
     const filter = ac.createBiquadFilter();
@@ -315,12 +316,9 @@ function getPhaser(begin, end, frequency = 1, depth = 0.5, centerFrequency = 100
 
     lfo.connect(filter.detune);
     fOffset += 282;
-    if (i > 0) {
-      filterChain[i - 1].connect(filter);
-    }
     filterChain.push(filter);
   }
-  return { phaser: filterChain[filterChain.length - 1], lfo };
+  return { filterChain, lfo };
 }
 
 function getFilterType(ftype) {
@@ -611,6 +609,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     compressorKnee,
     compressorAttack,
     compressorRelease,
+    transient,
+    transsustain,
   } = value;
 
   delaytime = delaytime ?? cycleToSeconds(delaysync, cps);
@@ -668,7 +668,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   } else if (getSound(s)) {
     const { onTrigger } = getSound(s);
     const onEnded = () => {
-      audioNodes.forEach((n) => n?.disconnect());
+      audioNodes.forEach((n) => releaseAudioNode(n));
       activeSoundSources.delete(chainID);
     };
     const soundHandle = await onTrigger(t, value, onEnded, cps);
@@ -694,6 +694,23 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   const chain = []; // audio nodes that will be connected to each other sequentially
   chain.push(sourceNode);
   stretch !== undefined && chain.push(getWorklet(ac, 'phase-vocoder-processor', { pitchFactor: stretch }));
+
+  transient !== undefined &&
+    chain.push(
+      getWorklet(
+        ac,
+        'transient-processor',
+        {},
+        {
+          processorOptions: {
+            attack: transient,
+            sustain: transsustain,
+            begin: t,
+            end: endWithRelease,
+          },
+        },
+      ),
+    );
 
   // gain stage
   const initialGain = gainNode(gain);
@@ -901,9 +918,10 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   }
   // phaser
   if (phaserrate !== undefined && phaserdepth > 0) {
-    const { phaser, lfo } = getPhaser(t, endWithRelease, phaserrate, phaserdepth, phasercenter, phasersweep);
-    nodes['phaser'] = [phaser];
-    chain.push(phaser);
+    const { filterChain, lfo } = getPhaser(t, endWithRelease, phaserrate, phaserdepth, phasercenter, phasersweep);
+    nodes['phaser'] = [...filterChain];
+    nodes['phaser_lfo'] = [lfo];
+    chain.push(...filterChain);
     audioNodes.push(lfo);
   }
 
