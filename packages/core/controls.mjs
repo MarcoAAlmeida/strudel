@@ -2924,8 +2924,8 @@ Pattern.prototype.modulate = function (type, config, idx) {
  * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
  * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
  * @param {number | Pattern} [config.dcoffset] DC offset / bias for the waveform. Aliases: dc
- * @param {number | Pattern} [config.shape] Waveform shape index. Aliases: sh
- * @param {number | Pattern} [config.skew] Waveform skew amount. Aliases: sk
+ * @param {number | Pattern} [config.shape] Shape index. Aliases: sh
+ * @param {number | Pattern} [config.skew] Skew amount. Aliases: sk
  * @param {number | Pattern} [config.curve] Exponential curve amount. Aliases: c
  * @param {number | Pattern} [config.sync] Tempo-synced modulation rate. Aliases: s
  * @returns Pattern
@@ -2973,7 +2973,6 @@ export const env = (config) => pure({}).env(config);
  * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc, p
  * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
  * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
- * @param {number | Pattern} [config.ratio] Modulation ratio. Aliases: rat
  * @param {number | Pattern} [config.dc] DC offset prior to application
  * @returns Pattern
  */
