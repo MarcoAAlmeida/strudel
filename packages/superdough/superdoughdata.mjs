@@ -74,6 +74,7 @@ const CONTROL_TARGETS = {
   shapevol: { node: 'shape', param: 'postgain' },
   distort: { node: 'distort', param: 'distort' },
   distortvol: { node: 'distort', param: 'postgain' },
+  distorttype: { node: 'distort', param: 'distort' },
 
   // COMPRESSOR
   compressor: { node: 'compressor', param: 'threshold' },

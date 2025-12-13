@@ -380,7 +380,7 @@ export function registerSynthSounds() {
       const holdend = begin + value.duration;
       const end = holdend + release + 0.01;
       const bus = getSuperdoughAudioController().getBus(value.n ?? 0);
-      const envGain = bus.connect(gainNode(1));
+      const envGain = bus.connect(gainNode(0));
       getParamADSR(envGain.gain, attack, decay, sustain, release, 0, 1, begin, holdend, 'linear');
       const timeoutNode = webAudioTimeout(
         ac,
