@@ -457,7 +457,7 @@ function connectLFO(idx, params, nodeTracker) {
     min,
     max,
   };
-  const lfoNode = getCustomLfo(getAudioContext(), modParams);
+  const lfoNode = getLfo(getAudioContext(), modParams);
   nodeTracker[`lfo${idx}`] = [lfoNode];
   targetParams.forEach((t) => lfoNode.connect(t));
   return lfoNode;
