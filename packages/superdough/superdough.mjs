@@ -401,10 +401,11 @@ function _getControlData(control) {
   return controlTargets[_stripIndex(control)];
 }
 
-function _getRangeForParam(paramName, targetParams, currentValue) {
-  if (paramName === 'frequency') {
-    const liveValue = targetParams?.[0]?.value ?? currentValue ?? 0;
-    return { min: 20 - liveValue, max: 24000 - liveValue };
+function _getRangeForParam(paramName, currentValue, control) {
+  // For our normal oscillators / filters we want to clamp the frequency to a reasonable range
+  // For LFOs we allow it to be modulated freely
+  if (paramName === 'frequency' || control?.startsWith?.('lfo')) {
+    return { min: 20 - currentValue, max: 24000 - currentValue };
   }
   return { min: undefined, max: undefined };
 }
@@ -447,7 +448,7 @@ function connectLFO(idx, params, nodeTracker) {
   const { rate = 1, sync, cps, cycle, control = 'lfo', subControl, depth = 1, depthabs, ...filteredParams } = params;
   const { targetParams, paramName } = _getTargetParamsForControl(control, nodeTracker, subControl);
   const currentValue = targetParams[0].value;
-  const { min, max } = _getRangeForParam(paramName, targetParams, currentValue);
+  const { min, max } = _getRangeForParam(paramName, currentValue, control);
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
   const modParams = {
     ...filteredParams,
@@ -467,7 +468,7 @@ function connectEnvelope(idx, params, nodeTracker) {
   const { control, subControl, acurve, dcurve, rcurve, depth = 1, depthabs, ...filteredParams } = params;
   const { targetParams, paramName } = _getTargetParamsForControl(control, nodeTracker, subControl);
   const currentValue = targetParams[0].value;
-  const { min, max } = _getRangeForParam(paramName, targetParams, currentValue);
+  const { min, max } = _getRangeForParam(paramName, currentValue, control);
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
   const envNode = getEnvelope(getAudioContext(), {
     ...filteredParams,
@@ -493,7 +494,7 @@ function connectBusModulator(params, nodeTracker) {
   signal.connect(shifted);
   const { targetParams, paramName } = _getTargetParamsForControl(control, nodeTracker, subControl);
   const currentValue = targetParams[0].value;
-  const { min, max } = _getRangeForParam(paramName, targetParams, currentValue);
+  const { min, max } = _getRangeForParam(paramName, currentValue, control);
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
   const maxAbsDepth = Math.min(Math.abs(min), Math.abs(max));
   const boundedDepth = Math.min(Math.abs(depthValue), maxAbsDepth) || Math.abs(depthValue);

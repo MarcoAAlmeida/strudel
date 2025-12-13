@@ -19,8 +19,18 @@ const CONTROL_TARGETS = {
 
   // MODULATORS
   lfo: { node: 'lfo', param: 'frequency' },
+  lfo_rate: { node: 'lfo', param: 'frequency' },
+  lfo_sync: { node: 'lfo', param: 'frequency' },
+  lfo_depth: { node: 'lfo', param: 'depth' },
+  lfo_depthabs: { node: 'lfo', param: 'depth' },
   env: { node: 'env', param: 'depth' },
+  env_attack: { node: 'env', param: 'attack' },
+  env_decay: { node: 'env', param: 'decay' },
+  env_sustain: { node: 'env', param: 'sustain' },
+  env_release: { node: 'env', param: 'release' },
   bmod: { node: 'bmod', param: 'depth' },
+  bmod_depth: { node: 'bmod', param: 'depth' },
+  bmod_depthabs: { node: 'bmod', param: 'depth' },
 
   // LPF
   cutoff: { node: 'lpf', param: 'frequency' },
