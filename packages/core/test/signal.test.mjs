@@ -8,7 +8,7 @@ import Fraction from 'fraction.js';
 
 import { describe, it, expect, vi } from 'vitest';
 
-import { saw, saw2, isaw, isaw2, tight, tightx, loose } from '../signal.mjs';
+import { saw, saw2, isaw, isaw2, per, perx, cyclesPer } from '../signal.mjs';
 import { fastcat, sequence, State, TimeSpan, Hap } from '../index.mjs';
 
 const st = (begin, end) => new State(ts(begin, end));
@@ -37,24 +37,24 @@ describe('signal()', () => {
   });
 });
 
-describe('loose', () => {
+describe('cyclesPer', () => {
   it('gives cycles per hap', () => {
     sameFirst(
-      loose.struct(true, true, true, fastcat(true, true)),
+      cyclesPer.struct(true, true, true, fastcat(true, true)),
       sequence(0.25, 0.25, 0.25, fastcat(0.125, 0.125)).fmap(Fraction),
     );
   });
 });
-describe('tight', () => {
+describe('per', () => {
   it('gives haps per cycle', () => {
-    sameFirst(tight.struct(true, true, true, fastcat(true, true)), sequence(4, 4, 4, fastcat(8, 8)).fmap(Fraction));
+    sameFirst(per.struct(true, true, true, fastcat(true, true)), sequence(4, 4, 4, fastcat(8, 8)).fmap(Fraction));
   });
 });
 
-describe('tightx', () => {
+describe('perx', () => {
   it('gives exponential haps per cycle', () => {
     sameFirst(
-      tightx.struct(true, true, true, fastcat(true, fastcat(true, true))),
+      perx.struct(true, true, true, fastcat(true, fastcat(true, true))),
       sequence(3, 3, 3, fastcat(4, fastcat(5, 5))),
     );
   });
