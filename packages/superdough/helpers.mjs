@@ -132,10 +132,11 @@ export function getLfo(audioContext, begin, end, properties = {}) {
 }
 
 export function getCustomLfo(audioContext, properties = {}) {
-  // Extract some params we need for deriving other params
+  // Default / process certain params
   const { shape = 0, ...props } = properties;
   const lfoprops = {
     shape: getModulationShapeInput(shape),
+    dcoffset: -0.5,
     ...props,
   };
   return getWorklet(audioContext, 'lfo-processor', lfoprops);

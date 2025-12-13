@@ -451,7 +451,7 @@ function connectLFO(idx, params, nodeTracker) {
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
   const modParams = {
     ...filteredParams,
-    frequency: sync !== undefined ? sync / cps : rate,
+    frequency: sync !== undefined ? sync * cps : rate,
     time: cycle / cps,
     depth: depthValue,
     min,
