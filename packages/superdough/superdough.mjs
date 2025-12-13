@@ -381,19 +381,6 @@ function _getNodeParam(node, name) {
   return undefined;
 }
 
-function _getNodeParams(node) {
-  const params = new Set();
-  // Worklet case
-  if (node?.parameters) {
-    node.parameters.forEach((_v, k) => params.add(k));
-  }
-  // Guesses based on common parameters
-  ['gain', 'frequency', 'detune', 'Q', 'pan', 'playbackRate', 'delayTime'].forEach((k) => {
-    if (node?.[k] instanceof AudioParam) params.add(k);
-  });
-  return Array.from(params);
-}
-
 const controlTargets = getSuperdoughControlTargets();
 
 const _stripIndex = (control) => control?.replace(/\d+$/, '');
@@ -431,14 +418,6 @@ function _getTargetParamsForControl(control, nodes, subControl) {
   const audioParams = [];
   targetNodes.forEach((targetNode) => {
     const targetParam = _getNodeParam(targetNode, paramName);
-    if (!targetParam) {
-      const available = _getNodeParams(targetNode);
-      errorLogger(
-        `Could not connect to parameter '${paramName}' on '${nodeKey}'. Available parameters: ${available.join(', ')}`,
-        'superdough',
-      );
-      return;
-    }
     audioParams.push(targetParam);
   });
   return { targetParams: audioParams, paramName };
