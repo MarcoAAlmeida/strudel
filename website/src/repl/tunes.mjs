@@ -393,7 +393,7 @@ samples({
   bass: { d2: 'https://cdn.freesound.org/previews/608/608286_13074022-lq.mp3' }
 })
 
-useOldRandom(true)
+useRNG('legacy')
 
 stack(
   // bells
@@ -432,7 +432,7 @@ export const festivalOfFingers3 = `// "Festival of fingers 3"
 // @by Felix Roos
 
 setcps(1)
-useOldRandom(true)
+useRNG('legacy')
 
 n("[-7*3],0,2,6,[8 7]")
   .echoWith(
@@ -457,7 +457,7 @@ export const meltingsubmarine = `// "Melting submarine"
 // @by Felix Roos
 
 samples('github:tidalcycles/dirt-samples')
-useOldRandom(true)
+useRNG('legacy')
 
 stack(
   s("bd:5,[~ <sd:1!3 sd:1(3,4,3)>],hh27(3,4,1)") // drums
@@ -608,7 +608,7 @@ export const belldub = `// "Belldub"
 samples({ bell: {b4:'https://cdn.freesound.org/previews/339/339809_5121236-lq.mp3'}})
 // "Hand Bells, B, Single.wav" by InspectorJ (www.jshaw.co.uk) of Freesound.org
 
-useOldRandom(true)
+useRNG('legacy')
 
 stack(
   // bass
@@ -646,7 +646,7 @@ export const dinofunk = `// "Dinofunk"
 // @by Felix Roos
 
 setcps(1)
-useOldRandom(true)
+useRNG('legacy')
 
 samples({bass:'https://cdn.freesound.org/previews/614/614637_2434927-hq.mp3',
 dino:{b4:'https://cdn.freesound.org/previews/316/316403_5123851-hq.mp3'}})
@@ -675,7 +675,7 @@ export const sampleDemo = `// "Sample demo"
 // @license CC BY-NC-SA 4.0 https://creativecommons.org/licenses/by-nc-sa/4.0/
 // @by Felix Roos
 
-useOldRandom(true)
+useRNG('legacy')
 
 stack(
   // percussion
@@ -695,7 +695,7 @@ export const holyflute = `// "Holy flute"
 // @license CC BY-NC-SA 4.0 https://creativecommons.org/licenses/by-nc-sa/4.0/
 // @by Felix Roos
 
-useOldRandom(true)
+useRNG('legacy')
 
 "c3 eb3(3,8) c4/2 g3*2"
 .superimpose(
@@ -712,7 +712,7 @@ export const flatrave = `// "Flatrave"
 // @license CC BY-NC-SA 4.0 https://creativecommons.org/licenses/by-nc-sa/4.0/
 // @by Felix Roos
 
-useOldRandom(true)
+useRNG('legacy')
 
 stack(
   s("bd*2,~ [cp,sd]").bank('RolandTR909'),
@@ -742,7 +742,7 @@ export const amensister = `// "Amensister"
 
 samples('github:tidalcycles/dirt-samples')
 
-useOldRandom(true)
+useRNG('legacy')
 
 stack(
   // amen
@@ -851,7 +851,7 @@ export const arpoon = `// "Arpoon"
 // @license CC BY-NC-SA 4.0 https://creativecommons.org/licenses/by-nc-sa/4.0/
 // @by Felix Roos
 
-useOldRandom(true)
+useRNG('legacy')
 
 samples('github:tidalcycles/dirt-samples')
 

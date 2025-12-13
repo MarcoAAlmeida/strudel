@@ -1,6 +1,6 @@
 import { describe, bench } from 'vitest';
 
-import { calculateSteps, rand, useOldRandom } from '../index.mjs';
+import { calculateSteps, rand, useRNG } from '../index.mjs';
 
 const testingResolution = 128;
 
@@ -11,13 +11,13 @@ describe('old random', () => {
   bench(
     '+tactus',
     () => {
-      useOldRandom();
+      useRNG('legacy');
       _generateRandomPattern();
     },
     {
       time: 1000,
       teardown() {
-        useOldRandom(false);
+        useRNG('legacy');
       },
     },
   );
@@ -26,13 +26,13 @@ describe('old random', () => {
   bench(
     '-tactus',
     () => {
-      useOldRandom();
+      useRNG('precise');
       _generateRandomPattern();
     },
     {
       time: 1000,
       teardown() {
-        useOldRandom(false);
+        useRNG('legacy');
       },
     },
   );

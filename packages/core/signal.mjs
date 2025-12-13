@@ -231,7 +231,8 @@ const timeToRands = (t, n, seed = 0) => {
   return out;
 };
 
-// Deprecated: Old random signals. Configuration `useOldRandom` may be used for legacy songs
+// Old random signals. Currently the default, but can also be chosen via
+// `useRNG('legacy')`
 
 // stretch 300 cycles over the range of [0,2**29 == 536870912) then apply the xorshift algorithm
 const __xorwise = (x) => {
@@ -257,23 +258,25 @@ const __timeToRands = (t, n) => __timeToRandsPrime(__timeToIntSeed(t), n);
 
 // End old random
 
-let useOldRandomBool = false;
+let RNG_MODE = 'legacy';
 export const getRandsAtTime = (t, n = 1, seed = 0) => {
-  return useOldRandomBool ? __timeToRands(t + seed, n) : timeToRands(t, n, seed);
+  return RNG_MODE === 'legacy' ? __timeToRands(t + seed, n) : timeToRands(t, n, seed);
 };
 
 /**
- * Whether to use the old random number generator or not. Can be used to support legacy projects
+ * Sets which random number generator to use. Historically Strudel would
+ * use `useRNG('legacy')`, which remains the default. To use a new more statistically
+ * precise RNG, try `useRNG('precise')`.
  *
- * @name useOldRandom
- * @param {boolean} b - Whether to use old RNG
+ * @name useRNG
+ * @param {string} mod - Mode. One of 'legacy', 'precise'
  * @example
- * useOldRandom(true)
+ * useRNG('legacy')
  * // Repeats every 300 cycles
  * $: n(irand(50)).seg(16).scale("C:minor").ribbon(88, 32)
  * $: n(irand(50)).seg(16).scale("C:minor").ribbon(388, 32)
  */
-export const useOldRandom = (b = true) => (useOldRandomBool = b);
+export const useRNG = (mode = 'legacy') => (RNG_MODE = mode);
 
 /**
  * A discrete pattern of numbers from 0 to n-1
