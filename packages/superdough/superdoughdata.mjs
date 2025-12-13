@@ -94,6 +94,7 @@ const CONTROL_TARGETS = {
   wt: { node: 'source', param: 'position' },
   warp: { node: 'source', param: 'warp' },
   freq: { node: 'source', param: 'frequency' },
+  note: { node: 'source', param: 'frequency' },
 };
 
 export function getSuperdoughControlTargets() {
