@@ -109,7 +109,29 @@ export function getEnvelope(audioContext, properties = {}) {
   return getWorklet(audioContext, 'envelope-processor', properties);
 }
 
-export function getLfo(audioContext, properties = {}) {
+export function getLfo(audioContext, begin, end, properties = {}) {
+  const { shape = 0, ...props } = properties;
+  const { dcoffset = -0.5, depth = 1 } = properties;
+  const lfoprops = {
+    frequency: 1,
+    depth,
+    skew: 0.5,
+    phaseoffset: 0,
+    time: begin,
+    begin,
+    end,
+    shape: getModulationShapeInput(shape),
+    dcoffset,
+    min: dcoffset * depth,
+    max: dcoffset * depth + depth,
+    curve: 1,
+    ...props,
+  };
+
+  return getWorklet(audioContext, 'lfo-processor', lfoprops);
+}
+
+export function getCustomLfo(audioContext, properties = {}) {
   // Extract some params we need for deriving other params
   const { shape = 0, ...props } = properties;
   const lfoprops = {

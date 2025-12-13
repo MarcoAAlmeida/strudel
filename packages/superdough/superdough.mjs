@@ -443,7 +443,7 @@ function _getTargetParamsForControl(control, nodes, subControl) {
   return { targetParams: audioParams, paramName };
 }
 
-function connectLFO(idx, params, nodeTracker, value) {
+function connectLFO(idx, params, nodeTracker) {
   const { rate = 1, sync, cps, cycle, control = 'lfo', subControl, depth = 1, depthabs, ...filteredParams } = params;
   const { targetParams, paramName } = _getTargetParamsForControl(control, nodeTracker, subControl);
   const currentValue = targetParams[0].value;
@@ -457,13 +457,13 @@ function connectLFO(idx, params, nodeTracker, value) {
     min,
     max,
   };
-  const lfoNode = getLfo(getAudioContext(), modParams);
+  const lfoNode = getCustomLfo(getAudioContext(), modParams);
   nodeTracker[`lfo${idx}`] = [lfoNode];
   targetParams.forEach((t) => lfoNode.connect(t));
   return lfoNode;
 }
 
-function connectEnvelope(idx, params, nodeTracker, value) {
+function connectEnvelope(idx, params, nodeTracker) {
   const { control, subControl, acurve, dcurve, rcurve, depth = 1, depthabs, ...filteredParams } = params;
   const { targetParams, paramName } = _getTargetParamsForControl(control, nodeTracker, subControl);
   const currentValue = targetParams[0].value;
@@ -997,7 +997,6 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
           end: endWithRelease,
         },
         nodes,
-        value,
       );
       audioNodes.push(lfo);
     }
@@ -1012,14 +1011,13 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
           end: endWithRelease,
         },
         nodes,
-        value,
       );
       audioNodes.push(env);
     }
   }
   if (value.bmod) {
     for (const p of value.bmod) {
-      const { toCleanup } = connectBusModulator({ ...p, begin: t, end: endWithRelease }, nodes, value);
+      const { toCleanup } = connectBusModulator({ ...p, begin: t, end: endWithRelease }, nodes);
       audioNodes.push(...toCleanup);
     }
   }
