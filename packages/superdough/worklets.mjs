@@ -1013,9 +1013,15 @@ class EnvelopeProcessor extends AudioWorkletProcessor {
   }
 
   process(_inputs, outputs, params) {
+    const begin = params['begin'][0];
+    const end = params['end'][0];
+    if (currentTime >= end) {
+      return false;
+    }
+    if (currentTime <= begin) {
+      return true;
+    }
     const out = outputs[0][0];
-    if (!out) return true;
-    const begin = pv(params.begin, 0);
     const retrigger = pv(params.retrigger, 0) >= 0.5; // convert to bool
     if (begin !== this.beginTime && (this.state === 0 || retrigger)) {
       // triggered
@@ -1034,8 +1040,8 @@ class EnvelopeProcessor extends AudioWorkletProcessor {
       const dCurve = pv(params.decayCurve, i);
       const rCurve = pv(params.releaseCurve, i);
       const depth = pv(params.depth, i);
-      const clampMin = pv(params.min, i);
-      const clampMax = pv(params.max, i);
+      const min = pv(params.min, i);
+      const max = pv(params.max, i);
       const states = [
         { time: Number.POSITIVE_INFINITY, start: 0, target: 0 }, // idle
         { time: attack, start: this.attackStart, target: 1, curve: aCurve },
@@ -1049,7 +1055,7 @@ class EnvelopeProcessor extends AudioWorkletProcessor {
         this.state = (this.state + 1) % states.length;
         time = states[this.state].time;
       }
-      const clamped = clamp(this.val * depth, Math.min(clampMin, clampMax), Math.max(clampMin, clampMax));
+      const clamped = clamp(this.val * depth, min, max);
       out[i] = clamped;
     }
     return true;
