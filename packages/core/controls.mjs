@@ -2810,51 +2810,63 @@ export const scrub = register(
   false,
 );
 
-const configAliases = new Map();
-const addConfigAlias = (funcName, canonical, ...aliases) => {
+const subControlAliases = new Map();
+const registerSubControl = (funcName, main, ...aliases) => {
   const lowerFunc = String(funcName).toLowerCase();
-  const aliasMap = configAliases.get(lowerFunc) ?? new Map();
-  const allKeys = new Set([canonical, ...aliases]);
+  const aliasMap = subControlAliases.get(lowerFunc) ?? new Map();
+  const allKeys = new Set([main, ...aliases]);
   for (const alias of allKeys) {
-    aliasMap.set(String(alias).toLowerCase(), canonical);
+    aliasMap.set(String(alias).toLowerCase(), main);
   }
-  configAliases.set(lowerFunc, aliasMap);
+  subControlAliases.set(lowerFunc, aliasMap);
+};
+
+const registerSubControls = (funcName, aliasGroups = []) => {
+  for (const [main, ...aliases] of aliasGroups) {
+    registerSubControl(funcName, main, ...aliases);
+  }
 };
 
 const resolveConfigKey = (funcName, key) => {
-  const aliasMap = configAliases.get(String(funcName).toLowerCase());
+  const aliasMap = subControlAliases.get(String(funcName).toLowerCase());
   if (!aliasMap) return key;
   const normalized = String(key).toLowerCase();
   return aliasMap.get(normalized) ?? key;
 };
 
-addConfigAlias('lfo', 'control', 'c');
-addConfigAlias('lfo', 'subControl', 'sc');
-addConfigAlias('lfo', 'rate', 'r');
-addConfigAlias('lfo', 'depth', 'dep', 'dr');
-addConfigAlias('lfo', 'depthabs', 'da');
-addConfigAlias('lfo', 'dcoffset', 'dc');
-addConfigAlias('lfo', 'shape', 'sh');
-addConfigAlias('lfo', 'skew', 'sk');
-addConfigAlias('lfo', 'curve');
-addConfigAlias('lfo', 'sync', 's');
-addConfigAlias('env', 'control', 'c');
-addConfigAlias('env', 'subControl', 'sc');
-addConfigAlias('env', 'attack', 'att', 'a');
-addConfigAlias('env', 'decay', 'dec', 'd');
-addConfigAlias('env', 'sustain', 'sus', 's');
-addConfigAlias('env', 'release', 'rel', 'r');
-addConfigAlias('env', 'depth', 'dep', 'dr');
-addConfigAlias('env', 'depthabs', 'da');
-addConfigAlias('env', 'acurve', 'ac');
-addConfigAlias('env', 'dcurve', 'dc');
-addConfigAlias('env', 'rcurve', 'rc');
-addConfigAlias('bmod', 'orbit', 'o');
-addConfigAlias('bmod', 'control', 'c');
-addConfigAlias('bmod', 'subControl', 'sc');
-addConfigAlias('bmod', 'depth', 'dep', 'dr');
-addConfigAlias('bmod', 'depthabs', 'da');
-addConfigAlias('bmod', 'dc');
+registerSubControls('lfo', [
+  ['control', 'c'],
+  ['subControl', 'sc'],
+  ['rate', 'r'],
+  ['depth', 'dep', 'dr'],
+  ['depthabs', 'da'],
+  ['dcoffset', 'dc'],
+  ['shape', 'sh'],
+  ['skew', 'sk'],
+  ['curve'],
+  ['sync', 's'],
+]);
+registerSubControls('env', [
+  ['control', 'c'],
+  ['subControl', 'sc'],
+  ['attack', 'att', 'a'],
+  ['decay', 'dec', 'd'],
+  ['sustain', 'sus', 's'],
+  ['release', 'rel', 'r'],
+  ['depth', 'dep', 'dr'],
+  ['depthabs', 'da'],
+  ['acurve', 'ac'],
+  ['dcurve', 'dc'],
+  ['rcurve', 'rc'],
+]);
+registerSubControls('bmod', [
+  ['bus', 'b'],
+  ['control', 'c'],
+  ['subControl', 'sc'],
+  ['depth', 'dep', 'dr'],
+  ['depthabs', 'da'],
+  ['dc'],
+]);
 
 Pattern.prototype.modulate = function (type, config, idx) {
   if (config == null || typeof config !== 'object') {

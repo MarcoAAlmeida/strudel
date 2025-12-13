@@ -485,7 +485,7 @@ function connectEnvelope(idx, params, nodeTracker, value) {
   return envNode;
 }
 
-function connectBusModulator(params, nodeTracker, value) {
+function connectBusModulator(params, nodeTracker) {
   const ac = getAudioContext();
   const { control, subControl, depth = 1, depthabs } = params;
   const signal = controller.getBus(params.bus);
