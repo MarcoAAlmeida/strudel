@@ -16,7 +16,7 @@ export function steady(value) {
 }
 
 export const signal = (func) => {
-  const query = (state) => [new Hap(undefined, state.span, func(state.span.begin))];
+  const query = (state) => [new Hap(undefined, state.span, func(state.span.begin, state.controls))];
   return new Pattern(query);
 };
 
@@ -186,38 +186,97 @@ export const mouseY = signal(() => _mouseY);
 export const mousex = signal(() => _mouseX);
 export const mouseX = signal(() => _mouseX);
 
-// random signals
+// Random number generators
 
-const xorwise = (x) => {
+// Produce "Avalanche effect" where flipping a single bit of x
+// results in all output bits flipping with probability 0.5
+// See e.g. https://github.com/aappleby/smhasher/blob/0ff96f7835817a27d0487325b6c16033e2992eb5/src/MurmurHash3.cpp#L68-L77
+const _murmurHashFinalizer = (x) => {
+  x |= 0;
+  x ^= x >>> 16;
+  x = Math.imul(x, 0x85ebca6b);
+  x ^= x >>> 13;
+  x = Math.imul(x, 0xc2b2ae35);
+  x ^= x >>> 16;
+  return x >>> 0; // unsigned
+};
+
+// Convert t to a 32 bit integer, preserving temporal resolution down to 1/2^29
+const _tToT = (t) => {
+  return Math.floor(t * 536870912);
+};
+
+// Used to decorrelate nearby T, i, and seed prior to hashing
+const _decorrelate = (T, i = 0, seed = 0) => {
+  const lowBits = (T >>> 0) >>> 0;
+  const highBits = Math.floor(T / 4294967296) >>> 0; // 2^32
+  let key = lowBits ^ Math.imul(highBits ^ 0x85ebca6b, 0xc2b2ae35);
+  key ^= Math.imul(i ^ 0x7f4a7c15, 0x9e3779b9);
+  key ^= Math.imul(seed ^ 0x165667b1, 0x27d4eb2d);
+  return key >>> 0;
+};
+
+const randAt = (T, i = 0, seed = 0) => {
+  return _murmurHashFinalizer(_decorrelate(T, i, seed)) / 4294967296; // 2^32
+};
+
+// n samples at time t
+const timeToRands = (t, n, seed = 0) => {
+  const T = _tToT(t);
+  if (n === 1) {
+    return randAt(T, 0, seed);
+  }
+  const out = new Array(n);
+  for (let i = 0; i < n; i++) out[i] = randAt(T, i, seed);
+  return out;
+};
+
+// Old random signals. Currently the default, but can also be chosen via
+// `useRNG('legacy')`
+
+// stretch 300 cycles over the range of [0,2**29 == 536870912) then apply the xorshift algorithm
+const __xorwise = (x) => {
   const a = (x << 13) ^ x;
   const b = (a >> 17) ^ a;
   return (b << 5) ^ b;
 };
-
-// stretch 300 cycles over the range of [0,2**29 == 536870912) then apply the xorshift algorithm
-const _frac = (x) => x - Math.trunc(x);
-
-const timeToIntSeed = (x) => xorwise(Math.trunc(_frac(x / 300) * 536870912));
-
-const intSeedToRand = (x) => (x % 536870912) / 536870912;
-
-const timeToRand = (x) => Math.abs(intSeedToRand(timeToIntSeed(x)));
-
-const timeToRandsPrime = (seed, n) => {
+const __frac = (x) => x - Math.trunc(x);
+const __timeToIntSeed = (x) => __xorwise(Math.trunc(__frac(x / 300) * 536870912));
+const __intSeedToRand = (x) => (x % 536870912) / 536870912;
+const __timeToRandsPrime = (seed, n) => {
+  if (n === 1) {
+    return Math.abs(__intSeedToRand(seed));
+  }
   const result = [];
-  // eslint-disable-next-line
-  for (let i = 0; i < n; ++i) {
-    result.push(intSeedToRand(seed));
-    seed = xorwise(seed);
+  for (let i = 0; i < n; i++) {
+    result.push(__intSeedToRand(seed));
+    seed = __xorwise(seed);
   }
   return result;
 };
+const __timeToRands = (t, n) => __timeToRandsPrime(__timeToIntSeed(t), n);
 
-const timeToRands = (t, n) => timeToRandsPrime(timeToIntSeed(t), n);
+// End old random
+
+let RNG_MODE = 'legacy';
+export const getRandsAtTime = (t, n = 1, seed = 0) => {
+  return RNG_MODE === 'legacy' ? __timeToRands(t + seed, n) : timeToRands(t, n, seed);
+};
 
 /**
+ * Sets which random number generator to use. Historically Strudel would
+ * use `useRNG('legacy')`, which remains the default. To use a new more statistically
+ * precise RNG, try `useRNG('precise')`.
  *
+ * @name useRNG
+ * @param {string} mod - Mode. One of 'legacy', 'precise'
+ * @example
+ * useRNG('legacy')
+ * // Repeats every 300 cycles
+ * $: n(irand(50)).seg(16).scale("C:minor").ribbon(88, 32)
+ * $: n(irand(50)).seg(16).scale("C:minor").ribbon(388, 32)
  */
+export const useRNG = (mode = 'legacy') => (RNG_MODE = mode);
 
 /**
  * A discrete pattern of numbers from 0 to n-1
@@ -300,13 +359,13 @@ export const binaryNL = (n, nBits = 16) => {
  *   .partials(randL(8))
  */
 export const randL = (n) => {
-  return signal((t) => (nVal) => timeToRands(t, nVal).map(Math.abs)).appLeft(reify(n));
+  return signal((t) => (nVal) => getRandsAtTime(t, nVal).map(Math.abs)).appLeft(reify(n));
 };
 
 export const randrun = (n) => {
-  return signal((t) => {
+  return signal((t, controls) => {
     // Without adding 0.5, the first cycle is always 0,1,2,3,...
-    const rands = timeToRands(t.floor().add(0.5), n);
+    const rands = getRandsAtTime(t.floor().add(0.5), n, controls.randSeed);
     const nums = rands
       .map((n, i) => [n, i])
       .sort((a, b) => (a[0] > b[0]) - (a[0] < b[0]))
@@ -348,6 +407,37 @@ export const scramble = register('scramble', (n, pat) => {
 });
 
 /**
+ * Modify a pattern by applying a function to the `randomSeed` control if present
+ *
+ * @param {Function} func Function from seed (or undefined) to seed (or undefined)
+ * @param {Pattern} pat Pattern to update
+ * @returns Pattern
+ */
+export const withSeed = (func, pat) => {
+  return new Pattern((state) => {
+    let { randSeed, ...controls } = state.controls;
+    randSeed = func(randSeed);
+    return pat.query(state.setControls({ ...controls, randSeed }));
+  }, pat._steps);
+};
+
+/**
+ * Change the seed for random signals. Normally, random signals depend on time,
+ * so two patterns at the same time will have the same random values. Specifying
+ * a new seed changes the signal output by `rand`. This also affects other functions
+ * that use randomness, like `shuffle` and `sometimes`.
+ *
+ * @name seed
+ * @param {number} n A new seed. Can be any number.
+ * @example
+ * $: s("hh*4").degrade();
+ * $: s("bd*4").degrade().seed(1); // Will degrade different events from the hi-hat
+ */
+export const seed = register('seed', (n, pat) => {
+  return withSeed(() => n, pat);
+});
+
+/**
  * A continuous pattern of random numbers, between 0 and 1.
  *
  * @name rand
@@ -356,7 +446,7 @@ export const scramble = register('scramble', (n, pat) => {
  * s("bd*4,hh*8").cutoff(rand.range(500,8000))
  *
  */
-export const rand = signal(timeToRand);
+export const rand = signal((t, controls) => getRandsAtTime(t, 1, controls.randSeed));
 /**
  * A continuous pattern of random numbers, between -1 and 1
  */
@@ -533,35 +623,31 @@ export const wchooseCycles = (...pairs) => _wchooseWith(rand.segment(1), ...pair
 
 export const wrandcat = wchooseCycles;
 
-function _perlin(t) {
+function _perlin(t, seed = 0) {
   let ta = Math.floor(t);
   let tb = ta + 1;
   const smootherStep = (x) => 6.0 * x ** 5 - 15.0 * x ** 4 + 10.0 * x ** 3;
   const interp = (x) => (a) => (b) => a + smootherStep(x) * (b - a);
-  const v = interp(t - ta)(timeToRand(ta))(timeToRand(tb));
+  const ra = getRandsAtTime(ta, 1, seed);
+  const rb = getRandsAtTime(tb, 1, seed);
+  const v = interp(t - ta)(ra)(rb);
   return v;
 }
-export const perlinWith = (tpat) => {
-  return tpat.fmap(_perlin);
-};
 
-function _berlin(t) {
+function _berlin(t, seed = 0) {
   const prevRidgeStartIndex = Math.floor(t);
   const nextRidgeStartIndex = prevRidgeStartIndex + 1;
 
-  const prevRidgeBottomPoint = timeToRand(prevRidgeStartIndex);
-  const nextRidgeTopPoint = timeToRand(nextRidgeStartIndex) + prevRidgeBottomPoint;
+  const prevRidgeBottomPoint = getRandsAtTime(prevRidgeStartIndex, 1, seed);
+  const height = getRandsAtTime(nextRidgeStartIndex, 1, seed);
+  const nextRidgeTopPoint = prevRidgeBottomPoint + height;
 
   const currentPercent = (t - prevRidgeStartIndex) / (nextRidgeStartIndex - prevRidgeStartIndex);
   const interp = (a, b, t) => {
-    return a + (b - a) * t;
+    return a + t * (b - a);
   };
   return interp(prevRidgeBottomPoint, nextRidgeTopPoint, currentPercent) / 2;
 }
-
-export const berlinWith = (tpat) => {
-  return tpat.fmap(_berlin);
-};
 
 /**
  * Generates a continuous pattern of [perlin noise](https://en.wikipedia.org/wiki/Perlin_noise), in the range 0..1.
@@ -572,7 +658,7 @@ export const berlinWith = (tpat) => {
  * s("bd*4,hh*8").cutoff(perlin.range(500,8000))
  *
  */
-export const perlin = perlinWith(time.fmap((v) => Number(v)));
+export const perlin = signal((t, controls) => _perlin(t, controls.randSeed));
 
 /**
  * Generates a continuous pattern of [berlin noise](conceived by Jame Coyne and Jade Rowland as a joke but turned out to be surprisingly cool and useful,
@@ -584,7 +670,7 @@ export const perlin = perlinWith(time.fmap((v) => Number(v)));
  * n("0!16".add(berlin.fast(4).mul(14))).scale("d:minor")
  *
  */
-export const berlin = berlinWith(time.fmap((v) => Number(v)));
+export const berlin = signal((t, controls) => _berlin(t, controls.randSeed));
 
 export const degradeByWith = register(
   'degradeByWith',
