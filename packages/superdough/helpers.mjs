@@ -593,7 +593,7 @@ export const releaseAudioNode = (node) => {
   // make sure all AudioScheduledSourceNodes are in a stopped state
   // https://developer.mozilla.org/en-US/docs/Web/API/AudioScheduledSourceNode
   if (node instanceof AudioScheduledSourceNode) {
-    if (node.onended && node.onended.name !== 'cleanup') {
+    if (process.env.NODE_ENV === 'development' && node.onended && node.onended.name !== 'cleanup') {
       logger(
         `[superdough] Deprecation warning: it seems your code path is setting 'node.onended = callback' instead of using the onceEnded helper`,
       );
