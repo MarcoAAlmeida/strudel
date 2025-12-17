@@ -9,7 +9,16 @@ import './reverb.mjs';
 import './vowel.mjs';
 import { nanFallback, _mod, cycleToSeconds, pickAndRename } from './util.mjs';
 import workletsUrl from './worklets.mjs?audioworklet';
-import { createFilter, gainNode, getCompressor, getDistortion, getLfo, getWorklet, effectSend } from './helpers.mjs';
+import {
+  createFilter,
+  gainNode,
+  getCompressor,
+  getDistortion,
+  getLfo,
+  getWorklet,
+  effectSend,
+  releaseAudioNode,
+} from './helpers.mjs';
 import { map } from 'nanostores';
 import { logger } from './logger.mjs';
 import { loadBuffer } from './sampler.mjs';
@@ -21,6 +30,17 @@ const DEFAULT_AUDIO_DEVICE_NAME = 'System Standard';
 
 let maxPolyphony = DEFAULT_MAX_POLYPHONY;
 
+/**
+ * Set the max polyphony. If notes are ringing out via `release` then they will
+ * start to die out in first-in-first-out order once the max polyphony has been hit
+ *
+ * @name setMaxPolyphony
+ * @param {number} Max polyphony. Defaults to 128
+ * @example
+ * setMaxPolyphony(4)
+ * n(irand(24).seg(8)).scale("C#3:minor").room(1).release(4).gain(0.5)
+ *
+ */
 export function setMaxPolyphony(polyphony) {
   maxPolyphony = parseInt(polyphony) ?? DEFAULT_MAX_POLYPHONY;
 }
@@ -43,6 +63,17 @@ export function applyGainCurve(val) {
   return gainCurveFunc(val);
 }
 
+/**
+ * Apply a function to all gains provided in patterns. Can be used to rescale gain to be
+ * quadratic, exponential, etc. rather than linear
+ *
+ * @name setGainCurve
+ * @param {Function} function to apply to all gain values
+ * @example
+ * setGainCurve((x) => x * x) // quadratic gain
+ * s("bd*4").gain(0.5) // equivalent to 0.25 gain normally
+ *
+ */
 export function setGainCurve(newGainCurveFunc) {
   gainCurveFunc = newGainCurveFunc;
 }
@@ -290,8 +321,8 @@ function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000
   const lfo = getLfo(ac, time, end, { frequency, depth: sweep * 2 });
 
   //filters
-  const numStages = 2; //num of filters in series
-  let fOffset = 0;
+  const numStages = 1; //num of filters in series
+  let fOffset = 282; //for backward compat in #1800
   const filterChain = [];
   for (let i = 0; i < numStages; i++) {
     const filter = ac.createBiquadFilter();
@@ -302,12 +333,9 @@ function getPhaser(time, end, frequency = 1, depth = 0.5, centerFrequency = 1000
 
     lfo.connect(filter.detune);
     fOffset += 282;
-    if (i > 0) {
-      filterChain[i - 1].connect(filter);
-    }
     filterChain.push(filter);
   }
-  return { phaser: filterChain[filterChain.length - 1], lfo };
+  return { filterChain, lfo };
 }
 
 function getFilterType(ftype) {
@@ -451,6 +479,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     compressorKnee,
     compressorAttack,
     compressorRelease,
+    transient,
+    transsustain,
   } = value;
 
   delaytime = delaytime ?? cycleToSeconds(delaysync, cps);
@@ -506,7 +536,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   } else if (getSound(s)) {
     const { onTrigger } = getSound(s);
     const onEnded = () => {
-      audioNodes.forEach((n) => n?.disconnect());
+      audioNodes.forEach((n) => releaseAudioNode(n));
       activeSoundSources.delete(chainID);
     };
     const soundHandle = await onTrigger(t, value, onEnded, cps);
@@ -531,6 +561,23 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   const chain = []; // audio nodes that will be connected to each other sequentially
   chain.push(sourceNode);
   stretch !== undefined && chain.push(getWorklet(ac, 'phase-vocoder-processor', { pitchFactor: stretch }));
+
+  transient !== undefined &&
+    chain.push(
+      getWorklet(
+        ac,
+        'transient-processor',
+        {},
+        {
+          processorOptions: {
+            attack: transient,
+            sustain: transsustain,
+            begin: t,
+            end: endWithRelease,
+          },
+        },
+      ),
+    );
 
   // gain stage
   chain.push(gainNode(gain));
@@ -697,9 +744,9 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   }
   // phaser
   if (phaserrate !== undefined && phaserdepth > 0) {
-    const { phaser, lfo } = getPhaser(t, endWithRelease, phaserrate, phaserdepth, phasercenter, phasersweep);
+    const { filterChain, lfo } = getPhaser(t, endWithRelease, phaserrate, phaserdepth, phasercenter, phasersweep);
     audioNodes.push(lfo);
-    chain.push(phaser);
+    chain.push(...filterChain);
   }
 
   // last gain
