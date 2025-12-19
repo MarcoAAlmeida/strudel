@@ -38,6 +38,7 @@ import { getRandomTune, initCode, loadModules, shareCode } from './util.mjs';
 import './Repl.css';
 import { setInterval, clearInterval } from 'worker-timers';
 import { getMetadata } from '../metadata_parser';
+import { debugAudiograph } from './audiograph';
 
 const { latestCode, maxPolyphony, audioDeviceName, multiChannelOrbits } = settingsMap.get();
 let modulesLoading, presets, drawContext, clearCanvas, audioReady;
@@ -131,6 +132,7 @@ export function useReplContext() {
       bgFill: false,
     });
     window.strudelMirror = editor;
+    window.debugAudiograph = debugAudiograph;
 
     // init settings
     initCode().then(async (decoded) => {
