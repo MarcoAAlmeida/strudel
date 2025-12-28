@@ -9,12 +9,23 @@ import {
   updateMiniLocations,
   highlightMiniLocations,
 } from '@strudel/codemirror';
-import { evalScope } from '@strudel/core';
+import { evalScope, hash2code } from '@strudel/core';
 import { Framer } from '@strudel/draw';
 import { persistentAtom } from '@nanostores/persistent';
 import { DoughRepl } from './dough-repl.mjs';
 
-const initialCode = '$: note("c a f e")';
+let initialCode = '$: note("c a f e")';
+if (typeof window !== 'undefined') {
+  try {
+    const codeParam = window.location.href.split('#')[1] || '';
+    if (codeParam) {
+      initialCode = hash2code(codeParam);
+    }
+  } catch (err) {
+    console.error('could not init code from url');
+  }
+}
+
 export const code = persistentAtom('vanilla-repl-code', initialCode, {
   encode: JSON.stringify,
   decode: JSON.parse,
@@ -64,6 +75,7 @@ export class DoughMirror {
     this.flash();
     await this.prebaked;
     const { miniLocations } = await this.repl.evaluate(this.code);
+    window.location.hash = '#' + code2hash(this.code);
     updateMiniLocations(this.editor, miniLocations);
   }
   stop() {
