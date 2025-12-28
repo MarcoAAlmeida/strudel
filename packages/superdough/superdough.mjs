@@ -359,7 +359,9 @@ export let analysers = {},
   analysersData = {};
 
 export function getAnalyserById(id, fftSize = 1024, smoothingTimeConstant = 0.5) {
-  if (!analysers[id] || analysers[id].audioContext != getAudioContext()) {
+  // below commented out branch is hotfixing https://codeberg.org/uzu/strudel/issues/1847
+  // might cause conflicts with exporting...
+  if (!analysers[id] /*  || analysers[id].audioContext != getAudioContext() */) {
     // make sure this doesn't happen too often as it piles up garbage
     const analyserNode = getAudioContext().createAnalyser();
     analyserNode.fftSize = fftSize;
