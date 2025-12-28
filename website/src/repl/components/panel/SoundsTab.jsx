@@ -14,6 +14,10 @@ import { prebake } from '@src/repl/prebake.mjs';
 const getSamples = (samples) =>
   Array.isArray(samples) ? samples.length : typeof samples === 'object' ? Object.values(samples).length : 1;
 
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function SoundsTab() {
   const sounds = useStore(soundMap);
 
@@ -56,15 +60,21 @@ export function SoundsTab() {
 
   // holds mutable ref to current triggered sound
   const trigRef = useRef();
-
-  // Used to cycle through sound previews on banks with multiple sounds
-  let soundPreviewIdx = 0;
+  const numRef = useRef(0);
 
   // stop current sound on mouseup
   useEvent('mouseup', () => {
     const ref = trigRef.current;
     trigRef.current = undefined;
     ref?.stop?.(getAudioContext().currentTime + 0.01);
+  });
+  useEvent('keydown', (e) => {
+    if (!isNaN(Number(e.key))) {
+      numRef.current = Number(e.key);
+    }
+  });
+  useEvent('keyup', (e) => {
+    numRef.current = 0;
   });
   return (
     <div id="sounds-tab" className="px-4 flex gap-2 flex-col w-full h-full text-foreground">
@@ -115,25 +125,34 @@ export function SoundsTab() {
                 const params = {
                   note: ['synth', 'soundfont'].includes(data.type) ? 'a3' : undefined,
                   s: name,
-                  n: soundPreviewIdx,
+                  n: numRef.current,
                   clip: 1,
                   release: 0.5,
                   sustain: 1,
                   duration: 0.5,
                 };
-                soundPreviewIdx++;
                 const onended = () => trigRef.current?.node?.disconnect();
-                try {
-                  // Pre-load the sample by calling onTrigger with a future time
-                  // This triggers the loading but schedules playback for later
-                  const time = ctx.currentTime + 0.5; // Give 500ms for loading
-                  const ref = await onTrigger(time, params, onended);
-                  trigRef.current = ref;
-                  if (ref?.node) {
-                    connectToDestination(ref.node);
+                // Attempt to play the sample and retry every 200ms until 10 attempts have been reached
+                let errMsg;
+                for (let attempt = 0; attempt < 10; attempt++) {
+                  try {
+                    // Pre-load the sample by calling onTrigger with a future time
+                    // This triggers the loading but schedules playback for later
+                    const time = ctx.currentTime + 0.05; // Give 50ms for loading
+                    const ref = await onTrigger(time, params, onended);
+                    trigRef.current = ref;
+                    if (ref?.node) {
+                      connectToDestination(ref.node);
+                      break;
+                    }
+                  } catch (err) {
+                    errMsg = err;
                   }
-                } catch (err) {
-                  console.warn('Failed to trigger sound:', err);
+                  if (attempt == 9) {
+                    console.warn('Failed to trigger sound after 10 attempts' + (errMsg ? `: ${errMsg}` : ''));
+                  } else {
+                    await wait(200);
+                  }
                 }
               }}
             >

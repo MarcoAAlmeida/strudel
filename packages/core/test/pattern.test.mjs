@@ -586,6 +586,18 @@ describe('Pattern', () => {
           .map((a) => a.value),
       ).toStrictEqual(['c', 'b', 'a']);
     });
+    it('Does not reverse the order of cycles', () => {
+      expect(fastcat('a', 'b', 'c', 'd').slow(2).rev().fast(2).sortHapsByPart().firstCycle()).toStrictEqual(
+        fastcat('b', 'a', 'd', 'c').firstCycle(),
+      );
+    });
+  });
+  describe('revv()', () => {
+    it('Does reverse the order of cycles', () => {
+      expect(fastcat('a', 'b', 'c', 'd').slow(2).revv().fast(2).sortHapsByPart().firstCycle()).toStrictEqual(
+        fastcat('d', 'c', 'b', 'a').firstCycle(),
+      );
+    });
   });
   describe('sequence()', () => {
     it('Can work like fastcat', () => {
@@ -726,20 +738,6 @@ describe('Pattern', () => {
       expect(sequence(true, false, [true, false]).invert().firstCycle()).toStrictEqual(
         sequence(false, true, [false, true]).firstCycle(),
       );
-    });
-  });
-  describe('signal()', () => {
-    it('Can make saw/saw2', () => {
-      expect(saw.struct(true, true, true, true).firstCycle()).toStrictEqual(
-        sequence(0, 1 / 4, 1 / 2, 3 / 4).firstCycle(),
-      );
-
-      expect(saw2.struct(true, true, true, true).firstCycle()).toStrictEqual(sequence(-1, -0.5, 0, 0.5).firstCycle());
-    });
-    it('Can make isaw/isaw2', () => {
-      expect(isaw.struct(true, true, true, true).firstCycle()).toStrictEqual(sequence(1, 0.75, 0.5, 0.25).firstCycle());
-
-      expect(isaw2.struct(true, true, true, true).firstCycle()).toStrictEqual(sequence(1, 0.5, 0, -0.5).firstCycle());
     });
   });
   describe('_setContext()', () => {

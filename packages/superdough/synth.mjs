@@ -3,7 +3,6 @@ import { registerSound, soundMap } from './superdough.mjs';
 import { getAudioContext } from './audioContext.mjs';
 import {
   applyFM,
-  destroyAudioWorkletNode,
   gainNode,
   getADSRValues,
   getFrequencyFromValue,
@@ -13,6 +12,8 @@ import {
   getVibratoOscillator,
   getWorklet,
   noises,
+  onceEnded,
+  releaseAudioNode,
   webAudioTimeout,
 } from './helpers.mjs';
 import { logger } from './logger.mjs';
@@ -48,19 +49,17 @@ export function registerSynthSounds() {
           [0.001, 0.05, 0.6, 0.01],
         );
 
-        let sound = getOscillator(s, t, value);
-        let { node: o, stop, triggerRelease } = sound;
-
         // turn down
         const g = gainNode(0.3);
 
-        const { duration } = value;
-
-        o.onended = () => {
-          o.disconnect();
-          g.disconnect();
+        let sound = getOscillator(s, t, value, () => {
+          releaseAudioNode(g);
           onended();
-        };
+        });
+
+        let { node: o, stop, triggerRelease } = sound;
+
+        const { duration } = value;
 
         const envGain = gainNode(1);
         let node = o.connect(g).connect(envGain);
@@ -112,15 +111,15 @@ export function registerSynthSounds() {
 
       const mix = gainNode(mixGain);
 
-      o.onended = () => {
-        o.disconnect();
-        g.disconnect();
-        sat.disconnect();
-        noise.node.disconnect();
-        noiseGain.disconnect();
-        mix.disconnect();
+      onceEnded(o, () => {
+        releaseAudioNode(o);
+        releaseAudioNode(g);
+        releaseAudioNode(sat);
+        releaseAudioNode(noise.node);
+        releaseAudioNode(noiseGain);
+        releaseAudioNode(mix);
         onended();
-      };
+      });
 
       const node = o.connect(sat).connect(g).connect(mix);
       noise.node.connect(noiseGain).connect(mix);
@@ -194,8 +193,7 @@ export function registerSynthSounds() {
       let timeoutNode = webAudioTimeout(
         ac,
         () => {
-          destroyAudioWorkletNode(o);
-          envGain.disconnect();
+          releaseAudioNode(o);
           onended();
           fm?.stop();
           vibratoOscillator?.stop();
@@ -272,8 +270,7 @@ export function registerSynthSounds() {
       let timeoutNode = webAudioTimeout(
         ac,
         () => {
-          destroyAudioWorkletNode(o);
-          envGain.disconnect();
+          releaseAudioNode(o);
           onended();
         },
         begin,
@@ -346,9 +343,8 @@ export function registerSynthSounds() {
       let timeoutNode = webAudioTimeout(
         ac,
         () => {
-          destroyAudioWorkletNode(o);
-          destroyAudioWorkletNode(lfo);
-          envGain.disconnect();
+          releaseAudioNode(o);
+          releaseAudioNode(lfo);
           onended();
           fm?.stop();
           vibratoOscillator?.stop();
@@ -389,11 +385,11 @@ export function registerSynthSounds() {
 
         const { duration } = value;
 
-        o.onended = () => {
-          o.disconnect();
-          g.disconnect();
+        onceEnded(o, () => {
+          releaseAudioNode(o);
+          releaseAudioNode(g);
           onended();
-        };
+        });
 
         const envGain = gainNode(1);
         let node = o.connect(g).connect(envGain);
@@ -460,7 +456,7 @@ export function waveformN(partials, phases, type) {
 }
 
 // expects one of waveforms as s
-export function getOscillator(s, t, value) {
+export function getOscillator(s, t, value, onended) {
   const { duration, noise = 0 } = value;
   const partials = value.partials ?? value.n;
   let o;
@@ -482,7 +478,6 @@ export function getOscillator(s, t, value) {
   }
   // set frequency
   o.frequency.value = getFrequencyFromValue(value);
-  o.start(t);
 
   let vibratoOscillator = getVibratoOscillator(o.detune, value, t);
 
@@ -494,6 +489,14 @@ export function getOscillator(s, t, value) {
   if (noise) {
     noiseMix = getNoiseMix(o, noise, t);
   }
+
+  onceEnded(o, () => {
+    noiseMix?.teardown();
+    releaseAudioNode(o);
+    releaseAudioNode(noiseMix?.node);
+    onended();
+  });
+  o.start(t);
 
   return {
     node: noiseMix?.node || o,
