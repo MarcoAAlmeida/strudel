@@ -6,6 +6,8 @@ import { transpiler } from '@strudel/transpiler';
 //const doughBaseUrl = doughUrl.split('/').slice(0, -1).join('/') + '/';
 const doughBaseUrl = 'https://unpkg.com/dough-synth@0.1.9/';
 
+Object.assign(globalThis, { doughsamples });
+
 export class DoughRepl {
   pattern;
   latency = 0.1;
@@ -81,7 +83,9 @@ export class DoughRepl {
     this.origin = undefined;
   }
   prebake() {
-    return Promise.all([doughsamples('github:eddyflux/crate')]);
+    return Promise.all([
+      // doughsamples('github:eddyflux/crate')
+    ]);
   }
   // tbd: move this to dough-synth
   get time() {
