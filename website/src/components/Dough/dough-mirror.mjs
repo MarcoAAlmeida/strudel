@@ -15,21 +15,23 @@ import { persistentAtom } from '@nanostores/persistent';
 import { DoughRepl } from './dough-repl.mjs';
 
 let initialCode = '$: note("c a f e")';
-if (typeof window !== 'undefined') {
-  try {
-    const codeParam = window.location.href.split('#')[1] || '';
-    if (codeParam) {
-      initialCode = hash2code(codeParam);
-    }
-  } catch (err) {
-    console.error('could not init code from url');
-  }
-}
 
 export const code = persistentAtom('vanilla-repl-code', initialCode, {
   encode: JSON.stringify,
   decode: JSON.parse,
 });
+
+if (typeof window !== 'undefined') {
+  try {
+    const codeParam = window.location.href.split('#')[1] || '';
+    if (codeParam) {
+      const codeFromHash = hash2code(codeParam);
+      code.set(codeFromHash);
+    }
+  } catch (err) {
+    console.error('could not init code from url');
+  }
+}
 
 export class DoughMirror {
   constructor(options) {
