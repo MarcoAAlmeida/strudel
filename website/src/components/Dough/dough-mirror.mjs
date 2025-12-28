@@ -9,7 +9,7 @@ import {
   updateMiniLocations,
   highlightMiniLocations,
 } from '@strudel/codemirror';
-import { evalScope, hash2code } from '@strudel/core';
+import { evalScope, hash2code, code2hash } from '@strudel/core';
 import { Framer } from '@strudel/draw';
 import { persistentAtom } from '@nanostores/persistent';
 import { DoughRepl } from './dough-repl.mjs';
