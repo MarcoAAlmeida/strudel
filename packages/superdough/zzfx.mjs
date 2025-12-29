@@ -75,7 +75,6 @@ export const getZZFX = (value, t) => {
   source.start(t);
   return {
     node: source,
-    nodes: { source: [source] },
   };
 };
 
@@ -91,6 +90,7 @@ export function registerZZFXSounds() {
         });
         return {
           node: o,
+          nodes: { source: [o] },
           stop: () => {},
         };
       },

@@ -19,7 +19,11 @@ const getNodeParam = (node, name) => {
     }
   }
   // Built-in node case
-  const p = node?.[name];
+  let p = node?.[name];
+  if (p === undefined && name === 'frequency') {
+    // Fallbacks for source nodes without 'frequency' params (e.g. soundfonts)
+    p = node?.['detune'] ?? node?.['playbackRate'];
+  }
   if (p instanceof AudioParam) {
     return p;
   }
