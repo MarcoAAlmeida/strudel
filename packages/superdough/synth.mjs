@@ -19,7 +19,7 @@ import {
 import { logger } from './logger.mjs';
 import { getNoiseMix, getNoiseOscillator } from './noise.mjs';
 
-const waveforms = ['triangle', 'square', 'sawtooth', 'sine', 'user'];
+const waveforms = ['triangle', 'square', 'sawtooth', 'sine', 'user', 'one'];
 const waveformAliases = [
   ['tri', 'triangle'],
   ['sqr', 'square'],
@@ -508,8 +508,17 @@ export function getOscillator(s, t, value, onended) {
     s = 'triangle';
   }
   s = s === 'user' && !partials ? 'triangle' : s;
-  // If no partials are given, use stock waveforms
-  if (!partials || partials?.length === 0 || s === 'sine') {
+  if (s === 'one') {
+    // Constant 1 oscillator (used for modulation)
+    o = new ConstantSourceNode(getAudioContext(), { offset: 1 });
+    o.start(t);
+    return {
+      node: o,
+      nodes: { source: o },
+      stop: (time) => o?.stop(time),
+    };
+  } else if (!partials || partials?.length === 0 || s === 'sine') {
+    // If no partials are given, use stock waveforms
     o = getAudioContext().createOscillator();
     o.type = s || 'triangle';
   }

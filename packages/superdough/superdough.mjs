@@ -875,9 +875,10 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
 
   // finally, now that `nodes` is populated, set up modulators
   if (value.lfo) {
-    for (const [idx, params] of Object.entries(value.lfo)) {
+    for (const id of value.lfo.__ids) {
+      const params = value.lfo[id];
       const lfo = connectLFO(
-        idx,
+        id,
         {
           ...params,
           cps,
@@ -891,9 +892,10 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     }
   }
   if (value.env) {
-    for (const [idx, params] of Object.entries(value.env)) {
+    for (const id of value.env.__ids) {
+      const params = value.env[id];
       const env = connectEnvelope(
-        idx,
+        id,
         {
           ...params,
           begin: t,
@@ -905,8 +907,9 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     }
   }
   if (value.bmod) {
-    for (const p of value.bmod) {
-      const { toCleanup } = connectBusModulator({ ...p, begin: t, end: endWithRelease }, nodes, controller);
+    for (const id of value.bmod.__ids) {
+      const params = value.bmod[id];
+      const { toCleanup } = connectBusModulator({ ...params, begin: t, end: endWithRelease }, nodes, controller);
       audioNodes.push(...toCleanup);
     }
   }

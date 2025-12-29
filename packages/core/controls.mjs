@@ -2869,8 +2869,8 @@ registerSubControls('bmod', [
   ['dc'],
 ]);
 
-Pattern.prototype.modulate = function (type, config, idx) {
-  config ??= { control: undefined };
+Pattern.prototype.modulate = function (type, config, id) {
+  config = { control: undefined, ...config };
   const modulatorKeys = ['lfo', 'env', 'bmod'];
   if (!modulatorKeys.includes(type)) {
     logger(`[core] Modulation type ${type} not found. Please use one of 'lfo', 'env', 'bmod'`);
@@ -2888,19 +2888,20 @@ Pattern.prototype.modulate = function (type, config, idx) {
           // e.g. pat.gain(0.5).lfo({..}) will be a gain-LFO
           let control = getControlName(Object.keys(v).at(-1));
           if (modulatorKeys.includes(control)) {
-            control = `${control}${v[control].length - 1}`;
+            control = `${control}_${[...v[control].__ids].at(-1)}`;
           }
           defaultValue = control;
         }
-        v[type] ??= [];
+        v[type] ??= { __ids: new Set() };
         const t = v[type];
-        idx ??= t.length;
-        t[idx] ??= { control: defaultValue };
+        id ??= t.__ids.size;
+        t[id] ??= { control: defaultValue };
+        t.__ids.add(id); // keeps track of insertion order
         if (c === undefined) return v;
         if (key === 'control' || key === 'subControl') {
-          t[idx][key] = getControlName(c);
+          t[id][key] = getControlName(c);
         } else {
-          t[idx][key] = c;
+          t[id][key] = c;
         }
         return v;
       })
@@ -2910,10 +2911,16 @@ Pattern.prototype.modulate = function (type, config, idx) {
 };
 
 /**
- * Configures an LFO. Can be called in sequence like pat.lfo(...).lfo(...) to set up multiple LFOs
+ * Configures an LFO. Can be called in sequence like pat.lfo(...).lfo(...) to set up multiple LFOs.
+ * There are two ways to declare which control will be modulated:
+ * 1. Explicitly put `control` in the config (e.g. `lfo({ c: "lpf" })`)
+ * 2. If the control parameter is absent, the control _immediately before_ the `lfo` call will be used
+ *   (e.g. `s("saw").lpf(500).lfo()` to modulate `lpf`)
+ *
+ * Modulators can be referred to by `id` so that they can be updated later e.g. inside
+ * a `sometimes`. See example below.
  *
  * @name lfo
- * @memberof Pattern
  * @param {Object} config LFO configuration.
  * @param {string | Pattern} [config.control] Node to modulate. Aliases: t
  * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc, p
@@ -2925,18 +2932,47 @@ Pattern.prototype.modulate = function (type, config, idx) {
  * @param {number | Pattern} [config.skew] Skew amount. Aliases: sk
  * @param {number | Pattern} [config.curve] Exponential curve amount. Aliases: c
  * @param {number | Pattern} [config.sync] Tempo-synced modulation rate. Aliases: s
+ * @param {string | Pattern} id ID to use for this modulator
  * @returns Pattern
+ *
+ * @example
+ * s("saw").note("F1").lpf(500).lfo()
+ *
+ * @example
+ * s("saw").lfo().lpf(500).lfo({ s: 0.3 })
+ *
+ * @example
+ * s("saw").lpf(500).diode(0.3)
+ *   .lfo({ c: "lpf" })
+ *
+ * @example
+ * s("pulse").lpf(500).lfo()
+ *   .lfo({ c: "s" })
+ *   .diode(0.3)
+ *   .sometimes(x => x.lfo({ s: "8" }, 1)) // lfo #1 (0-indexed)
+ *
+ * @example
+ * s("pulse").lpf(500).lfo({ depth: 4 }, 'lpf_mod')
+ *   .lfo({ c: "s" })
+ *   .diode(0.3)
+ *   .sometimes(x => x.lfo({ s: "8" }, 'lpf_mod'))
  */
-Pattern.prototype.lfo = function (config, idx) {
-  return this.modulate('lfo', config, idx);
+Pattern.prototype.lfo = function (config, id) {
+  return this.modulate('lfo', config, id);
 };
 export const lfo = (config) => pure({}).lfo(config);
 
 /**
  * Configures an envelope. Can be called in sequence like pat.env(...).env(...) to set up multiple envelopes
+ * There are two ways to declare which control will be modulated:
+ * 1. Explicitly put `control` in the config (e.g. `env({ c: "lpf" })`)
+ * 2. If the control parameter is absent, the control _immediately before_ the `env` call will be used
+ *   (e.g. `s("saw").lpf(500).env({ a: 1 })` to modulate `lpf`)
+ *
+ * Modulators can be referred to by `id` so that they can be updated later e.g. inside
+ * a `sometimes`. See example below.
  *
  * @name env
- * @memberof Pattern
  * @param {Object} config Envelope configuration.
  * @param {string | Pattern} [config.control] Node to modulate. Aliases: t
  * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc, p
@@ -2949,10 +2985,35 @@ export const lfo = (config) => pure({}).lfo(config);
  * @param {number | Pattern} [config.acurve] Snappiness of attack curve (-1 = relaxed, 1 = snappy). Aliases: ac
  * @param {number | Pattern} [config.dcurve] Snappiness of decay curve (-1 = relaxed, 1 = snappy). Aliases: dc
  * @param {number | Pattern} [config.rcurve] Snappiness of release curve (-1 = relaxed, 1 = snappy). Aliases: rc
+ * @param {string | Pattern} id ID to use for this modulator
  * @returns Pattern
+ *
+ * @example
+ * s("saw").note("F1").lpf(500).env({ a: 1 })
+ *
+ * @example
+ * s("saw").env({ d: 1 }).note("F1")
+ *   .lpq(4).lpf(50)
+ *   .env({ a: 0.1, d: 1, ac: 0.8, dc: 0.3, depth: 50 })
+ *
+ * @example
+ * s("saw").lpf(500).diode(0.3)
+ *   .env({ c: "lpf", a: 0.5, d: 0.5 })
+ *
+ * @example
+ * s("pulse").lpf(500).env({ a: 1 })
+ *   .env({ c: "s", a: 1 })
+ *   .diode(0.3)
+ *   .sometimes(x => x.env({ a: "0.5" }, 1)) // envelope #1 (0-indexed)
+ *
+ * @example
+ * s("pulse").lpf(500).env({ a: 1 }, 'lpf_mod')
+ *   .env({ c: "s", a: 1 })
+ *   .diode(0.3)
+ *   .sometimes(x => x.env({ a: "0.5" }, 'lpf_mod'))
  */
-Pattern.prototype.env = function (config, idx) {
-  return this.modulate('env', config, idx);
+Pattern.prototype.env = function (config, id) {
+  return this.modulate('env', config, id);
 };
 export const env = (config) => pure({}).env(config);
 
@@ -2962,8 +3023,15 @@ export const env = (config) => pure({}).env(config);
  *
  * Send to an audio bus with `otherPat.bus(..)`.
  *
+ * There are two ways to declare which control will be modulated:
+ * 1. Explicitly put `control` in the config (e.g. `bmod({ id: 2, c: "lpf" })`)
+ * 2. If the control parameter is absent, the control _immediately before_ the `bmod` call will be used
+ *   (e.g. `s("saw").lpf(500).bmod({ id: 2 })` to modulate `lpf`)
+ *
+ * Modulators can be referred to by `id` so that they can be updated later e.g. inside
+ * a `sometimes`. See example below.
+ *
  * @name bmod
- * @memberof Pattern
  * @param {Object} config Bus modulation configuration.
  * @param {string | Pattern} [config.bus] Bus to get modulation signal from
  * @param {string | Pattern} [config.control] Node to modulate. Aliases: t
@@ -2971,10 +3039,16 @@ export const env = (config) => pure({}).env(config);
  * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
  * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
  * @param {number | Pattern} [config.dc] DC offset prior to application
+ * @param {string | Pattern} id ID to use for this modulator
  * @returns Pattern
+ *
+ * @example
+ * modulator: s("one").seg(64).gain(slider(0, 0, 1)).bus(1).dry(0)
+ * carrier: s("saw").bmod({ b: 1 })
+ *
  */
-Pattern.prototype.bmod = function (config, idx) {
-  return this.modulate('bmod', config, idx);
+Pattern.prototype.bmod = function (config, id) {
+  return this.modulate('bmod', config, id);
 };
 export const bmod = (config) => pure({}).bmod(config);
 

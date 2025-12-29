@@ -8,6 +8,7 @@ import { getAudioContext } from './audioContext.mjs';
 import { gainNode, getEnvelope, getLfo, webAudioTimeout } from './helpers.mjs';
 import { errorLogger } from './logger.mjs';
 import { getSuperdoughControlTargets } from './superdoughdata.mjs';
+import { clamp } from './util.mjs';
 
 const getNodeParam = (node, name) => {
   // Worklet case
@@ -27,9 +28,8 @@ const getNodeParam = (node, name) => {
 
 const controlTargets = getSuperdoughControlTargets();
 
-const stripIndex = (control) => control?.replace(/\d+$/, '');
 const getControlData = (control) => {
-  return controlTargets[stripIndex(control)];
+  return controlTargets[control.split('_')[0]];
 };
 
 const getRangeForParam = (paramName, currentValue) => {
@@ -39,6 +39,19 @@ const getRangeForParam = (paramName, currentValue) => {
     return { min: 20 - currentValue, max: 24000 - currentValue };
   }
   return { min: undefined, max: undefined };
+};
+
+const clampWithWaveShaper = (modulator, min, max) => {
+  const ac = getAudioContext();
+  const curve = new Float32Array(256);
+  for (let i = 0; i < curve.length; i++) {
+    const x = (i / (curve.length - 1)) * 2 - 1;
+    curve[i] = clamp(x * max, min, max);
+  }
+  const shaper = new WaveShaperNode(ac, { curve });
+  const scaleGain = gainNode(1 / max);
+  modulator.connect(scaleGain).connect(shaper);
+  return { modulator, toCleanup: [shaper, scaleGain] };
 };
 
 const getTargetParamsForControl = (control, nodes, subControl) => {
@@ -67,7 +80,7 @@ const getTargetParamsForControl = (control, nodes, subControl) => {
   return { targetParams: audioParams, paramName };
 };
 
-export const connectLFO = (idx, params, nodeTracker) => {
+export const connectLFO = (id, params, nodeTracker) => {
   const { rate = 1, sync, cps, cycle, control = 'lfo', subControl, depth = 1, depthabs, ...filteredParams } = params;
   const { targetParams, paramName } = getTargetParamsForControl(control, nodeTracker, subControl);
   if (!targetParams.length) return;
@@ -84,12 +97,12 @@ export const connectLFO = (idx, params, nodeTracker) => {
     max,
   };
   const lfoNode = getLfo(getAudioContext(), modParams);
-  nodeTracker[`lfo${idx}`] = [lfoNode];
+  nodeTracker[`lfo_${id}`] = [lfoNode];
   targetParams.forEach((t) => lfoNode.connect(t));
   return lfoNode;
 };
 
-export const connectEnvelope = (idx, params, nodeTracker) => {
+export const connectEnvelope = (id, params, nodeTracker) => {
   const { control, subControl, acurve, dcurve, rcurve, depth = 1, depthabs, ...filteredParams } = params;
   const { targetParams, paramName } = getTargetParamsForControl(control, nodeTracker, subControl);
   if (!targetParams.length) return;
@@ -106,7 +119,7 @@ export const connectEnvelope = (idx, params, nodeTracker) => {
     decayCurve: dcurve,
     releaseCurve: rcurve,
   });
-  nodeTracker[`env${idx}`] = [envNode];
+  nodeTracker[`env_${id}`] = [envNode];
   targetParams.forEach((t) => envNode.connect(t));
   return envNode;
 };
@@ -122,13 +135,12 @@ export const connectBusModulator = (params, nodeTracker, controller) => {
   const shifted = dc.connect(gainNode(1));
   signal.connect(shifted);
   let currentValue = targetParams[0].value;
-  debugger;
   currentValue = currentValue === 0 ? 1 : currentValue;
   const { min, max } = getRangeForParam(paramName, currentValue);
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
-  const maxAbsDepth = Math.min(Math.abs(min), Math.abs(max));
-  const boundedDepth = Math.min(Math.abs(depthValue), maxAbsDepth) || Math.abs(depthValue);
-  const modulator = shifted.connect(gainNode((Math.sign(depthValue) * boundedDepth) / 0.3));
+  const depthGain = gainNode((Math.sign(depthValue) * Math.abs(depthValue)) / 0.3);
+  const unClamped = shifted.connect(depthGain);
+  let { modulator, toCleanup } = clampWithWaveShaper(unClamped, min, max);
   webAudioTimeout(
     ac,
     () => {
@@ -137,5 +149,6 @@ export const connectBusModulator = (params, nodeTracker, controller) => {
     0,
     params.begin,
   );
-  return { modulator, toCleanup: [dc, shifted, modulator] };
+  toCleanup.push(dc, shifted, depthGain);
+  return { modulator, toCleanup };
 };
