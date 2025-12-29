@@ -351,7 +351,7 @@ export function getVibratoOscillator(param, value, t) {
       releaseAudioNode(vibratoOscillator);
     });
     vibratoOscillator.start(t);
-    return vibratoOscillator;
+    return { stop: (t) => vibratoOscillator.stop(t), nodes: { vib: [vibratoOscillator], vib_gain: [gain] } };
   }
 }
 
@@ -407,6 +407,7 @@ export function applyFM(param, value, begin) {
   const ac = getAudioContext();
   const toStop = []; // fm oscillators we will expose `stop` for
   const fms = {};
+  const nodes = {};
   // Matrix
   for (let i = 1; i <= 8; i++) {
     for (let j = 0; j <= 8; j++) {
@@ -457,11 +458,13 @@ export function applyFM(param, value, begin) {
             output = osc.connect(envGain);
           }
           fms[idx] = { input: osc.frequency, output, freq, osc, toCleanup };
+          nodes[`fm_${idx}`] = [osc];
         }
         const { input, output, freq, osc, toCleanup } = fms[idx];
         const g = gainNode(amt * freq);
         io.push(isMod ? output.connect(g) : input);
         cleanupOnEnd(osc, [...toCleanup, g]);
+        nodes[`fm_${idx}_gain`] = [g];
       }
       if (!io[1]) {
         logger(
@@ -474,6 +477,7 @@ export function applyFM(param, value, begin) {
     }
   }
   return {
+    nodes,
     stop: (t) => toStop.forEach((m) => m?.stop(t)),
   };
 }

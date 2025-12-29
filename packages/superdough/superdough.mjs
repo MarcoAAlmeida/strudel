@@ -532,7 +532,7 @@ function mapChannelNumbers(channels) {
 }
 
 export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) => {
-  const nodes = {};
+  let nodes = {};
   // new: t is always expected to be the absolute target onset time
   const ac = getAudioContext();
   const audioController = getSuperdoughAudioController();
@@ -690,7 +690,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     if (soundHandle) {
       sourceNode = soundHandle.node;
       activeSoundSources.set(chainID, new WeakRef(soundHandle)); // allow GC
-      nodes['source'] = [soundHandle.source];
+      nodes = { ...nodes, ...soundHandle.nodes };
     }
   } else {
     throw new Error(`sound ${s} not found! Is it loaded?`);
@@ -709,22 +709,23 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   chain.push(sourceNode);
   stretch !== undefined && chain.push(getWorklet(ac, 'phase-vocoder-processor', { pitchFactor: stretch }));
 
-  transient !== undefined &&
-    chain.push(
-      getWorklet(
-        ac,
-        'transient-processor',
-        {},
-        {
-          processorOptions: {
-            attack: transient,
-            sustain: transsustain,
-            begin: t,
-            end: endWithRelease,
-          },
+  if (transient !== undefined) {
+    const transProcessor = getWorklet(
+      ac,
+      'transient-processor',
+      {},
+      {
+        processorOptions: {
+          attack: transient,
+          sustain: transsustain,
+          begin: t,
+          end: endWithRelease,
         },
-      ),
+      },
     );
+    chain.push(transProcessor);
+    nodes['transient'] = transProcessor;
+  }
 
   // gain stage
   const initialGain = gainNode(gain);

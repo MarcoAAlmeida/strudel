@@ -2870,36 +2870,33 @@ registerSubControls('bmod', [
 ]);
 
 Pattern.prototype.modulate = function (type, config, idx) {
-  if (config == null || typeof config !== 'object') {
-    return this;
-  }
+  config ??= { control: undefined };
   const modulatorKeys = ['lfo', 'env', 'bmod'];
   if (!modulatorKeys.includes(type)) {
     logger(`[core] Modulation type ${type} not found. Please use one of 'lfo', 'env', 'bmod'`);
     return this;
   }
   let output = this;
-  let defaultValue = {};
-  let defaultSet = 'control' in config;
+  let defaultValue = undefined;
   for (const [rawKey, value] of Object.entries(config)) {
     const key = getMainSubcontrolName(type, rawKey);
     const valuePat = reify(value);
     output = output
       .fmap((v) => (c) => {
-        if (!defaultSet) {
+        if (defaultValue === undefined) {
           // default control to the control set just before this in the chain
           // e.g. pat.gain(0.5).lfo({..}) will be a gain-LFO
           let control = getControlName(Object.keys(v).at(-1));
           if (modulatorKeys.includes(control)) {
             control = `${control}${v[control].length - 1}`;
           }
-          defaultValue = { control };
-          defaultSet = true;
+          defaultValue = control;
         }
         v[type] ??= [];
         const t = v[type];
         idx ??= t.length;
-        t[idx] ??= defaultValue;
+        t[idx] ??= { control: defaultValue };
+        if (c === undefined) return v;
         if (key === 'control' || key === 'subControl') {
           t[idx][key] = getControlName(c);
         } else {
