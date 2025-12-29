@@ -1055,8 +1055,7 @@ class EnvelopeProcessor extends AudioWorkletProcessor {
         this.state = (this.state + 1) % states.length;
         time = states[this.state].time;
       }
-      const clamped = clamp(this.val * depth, min, max);
-      out[i] = clamped;
+      out[i] = clamp(this.val * depth, min, max);
     }
     return true;
   }

@@ -15,18 +15,16 @@ import {
   gainNode,
   getCompressor,
   getDistortion,
-  getEnvelope,
   getLfo,
   getWorklet,
   releaseAudioNode,
-  webAudioTimeout,
 } from './helpers.mjs';
 import { map } from 'nanostores';
-import { errorLogger, logger } from './logger.mjs';
+import { logger } from './logger.mjs';
+import { connectLFO, connectEnvelope, connectBusModulator } from './modulators.mjs';
 import { loadBuffer } from './sampler.mjs';
-import { getAudioContext, setAudioContext } from './audioContext.mjs';
+import { getAudioContext } from './audioContext.mjs';
 import { SuperdoughAudioController } from './superdoughoutput.mjs';
-import { getSuperdoughControlTargets } from './superdoughdata.mjs';
 import { resetSeenKeys } from './wavetable.mjs';
 
 export const DEFAULT_MAX_POLYPHONY = 128;
@@ -395,136 +393,6 @@ export function resetGlobalEffects() {
   controller?.reset();
   analysers = {};
   analysersData = {};
-}
-
-function _getNodeParam(node, name) {
-  // Worklet case
-  if (node?.parameters) {
-    const p = node.parameters.get(name);
-    if (p instanceof AudioParam) {
-      return p;
-    }
-  }
-  // Built-in node case
-  const p = node?.[name];
-  if (p instanceof AudioParam) {
-    return p;
-  }
-  return undefined;
-}
-
-const controlTargets = getSuperdoughControlTargets();
-
-const _stripIndex = (control) => control?.replace(/\d+$/, '');
-function _getControlData(control) {
-  return controlTargets[_stripIndex(control)];
-}
-
-function _getRangeForParam(paramName, currentValue) {
-  // We clamp the frequency to a reasonable range unless the currentValue
-  // is low, which indicates this may be an LFO
-  if (paramName === 'frequency' && currentValue >= 30) {
-    return { min: 20 - currentValue, max: 24000 - currentValue };
-  }
-  return { min: undefined, max: undefined };
-}
-
-function _getTargetParamsForControl(control, nodes, subControl) {
-  const lookupKey = subControl ? `${control}_${subControl}` : control;
-  const targetInfo = _getControlData(lookupKey) ?? _getControlData(control);
-  if (!targetInfo) {
-    errorLogger(new Error(`Could not find control data for target '${control}'`), 'superdough');
-    return { targetParams: [], paramName: control };
-  }
-  const paramName = targetInfo.param;
-  const nodeKey = nodes[targetInfo.node] ? targetInfo.node : control;
-  const targetNodes = nodes[nodeKey];
-  if (!targetNodes) {
-    const keys = Object.keys(nodes);
-    errorLogger(
-      new Error(`Could not connect to target '${nodeKey}' — it does not exist. Available targets: ${keys.join(', ')}`),
-      'superdough',
-    );
-    return { targetParams: [], paramName };
-  }
-  const audioParams = [];
-  targetNodes.forEach((targetNode) => {
-    const targetParam = _getNodeParam(targetNode, paramName);
-    audioParams.push(targetParam);
-  });
-  return { targetParams: audioParams, paramName };
-}
-
-function connectLFO(idx, params, nodeTracker) {
-  const { rate = 1, sync, cps, cycle, control = 'lfo', subControl, depth = 1, depthabs, ...filteredParams } = params;
-  const { targetParams, paramName } = _getTargetParamsForControl(control, nodeTracker, subControl);
-  if (!targetParams.length) return;
-  let currentValue = targetParams[0].value;
-  currentValue = currentValue === 0 ? 1 : currentValue;
-  const { min, max } = _getRangeForParam(paramName, currentValue);
-  const depthValue = depthabs != null ? depthabs : depth * currentValue;
-  const modParams = {
-    ...filteredParams,
-    frequency: sync !== undefined ? sync * cps : rate,
-    time: cycle / cps,
-    depth: depthValue,
-    min,
-    max,
-  };
-  const lfoNode = getLfo(getAudioContext(), modParams);
-  nodeTracker[`lfo${idx}`] = [lfoNode];
-  targetParams.forEach((t) => lfoNode.connect(t));
-  return lfoNode;
-}
-
-function connectEnvelope(idx, params, nodeTracker) {
-  const { control, subControl, acurve, dcurve, rcurve, depth = 1, depthabs, ...filteredParams } = params;
-  const { targetParams, paramName } = _getTargetParamsForControl(control, nodeTracker, subControl);
-  if (!targetParams.length) return;
-  let currentValue = targetParams[0].value;
-  currentValue = currentValue === 0 ? 1 : currentValue;
-  const { min, max } = _getRangeForParam(paramName, currentValue);
-  const depthValue = depthabs != null ? depthabs : depth * currentValue;
-  const envNode = getEnvelope(getAudioContext(), {
-    ...filteredParams,
-    depth: depthValue,
-    min,
-    max,
-    attackCurve: acurve,
-    decayCurve: dcurve,
-    releaseCurve: rcurve,
-  });
-  nodeTracker[`env${idx}`] = [envNode];
-  targetParams.forEach((t) => envNode.connect(t));
-  return envNode;
-}
-
-function connectBusModulator(params, nodeTracker) {
-  const ac = getAudioContext();
-  const { control, subControl, depth = 1, depthabs } = params;
-  const { targetParams, paramName } = _getTargetParamsForControl(control, nodeTracker, subControl);
-  if (!targetParams.length) return { toCleanup: [] };
-  const signal = controller.getBus(params.bus);
-  const dc = new ConstantSourceNode(ac, { offset: params.dc ?? 0 });
-  dc.start(params.begin);
-  const shifted = dc.connect(gainNode(1));
-  signal.connect(shifted);
-  let currentValue = targetParams[0].value;
-  currentValue = currentValue === 0 ? 1 : currentValue;
-  const { min, max } = _getRangeForParam(paramName, currentValue);
-  const depthValue = depthabs != null ? depthabs : depth * currentValue;
-  const maxAbsDepth = Math.min(Math.abs(min), Math.abs(max));
-  const boundedDepth = Math.min(Math.abs(depthValue), maxAbsDepth) || Math.abs(depthValue);
-  const modulator = shifted.connect(gainNode((Math.sign(depthValue) * boundedDepth) / 0.3));
-  webAudioTimeout(
-    ac,
-    () => {
-      targetParams.forEach((t) => modulator.connect(t));
-    },
-    0,
-    params.begin,
-  );
-  return { modulator, toCleanup: [dc, shifted, modulator] };
 }
 
 let activeSoundSources = new Map();
@@ -1038,7 +906,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   }
   if (value.bmod) {
     for (const p of value.bmod) {
-      const { toCleanup } = connectBusModulator({ ...p, begin: t, end: endWithRelease }, nodes);
+      const { toCleanup } = connectBusModulator({ ...p, begin: t, end: endWithRelease }, nodes, controller);
       audioNodes.push(...toCleanup);
     }
   }
