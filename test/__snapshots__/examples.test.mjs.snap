@@ -3803,6 +3803,51 @@ exports[`runs examples > example "end" example index 0 1`] = `
 ]
 `;
 
+exports[`runs examples > example "env" example index 0 1`] = `
+[
+  "[ 0/1 → 1/1 | s:saw note:F1 cutoff:500 env:{0:{control:cutoff attack:1} __ids:{}} ]",
+  "[ 1/1 → 2/1 | s:saw note:F1 cutoff:500 env:{0:{control:cutoff attack:1} __ids:{}} ]",
+  "[ 2/1 → 3/1 | s:saw note:F1 cutoff:500 env:{0:{control:cutoff attack:1} __ids:{}} ]",
+  "[ 3/1 → 4/1 | s:saw note:F1 cutoff:500 env:{0:{control:cutoff attack:1} __ids:{}} ]",
+]
+`;
+
+exports[`runs examples > example "env" example index 1 1`] = `
+[
+  "[ 0/1 → 1/1 | s:saw env:{0:{control:s decay:1} 1:{control:cutoff attack:0.1 decay:1 acurve:0.8 dcurve:0.3 depth:50} __ids:{}} note:F1 resonance:4 cutoff:50 ]",
+  "[ 1/1 → 2/1 | s:saw env:{0:{control:s decay:1} 1:{control:cutoff attack:0.1 decay:1 acurve:0.8 dcurve:0.3 depth:50} __ids:{}} note:F1 resonance:4 cutoff:50 ]",
+  "[ 2/1 → 3/1 | s:saw env:{0:{control:s decay:1} 1:{control:cutoff attack:0.1 decay:1 acurve:0.8 dcurve:0.3 depth:50} __ids:{}} note:F1 resonance:4 cutoff:50 ]",
+  "[ 3/1 → 4/1 | s:saw env:{0:{control:s decay:1} 1:{control:cutoff attack:0.1 decay:1 acurve:0.8 dcurve:0.3 depth:50} __ids:{}} note:F1 resonance:4 cutoff:50 ]",
+]
+`;
+
+exports[`runs examples > example "env" example index 2 1`] = `
+[
+  "[ 0/1 → 1/1 | s:saw cutoff:500 distort:0.3 distortvol:1 distorttype:diode env:{0:{control:cutoff attack:0.5 decay:0.5} __ids:{}} ]",
+  "[ 1/1 → 2/1 | s:saw cutoff:500 distort:0.3 distortvol:1 distorttype:diode env:{0:{control:cutoff attack:0.5 decay:0.5} __ids:{}} ]",
+  "[ 2/1 → 3/1 | s:saw cutoff:500 distort:0.3 distortvol:1 distorttype:diode env:{0:{control:cutoff attack:0.5 decay:0.5} __ids:{}} ]",
+  "[ 3/1 → 4/1 | s:saw cutoff:500 distort:0.3 distortvol:1 distorttype:diode env:{0:{control:cutoff attack:0.5 decay:0.5} __ids:{}} ]",
+]
+`;
+
+exports[`runs examples > example "env" example index 3 1`] = `
+[
+  "[ 0/1 → 1/1 | s:pulse cutoff:500 env:{0:{control:cutoff attack:1} 1:{control:s attack:0.5} __ids:{}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 1/1 → 2/1 | s:pulse cutoff:500 env:{0:{control:cutoff attack:1} 1:{control:s attack:1} __ids:{}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 2/1 → 3/1 | s:pulse cutoff:500 env:{0:{control:cutoff attack:1} 1:{control:s attack:1} __ids:{}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 3/1 → 4/1 | s:pulse cutoff:500 env:{0:{control:cutoff attack:1} 1:{control:s attack:0.5} __ids:{}} distort:0.3 distortvol:1 distorttype:diode ]",
+]
+`;
+
+exports[`runs examples > example "env" example index 4 1`] = `
+[
+  "[ 0/1 → 1/1 | s:pulse cutoff:500 env:{1:{control:s attack:1} __ids:{} lpf_mod:{control:cutoff attack:0.5}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 1/1 → 2/1 | s:pulse cutoff:500 env:{1:{control:s attack:1} __ids:{} lpf_mod:{control:cutoff attack:1}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 2/1 → 3/1 | s:pulse cutoff:500 env:{1:{control:s attack:1} __ids:{} lpf_mod:{control:cutoff attack:1}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 3/1 → 4/1 | s:pulse cutoff:500 env:{1:{control:s attack:1} __ids:{} lpf_mod:{control:cutoff attack:0.5}} distort:0.3 distortvol:1 distorttype:diode ]",
+]
+`;
+
 exports[`runs examples > example "euclid" example index 0 1`] = `
 [
   "[ 0/1 → 1/8 | note:c3 ]",
@@ -6110,6 +6155,51 @@ exports[`runs examples > example "leslie" example index 0 1`] = `
   "[ 3/1 → 4/1 | n:0 s:supersquare leslie:1 ]",
   "[ 3/1 → 4/1 | n:4 s:supersquare leslie:1 ]",
   "[ 3/1 → 4/1 | n:7 s:supersquare leslie:1 ]",
+]
+`;
+
+exports[`runs examples > example "lfo" example index 0 1`] = `
+[
+  "[ 0/1 → 1/1 | s:saw note:F1 cutoff:500 lfo:{0:{control:cutoff} __ids:{}} ]",
+  "[ 1/1 → 2/1 | s:saw note:F1 cutoff:500 lfo:{0:{control:cutoff} __ids:{}} ]",
+  "[ 2/1 → 3/1 | s:saw note:F1 cutoff:500 lfo:{0:{control:cutoff} __ids:{}} ]",
+  "[ 3/1 → 4/1 | s:saw note:F1 cutoff:500 lfo:{0:{control:cutoff} __ids:{}} ]",
+]
+`;
+
+exports[`runs examples > example "lfo" example index 1 1`] = `
+[
+  "[ 0/1 → 1/1 | s:saw lfo:{0:{control:s} 1:{control:cutoff sync:0.3} __ids:{}} cutoff:500 ]",
+  "[ 1/1 → 2/1 | s:saw lfo:{0:{control:s} 1:{control:cutoff sync:0.3} __ids:{}} cutoff:500 ]",
+  "[ 2/1 → 3/1 | s:saw lfo:{0:{control:s} 1:{control:cutoff sync:0.3} __ids:{}} cutoff:500 ]",
+  "[ 3/1 → 4/1 | s:saw lfo:{0:{control:s} 1:{control:cutoff sync:0.3} __ids:{}} cutoff:500 ]",
+]
+`;
+
+exports[`runs examples > example "lfo" example index 2 1`] = `
+[
+  "[ 0/1 → 1/1 | s:saw cutoff:500 distort:0.3 distortvol:1 distorttype:diode lfo:{0:{control:cutoff} __ids:{}} ]",
+  "[ 1/1 → 2/1 | s:saw cutoff:500 distort:0.3 distortvol:1 distorttype:diode lfo:{0:{control:cutoff} __ids:{}} ]",
+  "[ 2/1 → 3/1 | s:saw cutoff:500 distort:0.3 distortvol:1 distorttype:diode lfo:{0:{control:cutoff} __ids:{}} ]",
+  "[ 3/1 → 4/1 | s:saw cutoff:500 distort:0.3 distortvol:1 distorttype:diode lfo:{0:{control:cutoff} __ids:{}} ]",
+]
+`;
+
+exports[`runs examples > example "lfo" example index 3 1`] = `
+[
+  "[ 0/1 → 1/1 | s:pulse cutoff:500 lfo:{0:{control:cutoff} 1:{control:s sync:8} __ids:{}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 1/1 → 2/1 | s:pulse cutoff:500 lfo:{0:{control:cutoff} 1:{control:s} __ids:{}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 2/1 → 3/1 | s:pulse cutoff:500 lfo:{0:{control:cutoff} 1:{control:s} __ids:{}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 3/1 → 4/1 | s:pulse cutoff:500 lfo:{0:{control:cutoff} 1:{control:s sync:8} __ids:{}} distort:0.3 distortvol:1 distorttype:diode ]",
+]
+`;
+
+exports[`runs examples > example "lfo" example index 4 1`] = `
+[
+  "[ 0/1 → 1/1 | s:pulse cutoff:500 lfo:{1:{control:s} __ids:{} lpf_mod:{control:cutoff depth:4 sync:8}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 1/1 → 2/1 | s:pulse cutoff:500 lfo:{1:{control:s} __ids:{} lpf_mod:{control:cutoff depth:4}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 2/1 → 3/1 | s:pulse cutoff:500 lfo:{1:{control:s} __ids:{} lpf_mod:{control:cutoff depth:4}} distort:0.3 distortvol:1 distorttype:diode ]",
+  "[ 3/1 → 4/1 | s:pulse cutoff:500 lfo:{1:{control:s} __ids:{} lpf_mod:{control:cutoff depth:4 sync:8}} distort:0.3 distortvol:1 distorttype:diode ]",
 ]
 `;
 
