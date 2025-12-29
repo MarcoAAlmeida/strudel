@@ -87,25 +87,24 @@ const CONTROL_TARGETS = {
   compressorRelease: { node: 'compressor', param: 'release' },
 
   // PHASER
-  phaserrate: { node: 'phaser', param: 'rate' },
-  phaserdepth: { node: 'phaser', param: 'depth' },
-  phasersweep: { node: 'phaser', param: 'sweep' },
+  phaserrate: { node: 'phaser_lfo', param: 'rate' },
+  phasersweep: { node: 'phaser_lfo', param: 'depth' },
   phasercenter: { node: 'phaser', param: 'frequency' },
+  phaserdepth: { node: 'phaser', param: 'Q' },
 
   // ORBIT EFFECTS
+  delay: { node: 'delay_mix', param: 'gain' },
   delaytime: { node: 'delay', param: 'delayTime' },
   delayfeedback: { node: 'delay', param: 'feedback' },
-  delaysync: { node: 'delay', param: 'sync' },
+  delaysync: { node: 'delay', param: 'delayTime' },
   dry: { node: 'dry', param: 'gain' },
-  room: { node: 'room', param: 'wet' },
-  roomfade: { node: 'room', param: 'fade' },
-  roomlp: { node: 'room', param: 'lp' },
+  room: { node: 'room_mix', param: 'gain' },
   djf: { node: 'djf', param: 'value' },
   busgain: { node: 'bus', param: 'gain' },
 
   // SYNTHS
   s: { node: 'source', param: 'frequency' },
-  detune: { node: 'source', param: 'detune' },
+  detune: { node: 'source', param: 'freqspread' },
   wt: { node: 'source', param: 'position' },
   warp: { node: 'source', param: 'warp' },
   freq: { node: 'source', param: 'frequency' },

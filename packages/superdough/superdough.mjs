@@ -950,6 +950,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     const delayNode = orbitBus.getDelay(delaytime, delayfeedback, t);
     nodes['delay'] = [delayNode];
     const delaySend = orbitBus.sendDelay(post, delay);
+    nodes['delay_mix'] = [delaySend];
     audioNodes.push(delaySend);
   }
   // reverb
@@ -968,6 +969,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     const roomNode = orbitBus.getReverb(roomsize, roomfade, roomlp, roomdim, roomIR, irspeed, irbegin);
     nodes['room'] = [roomNode];
     const reverbSend = orbitBus.sendReverb(post, room);
+    nodes['room_mix'] = [reverbSend];
     audioNodes.push(reverbSend);
   }
   if (bus != null) {
@@ -977,7 +979,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   }
 
   if (djf != null) {
-    nodes['djf'] = orbitBus.getDjf(djf, t);
+    const djfNode = orbitBus.getDjf(djf, t);
+    nodes['djf'] = [djfNode];
   }
 
   // analyser

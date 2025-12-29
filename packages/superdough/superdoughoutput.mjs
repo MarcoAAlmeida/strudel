@@ -38,6 +38,7 @@ export class Orbit {
     }
     const val = this.djfNode.parameters.get('value');
     val.setValueAtTime(value, t);
+    return this.djfNode;
   }
 
   getDelay(delaytime = 0, feedback = 0.5, t) {
