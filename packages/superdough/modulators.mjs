@@ -144,7 +144,13 @@ export const connectBusModulator = (params, nodeTracker, controller) => {
   const depthValue = depthabs != null ? depthabs : depth * currentValue;
   const depthGain = gainNode((Math.sign(depthValue) * Math.abs(depthValue)) / 0.3);
   const unClamped = shifted.connect(depthGain);
-  let { modulator, toCleanup } = clampWithWaveShaper(unClamped, min, max);
+  const toCleanup = [];
+  let modulator = unClamped;
+  if (min !== undefined && max !== undefined) {
+    const wsData = clampWithWaveShaper(unClamped, min, max);
+    modulator = wsData.modulator;
+    toCleanup.push(...wsData.toCleanup);
+  }
   webAudioTimeout(
     ac,
     () => {
