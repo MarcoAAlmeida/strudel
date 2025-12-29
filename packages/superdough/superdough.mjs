@@ -359,7 +359,7 @@ export let analysers = {},
   analysersData = {};
 
 export function getAnalyserById(id, fftSize = 1024, smoothingTimeConstant = 0.5) {
-  if (!analysers[id] || analysers[id].audioContext != getAudioContext()) {
+  if (!analysers[id] || analysers[id].context != getAudioContext()) {
     // make sure this doesn't happen too often as it piles up garbage
     const analyserNode = getAudioContext().createAnalyser();
     analyserNode.fftSize = fftSize;
