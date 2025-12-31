@@ -85,8 +85,19 @@ const getTargetParamsForControl = (control, nodes, subControl) => {
 };
 
 export const connectLFO = (id, params, nodeTracker) => {
-  const { rate = 1, sync, cps, cycle, control = 'lfo', subControl, depth = 1, depthabs, ...filteredParams } = params;
-  const { targetParams, paramName } = getTargetParamsForControl(control, nodeTracker, subControl);
+  const {
+    rate = 1,
+    sync,
+    cps,
+    cycle,
+    control = 'lfo',
+    subControl,
+    fxi = 'main',
+    depth = 1,
+    depthabs,
+    ...filteredParams
+  } = params;
+  const { targetParams, paramName } = getTargetParamsForControl(control, nodeTracker[fxi], subControl);
   if (!targetParams.length) return;
   let currentValue = targetParams[0].value;
   currentValue = currentValue === 0 ? 1 : currentValue;
@@ -101,14 +112,14 @@ export const connectLFO = (id, params, nodeTracker) => {
     max,
   };
   const lfoNode = getLfo(getAudioContext(), modParams);
-  nodeTracker[`lfo_${id}`] = [lfoNode];
+  nodeTracker[0][`lfo_${id}`] = [lfoNode];
   targetParams.forEach((t) => lfoNode.connect(t));
   return lfoNode;
 };
 
 export const connectEnvelope = (id, params, nodeTracker) => {
-  const { control, subControl, acurve, dcurve, rcurve, depth = 1, depthabs, ...filteredParams } = params;
-  const { targetParams, paramName } = getTargetParamsForControl(control, nodeTracker, subControl);
+  const { control, subControl, acurve, dcurve, rcurve, depth = 1, depthabs, fxi = 'main', ...filteredParams } = params;
+  const { targetParams, paramName } = getTargetParamsForControl(control, nodeTracker[fxi], subControl);
   if (!targetParams.length) return;
   let currentValue = targetParams[0].value;
   currentValue = currentValue === 0 ? 1 : currentValue;
@@ -123,15 +134,15 @@ export const connectEnvelope = (id, params, nodeTracker) => {
     decayCurve: dcurve,
     releaseCurve: rcurve,
   });
-  nodeTracker[`env_${id}`] = [envNode];
+  nodeTracker[0][`env_${id}`] = [envNode];
   targetParams.forEach((t) => envNode.connect(t));
   return envNode;
 };
 
 export const connectBusModulator = (params, nodeTracker, controller) => {
   const ac = getAudioContext();
-  const { control, subControl, depth = 1, depthabs } = params;
-  const { targetParams, paramName } = getTargetParamsForControl(control, nodeTracker, subControl);
+  const { control, subControl, depth = 1, depthabs, fxi = 'main' } = params;
+  const { targetParams, paramName } = getTargetParamsForControl(control, nodeTracker[fxi], subControl);
   if (!targetParams.length) return { toCleanup: [] };
   const signal = controller.getBus(params.bus);
   const dc = new ConstantSourceNode(ac, { offset: params.dc ?? 0 });

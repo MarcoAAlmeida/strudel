@@ -3721,3 +3721,19 @@ Pattern.prototype.phases = function (list) {
 export const phases = (list) => {
   return _ensureListPattern(list).as('phases');
 };
+
+/**
+ * Establishes an FX chain. Can be called by chaining .FX(<fx1>).FX(<fx2>)..
+ * calls and/or in a single .FX(<fx1>, <fx2>, ..) call. The <fx1>, .. are _patterns_ which
+ * establish the controls of the given effect. See examples.
+ * @name FX
+ * @memberof Pattern
+ * @returns Pattern
+ */
+Pattern.prototype.FX = function (...effects) {
+  effects = effects.map(reify);
+  return this.withValue((v) => (vEff) => {
+    const currFX = v.FX ?? [];
+    return { ...v, FX: currFX.concat(vEff) };
+  }).appLeft(parray(effects));
+};
