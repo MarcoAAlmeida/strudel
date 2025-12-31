@@ -112,7 +112,7 @@ export const connectLFO = (id, params, nodeTracker) => {
     max,
   };
   const lfoNode = getLfo(getAudioContext(), modParams);
-  nodeTracker[0][`lfo_${id}`] = [lfoNode];
+  nodeTracker.main[`lfo_${id}`] = [lfoNode];
   targetParams.forEach((t) => lfoNode.connect(t));
   return lfoNode;
 };
@@ -134,7 +134,7 @@ export const connectEnvelope = (id, params, nodeTracker) => {
     decayCurve: dcurve,
     releaseCurve: rcurve,
   });
-  nodeTracker[0][`env_${id}`] = [envNode];
+  nodeTracker.main[`env_${id}`] = [envNode];
   targetParams.forEach((t) => envNode.connect(t));
   return envNode;
 };

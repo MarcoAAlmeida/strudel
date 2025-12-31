@@ -3729,6 +3729,22 @@ export const phases = (list) => {
  * @name FX
  * @memberof Pattern
  * @returns Pattern
+ * @example
+ * $: s("[sbd <hh [bd | lt | oh]>]*4").dec(.4)
+ *   .FX(
+ *     phaser(0.5).gain(2),
+ *     bpf(800),
+ *     distort(1.3),
+ *     room(0.2),
+ *     delay(0.5).gain(1.25),
+ *     distort(0.3),
+ *   ).fxr(1.7) // sets release time of effects (like delay)
+ * @example
+ * $: s("saw").fm(0.5)
+ *   .delay(0.3) // outer effects are applied *last*
+ *   .FX(coarse(4)) // first coarse
+ *   .FX(lpf(500).lpe(4).lpa(1).lpd(2)) // then lpf
+ *   .FX(distort(1)) // then distort
  */
 Pattern.prototype.FX = function (...effects) {
   effects = effects.map(reify);

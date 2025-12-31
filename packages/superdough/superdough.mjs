@@ -196,6 +196,7 @@ let defaultDefaultValues = {
   fft: 8,
   tremolodepth: 1,
   tremolophase: 0,
+  release: 0.01,
 };
 
 const defaultDefaultDefaultValues = Object.freeze({ ...defaultDefaultValues });
@@ -473,7 +474,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     duckattack,
     duckdepth,
     djf,
-    release = 0.01,
+    release = getDefaultValue('release'),
     dry,
     delay = getDefaultValue('delay'),
     delayfeedback = getDefaultValue('delayfeedback'),
@@ -544,7 +545,18 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     nodes.main['source'] = [sourceNode];
   } else if (getSound(s)) {
     const { onTrigger } = getSound(s);
-    const onEnded = () => {};
+    // We have to use onEnded because some sources (e.g. `sampler`) have
+    // an internal duration which is longer than `value.duration`
+    const onEnded = () =>
+      webAudioTimeout(
+        ac,
+        () => {
+          chain.releaseNodes();
+          activeSoundSources.delete(chainID);
+        },
+        0,
+        endWithRelease,
+      );
     const soundHandle = await onTrigger(t, value, onEnded, cps);
 
     if (soundHandle) {
@@ -566,7 +578,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     return;
   }
 
-  const chain = new Chain(sourceNode); // audio nodes that will be connected to each other sequentially
+  const chain = new Chain(sourceNode); // connection manager which tracks audio nodes for releasing
   FX = [...FX, value]; // run through the FX chain and then run through all FX outside of it as well
   for (let [idx, fx] of Object.entries(FX)) {
     const key = idx == FX.length - 1 ? 'main' : idx;
@@ -990,15 +1002,6 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       }
     }
   });
-  webAudioTimeout(
-    ac,
-    () => {
-      chain.releaseNodes();
-      activeSoundSources.delete(chainID);
-    },
-    0,
-    endWithRelease,
-  );
 };
 
 export const superdoughTrigger = (t, hap, ct, cps) => {
