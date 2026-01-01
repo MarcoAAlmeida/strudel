@@ -3723,8 +3723,8 @@ export const phases = (list) => {
 };
 
 /**
- * Establishes an FX chain. Can be called by chaining .FX(<fx1>).FX(<fx2>)..
- * calls and/or in a single .FX(<fx1>, <fx2>, ..) call. The <fx1>, .. are _patterns_ which
+ * Establishes an FX chain. Can be called by chaining .FX(fx1).FX(fx2)..
+ * calls and/or in a single .FX(fx1, fx2, ..) call. The fx1, .. are _patterns_ which
  * establish the controls of the given effect. See examples.
  * @name FX
  * @memberof Pattern
