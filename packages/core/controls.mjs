@@ -2846,6 +2846,7 @@ registerSubControls('lfo', [
   ['skew', 'sk'],
   ['curve'],
   ['sync', 's'],
+  ['fxi'],
 ]);
 registerSubControls('env', [
   ['control', 'c'],
@@ -2859,6 +2860,7 @@ registerSubControls('env', [
   ['acurve', 'ac'],
   ['dcurve', 'dc'],
   ['rcurve', 'rc'],
+  ['fxi'],
 ]);
 registerSubControls('bmod', [
   ['bus', 'b'],
@@ -2867,6 +2869,7 @@ registerSubControls('bmod', [
   ['depth', 'dep', 'dr'],
   ['depthabs', 'da'],
   ['dc'],
+  ['fxi'],
 ]);
 
 Pattern.prototype.modulate = function (type, config, id) {
@@ -2932,6 +2935,7 @@ Pattern.prototype.modulate = function (type, config, id) {
  * @param {number | Pattern} [config.skew] Skew amount. Aliases: sk
  * @param {number | Pattern} [config.curve] Exponential curve amount. Aliases: c
  * @param {number | Pattern} [config.sync] Tempo-synced modulation rate. Aliases: s
+ * @param {number | Pattern} [config.fxi] FX index to target
  * @param {string | Pattern} id ID to use for this modulator
  * @returns Pattern
  *
@@ -2985,6 +2989,7 @@ export const lfo = (config) => pure({}).lfo(config);
  * @param {number | Pattern} [config.acurve] Snappiness of attack curve (-1 = relaxed, 1 = snappy). Aliases: ac
  * @param {number | Pattern} [config.dcurve] Snappiness of decay curve (-1 = relaxed, 1 = snappy). Aliases: dc
  * @param {number | Pattern} [config.rcurve] Snappiness of release curve (-1 = relaxed, 1 = snappy). Aliases: rc
+ * @param {number | Pattern} [config.fxi] FX index to target
  * @param {string | Pattern} id ID to use for this modulator
  * @returns Pattern
  *
@@ -3039,6 +3044,7 @@ export const env = (config) => pure({}).env(config);
  * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
  * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
  * @param {number | Pattern} [config.dc] DC offset prior to application
+ * @param {number | Pattern} [config.fxi] FX index to target
  * @param {string | Pattern} id ID to use for this modulator
  * @returns Pattern
  *
@@ -3065,3 +3071,5 @@ export const bmod = (config) => pure({}).bmod(config);
  * s("hh*16").bank("tr909").transient("<-1:1 1:-1>")
  */
 export const { transient } = registerControl(['transient', 'transsustain']);
+
+export const { FXrelease, FXrel, FXr, fxr } = registerControl('FXrelease', 'FXrel', 'FXr', 'fxr');
