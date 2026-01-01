@@ -98,15 +98,15 @@ export function PatternsTab({ context }) {
         const meta = getMetadata(pattern.code);
 
         // Search for specific meta keys
-        const searchTrimmed = search.trim();
-        if (searchTrimmed.includes(':')) {
-          const [metaKey, metaSearch] = searchTrimmed.split(':');
+        const searchLowercaseTrimmed = search.trim().toLowerCase();
+        if (searchLowercaseTrimmed.includes(':')) {
+          const [metaKey, metaSearch] = searchLowercaseTrimmed.split(/:\s*/);
           if (metaKey !== undefined && metaSearch !== undefined && metaKey in meta) {
             const metaValues = meta[metaKey];
             if (Array.isArray(metaValues)) {
-              return metaValues.some((metaValue) => metaValue.toLowerCase().includes(metaSearch.trim().toLowerCase()));
+              return metaValues.some((metaValue) => metaValue.toLowerCase().includes(metaSearch));
             } else if (typeof metaValues === 'string') {
-              return metaValues.toLowerCase().includes(metaSearch.trim().toLowerCase());
+              return metaValues.toLowerCase().includes(metaSearch);
             } else {
               return false;
             }
@@ -115,11 +115,10 @@ export function PatternsTab({ context }) {
         const title = meta.title ? meta.title : 'unnamed';
         const authors = meta.by ? meta.by : ['anonymous'];
         const tags = meta.tag ? meta.tag : [];
-        const lowerCaseSearch = search.toLowerCase();
         return (
-          title.toLowerCase().includes(lowerCaseSearch) ||
-          authors.some((author) => author.toLowerCase().includes(lowerCaseSearch)) ||
-          tags.some((tag) => tag.toLowerCase().includes(lowerCaseSearch))
+          title.toLowerCase().includes(searchLowercaseTrimmed) ||
+          authors.some((author) => author.toLowerCase().includes(searchLowercaseTrimmed)) ||
+          tags.some((tag) => tag.toLowerCase().includes(searchLowercaseTrimmed))
         );
       }),
     );
