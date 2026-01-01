@@ -87,7 +87,7 @@ const CONTROL_TARGETS = {
   compressorRelease: { node: 'compressor', param: 'release' },
 
   // PHASER
-  phaserrate: { node: 'phaser_lfo', param: 'rate' },
+  phaserrate: { node: 'phaser_lfo', param: 'frequency' },
   phasersweep: { node: 'phaser_lfo', param: 'depth' },
   phasercenter: { node: 'phaser', param: 'frequency' },
   phaserdepth: { node: 'phaser', param: 'Q' },

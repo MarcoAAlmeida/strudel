@@ -62,7 +62,10 @@ const getTargetParamsForControl = (control, nodes, subControl) => {
   const lookupKey = subControl ? `${control}_${subControl}` : control;
   const targetInfo = getControlData(lookupKey) ?? getControlData(control);
   if (!targetInfo) {
-    errorLogger(new Error(`Could not find control data for target '${control}'`), 'superdough');
+    errorLogger(
+      new Error(`Could not find control data for target '${control}'. It may not be modulatable.`),
+      'superdough',
+    );
     return { targetParams: [], paramName: control };
   }
   const paramName = targetInfo.param;

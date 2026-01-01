@@ -597,6 +597,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       delaysync = getDefaultValue('delaysync'),
       delaytime,
       stretch = getDefaultValue('stretch'),
+      i = getDefaultValue('i'),
     } = fx;
     gain = applyGainCurve(nanFallback(gain, 1));
     shapevol = applyGainCurve(shapevol);
@@ -744,9 +745,9 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     }
 
     if (fx.vowel !== undefined) {
-      const vowelFilter = ac.createVowelFilter(fx.vowel);
-      fxNodes['vowel'] = [vowelFilter];
-      chain.connect(vowelFilter);
+      const vowelNode = ac.createVowelFilter(fx.vowel);
+      fxNodes['vowel'] = vowelNode.filters;
+      chain.connect(vowelNode);
     }
 
     // effects
@@ -839,7 +840,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       chain.audioNodes.push(lfo);
     }
     // delay
-    if (delay > 0 && delaytime > 0 && delayfeedback > 0) {
+    if (key !== 'main' && delay > 0 && delaytime > 0 && delayfeedback > 0) {
       const dry = gainNode(1);
       delayfeedback = clamp(delayfeedback, 0, 0.98);
       const delayNode = ac.createFeedbackDelay(1, delaytime, delayfeedback);
@@ -856,7 +857,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       fxNodes['delay_mix'] = [wetDelay];
     }
     // reverb
-    if (fx.room > 0) {
+    if (key !== 'main' && fx.room > 0) {
       let roomIR;
       if (fx.ir !== undefined) {
         let url;
@@ -864,7 +865,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
         if (Array.isArray(sample)) {
           url = sample.data.samples[fx.i % sample.data.samples.length];
         } else if (typeof sample === 'object') {
-          url = Object.values(sample.data.samples).flat()[fx.i % Object.values(sample.data.samples).length];
+          url = Object.values(sample.data.samples).flat()[i % Object.values(sample.data.samples).length];
         }
         roomIR = await loadBuffer(url, ac, fx.ir, 0);
       }
