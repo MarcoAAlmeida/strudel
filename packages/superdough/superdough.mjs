@@ -821,6 +821,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     // panning
     if (fx.pan !== undefined) {
       const panner = ac.createStereoPanner();
+      fxNodes['pan'] = [panner];
       panner.pan.value = 2 * fx.pan - 1;
       chain.connect(panner);
     }
