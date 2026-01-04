@@ -607,7 +607,11 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     gain *= velocity; // velocity currently only multiplies with gain. it might do other things in the future
     delaytime = delaytime ?? cycleToSeconds(delaysync, cps);
 
-    stretch !== undefined && chain.connect(getWorklet(ac, 'phase-vocoder-processor', { pitchFactor: stretch }));
+    if (stretch !== undefined) {
+      const phaseVocoder = getWorklet(ac, 'phase-vocoder-processor', { pitchFactor: stretch });
+      chain.connect(phaseVocoder);
+      fxNodes['stretch'] = [phaseVocoder];
+    }
 
     if (fx.transient !== undefined) {
       const transProcessor = getWorklet(
