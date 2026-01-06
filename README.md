@@ -2,6 +2,7 @@
 
 Live coding patterns on the web
 https://strudel.cc/
+https://codeberg.org/uzu/strudel/ *(Along with many other live coding projects, we have moved from Microsoft's Github platform to Codeberg for ethical reasons. Please don't fork the project back to github.)*
 
 - Try it here: <https://strudel.cc>
 - Docs: <https://strudel.cc/learn>
