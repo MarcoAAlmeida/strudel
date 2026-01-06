@@ -4,7 +4,8 @@ Copyright (C) 2022 Strudel contributors - see <https://codeberg.org/uzu/strudel/
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { Pattern, register, reify } from './pattern.mjs';
+import { logger } from './logger.mjs';
+import { Pattern, pure, register, reify } from './pattern.mjs';
 
 export function createParam(names) {
   let isMulti = Array.isArray(names);
@@ -69,6 +70,27 @@ export function registerControl(names, ...aliases) {
     controlAlias.set(alias, name);
     Pattern.prototype[alias] = Pattern.prototype[name];
   });
+  return bag;
+}
+
+export function registerMultiControl(names, maxControls, ...aliases) {
+  names = Array.isArray(names) ? names : [names];
+  let bag = {};
+  for (let i = 1; i <= maxControls; i++) {
+    let theseAliases = [...aliases];
+    let theseNames = [...names];
+    if (i === 1) {
+      // adds e.g. fm1 as an alias for fm
+      const aliases1 = theseAliases.map((a) => `${a}1`);
+      const names1 = theseNames.map((n) => `${n}1`);
+      theseAliases = theseAliases.concat(aliases1).concat(names1);
+    } else {
+      theseAliases = theseAliases.map((a) => `${a}${i}`);
+      theseNames = theseNames.map((n) => `${n}${i}`);
+    }
+    const subBag = registerControl(theseNames, ...theseAliases);
+    bag = { ...bag, ...subBag };
+  }
   return bag;
 }
 
@@ -380,12 +402,13 @@ export const { accelerate } = registerControl('accelerate');
  * Sets the velocity from 0 to 1. Is multiplied together with gain.
  *
  * @name velocity
+ * @synonyms vel
  * @example
  * s("hh*8")
  * .gain(".4!2 1 .4!2 1 .4 1")
  * .velocity(".4 1")
  */
-export const { velocity } = registerControl('velocity');
+export const { velocity, vel } = registerControl('velocity', 'vel');
 /**
  * Controls the gain by an exponential amount.
  *
@@ -435,6 +458,9 @@ export const { attack, att } = registerControl('attack', 'att');
  * Whole numbers and simple ratios sound more natural,
  * while decimal numbers and complex ratios sound metallic.
  *
+ * A number may be added afterwards to control the harmonicity of
+ * any of the 8 individual FMs (e.g. `fmh2`)
+ *
  * @name fmh
  * @param {number | Pattern} harmonicity
  * @example
@@ -444,24 +470,39 @@ export const { attack, att } = registerControl('attack', 'att');
  * ._scope()
  *
  */
-export const { fmh } = registerControl(['fmh', 'fmi'], 'fmh');
+export const { fmh, fmh1, fmh2, fmh3, fmh4, fmh5, fmh6, fmh7, fmh8 } = registerMultiControl(['fmh', 'fmi'], 8, 'fmh');
+
 /**
  * Sets the Frequency Modulation of the synth.
  * Controls the modulation index, which defines the brightness of the sound.
  *
- * @name fm
+ * A number may be added afterwards to control the modulation index of
+ * any of the 8 individual FMs (e.g. `fm3`). Also, FMs may be routed into
+ * each other with matrix commands like `fm13`, which would send `fm1` back into
+ * `fm3`
+ *
+ * @name fmi
  * @param {number | Pattern} brightness modulation index
- * @synonyms fmi
+ * @synonyms fm
  * @example
  * note("c e g b g e")
  * .fm("<0 1 2 8 32>")
  * ._scope()
+ * @example
+ * s("sine").note("F1").seg(8)
+ *  .fm(4).fm2(rand.mul(4)).fm3(saw.mul(8).slow(8))
+ *  .fmh(1.06).fmh2(10).fmh3(0.1)
  *
  */
-export const { fmi, fm } = registerControl(['fmi', 'fmh'], 'fm');
+export const { fmi, fmi1, fmi2, fmi3, fmi4, fmi5, fmi6, fmi7, fmi8, fm, fm1, fm2, fm3, fm4, fm5, fm6, fm7, fm8 } =
+  registerMultiControl(['fmi', 'fmh'], 8, 'fm');
+
 // fm envelope
 /**
  * Ramp type of fm envelope. Exp might be a bit broken..
+ *
+ * A number may be added afterwards to control the envelope of
+ * any of the 8 individual FMs (e.g. `fmenv4`)
  *
  * @name fmenv
  * @param {number | Pattern} type lin | exp
@@ -474,11 +515,19 @@ export const { fmi, fm } = registerControl(['fmi', 'fmh'], 'fm');
  * ._scope()
  *
  */
-export const { fmenv } = registerControl('fmenv');
+export const { fmenv, fmenv1, fmenv2, fmenv3, fmenv4, fmenv5, fmenv6, fmenv7, fmenv8 } = registerMultiControl(
+  'fmenv',
+  8,
+);
+
 /**
  * Attack time for the FM envelope: time it takes to reach maximum modulation
  *
+ * A number may be added afterwards to control the attack of the envelope of
+ * any of the 8 individual FMs (e.g. `fmatt5`)
+ *
  * @name fmattack
+ * @synonyms fmatt
  * @param {number | Pattern} time attack time
  * @example
  * note("c e g b g e")
@@ -487,10 +536,32 @@ export const { fmenv } = registerControl('fmenv');
  * ._scope()
  *
  */
-export const { fmattack } = registerControl('fmattack');
+export const {
+  fmattack,
+  fmattack1,
+  fmattack2,
+  fmattack3,
+  fmattack4,
+  fmattack5,
+  fmattack6,
+  fmattack7,
+  fmattack8,
+  fmatt,
+  fmatt1,
+  fmatt2,
+  fmatt3,
+  fmatt4,
+  fmatt5,
+  fmatt6,
+  fmatt7,
+  fmatt8,
+} = registerMultiControl('fmattack', 8, 'fmatt');
 
 /**
  * Waveform of the fm modulator
+ *
+ * A number may be added afterwards to control the waveform
+ * any of the 8 individual FMs (e.g. `fmwave6`)
  *
  * @name fmwave
  * @param {number | Pattern} wave waveform
@@ -500,12 +571,19 @@ export const { fmattack } = registerControl('fmattack');
  * n("0 1 2 3".fast(4)).chord("<Dm Am F G>").voicing().s("sawtooth").fmwave("brown").fm(.6)
  *
  */
-export const { fmwave } = registerControl('fmwave');
+export const { fmwave, fmwave1, fmwave2, fmwave3, fmwave4, fmwave5, fmwave6, fmwave7, fmwave8 } = registerMultiControl(
+  'fmwave',
+  8,
+);
 
 /**
  * Decay time for the FM envelope: seconds until the sustain level is reached after the attack phase.
  *
+ * A number may be added afterwards to control the decay of the envelope of
+ * any of the 8 individual FMs (e.g. `fmdec6`)
+ *
  * @name fmdecay
+ * @synonyms fmdec
  * @param {number | Pattern} time decay time
  * @example
  * note("c e g b g e")
@@ -515,11 +593,35 @@ export const { fmwave } = registerControl('fmwave');
  * ._scope()
  *
  */
-export const { fmdecay } = registerControl('fmdecay');
+export const {
+  fmdecay,
+  fmdecay1,
+  fmdecay2,
+  fmdecay3,
+  fmdecay4,
+  fmdecay5,
+  fmdecay6,
+  fmdecay7,
+  fmdecay8,
+  fmdec,
+  fmdec1,
+  fmdec2,
+  fmdec3,
+  fmdec4,
+  fmdec5,
+  fmdec6,
+  fmdec7,
+  fmdec8,
+} = registerMultiControl('fmdecay', 8, 'fmdec');
+
 /**
  * Sustain level for the FM envelope: how much modulation is applied after the decay phase
  *
+ * A number may be added afterwards to control the sustain of the envelope of
+ * any of the 8 individual FMs (e.g. `fmsus7`)
+ *
  * @name fmsustain
+ * @synonyms fmsus
  * @param {number | Pattern} level sustain level
  * @example
  * note("c e g b g e")
@@ -529,10 +631,69 @@ export const { fmdecay } = registerControl('fmdecay');
  * ._scope()
  *
  */
-export const { fmsustain } = registerControl('fmsustain');
-// these are not really useful... skipping for now
-export const { fmrelease } = registerControl('fmrelease');
-export const { fmvelocity } = registerControl('fmvelocity');
+export const {
+  fmsustain,
+  fmsustain1,
+  fmsustain2,
+  fmsustain3,
+  fmsustain4,
+  fmsustain5,
+  fmsustain6,
+  fmsustain7,
+  fmsustain8,
+  fmsus,
+  fmsus1,
+  fmsus2,
+  fmsus3,
+  fmsus4,
+  fmsus5,
+  fmsus6,
+  fmsus7,
+  fmsus8,
+} = registerMultiControl('fmsustain', 8, 'fmsus');
+
+/**
+ * Release time for the FM envelope: how much modulation is applied after the note is released
+ *
+ * A number may be added afterwards to control the release of the envelope of
+ * any of the 8 individual FMs (e.g. `fmrel8`)
+ *
+ * @name fmrelease
+ * @synonyms fmrel
+ * @param {number | Pattern} time release time
+ *
+ */
+export const {
+  fmrelease,
+  fmrelease1,
+  fmrelease2,
+  fmrelease3,
+  fmrelease4,
+  fmrelease5,
+  fmrelease6,
+  fmrelease7,
+  fmrelease8,
+  fmrel,
+  fmrel1,
+  fmrel2,
+  fmrel3,
+  fmrel4,
+  fmrel5,
+  fmrel6,
+  fmrel7,
+  fmrel8,
+} = registerMultiControl('fmrelease', 8, 'fmrel');
+
+// FM Matrix
+// Note: we do not declare top-level exports here since it would add
+// ~162 more explicit exports. This is likely fine as the most common use-case would be to at least
+// declare one other FM prior to utilizing the matrix functionality, but if we ever decide we need it,
+// TODO to add it explicitly / go with the globalThis approach
+for (let i = 0; i <= 8; i++) {
+  for (let j = 0; j <= 8; j++) {
+    registerControl(`fmi${i}${j}`, `fm${i}${j}`);
+  }
+}
 
 /**
  * Select the sound bank to use. To be used together with `s`. The bank name (+ "_") will be prepended to the value of `s`.
@@ -1323,14 +1484,13 @@ export const { lpdepth } = registerControl('lpdepth');
  * Depth of the LFO for the lowpass filter, in HZ
  *
  * @name lpdepthfrequency
- * @synonyms
- * lpdethfreq
+ * @synonyms lpdepthfreq
  * @param {number | Pattern} depth depth of modulation
  * @example
  * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lpdepthfrequency("<200 500 100 0>")
  */
 
-export const { lpdepthfrequency } = registerControl('lpdepthfrequency', 'lpdepthfreq');
+export const { lpdepthfrequency, lpdepthfreq } = registerControl('lpdepthfrequency', 'lpdepthfreq');
 
 /**
  * Shape of the LFO for the lowpass filter
@@ -1384,14 +1544,13 @@ export const { bpdepth } = registerControl('bpdepth');
  * Depth of the LFO for the bandpass filter, in HZ
  *
  * @name bpdepthfrequency
- * @synonyms
- * bpdethfreq
+ * @synonyms bpdepthfreq
  * @param {number | Pattern} depth depth of modulation
  * @example
  * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).bpdepthfrequency("<200 500 100 0>")
  */
 
-export const { bpdepthfrequency } = registerControl('bpdepthfrequency', 'bpdepthfreq');
+export const { bpdepthfrequency, bpdepthfreq } = registerControl('bpdepthfrequency', 'bpdepthfreq');
 
 /**
  * Shape of the LFO for the bandpass filter
@@ -1439,20 +1598,19 @@ export const { hpsync } = registerControl('hpsync');
  * @name hpdepth
  * @param {number | Pattern} depth depth of modulation
  */
-export const { hpdepth, hpdepthfreq } = registerControl('hpdepth');
+export const { hpdepth } = registerControl('hpdepth');
 
 /**
  * Depth of the LFO for the hipass filter, in hz
  *
  * @name hpdepthfrequency
- * @synonyms
- * hpdethfreq
+ * @synonyms hpdepthfreq
  * @param {number | Pattern} depth depth of modulation
  * @example
  * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).hpdepthfrequency("<200 500 100 0>")
  */
 
-export const { hpdepthfrequency } = registerControl('hpdepthfrequency', 'hpdepthfreq');
+export const { hpdepthfrequency, hpdepthfreq } = registerControl('hpdepthfrequency', 'hpdepthfreq');
 
 /**
  * Shape of the LFO for the highpass filter
@@ -1865,12 +2023,12 @@ export const { nudge } = registerControl('nudge');
  * Sets the default octave of a synth.
  *
  * @name octave
+ * @synonyms oct
  * @param {number | Pattern} octave octave number
  * @example
- * n("0,4,7").s('supersquare').octave("<3 4 5 6>").osc()
- * @superDirtOnly
+ * n("0,4,7").scale("F:minor").s('supersaw').octave("<0 1 2 3>")
  */
-export const { octave } = registerControl('octave');
+export const { octave, oct } = registerControl('octave', 'oct');
 
 // ['ophatdecay'],
 // TODO: example
@@ -1887,6 +2045,28 @@ export const { octave } = registerControl('octave');
  * )
  */
 export const { orbit } = registerControl('orbit', 'o');
+
+/**
+ * A `bus` is a send which can be used for mixing patterns. It combines with..
+ *   s("bus") to play that bus through another pattern (for, say, applying non-linear
+ *   effects like distortion to multiple signals)
+ *
+ *   otherPat.bmod(..) (to modulate another pattern with the bus)
+ *
+ * @name bus
+ * @param {number | Pattern} number
+ */
+export const { bus } = registerControl('bus');
+
+/**
+ * Postgain multiplier prior to sending the signal to the audio bus.
+ *
+ * @name busgain
+ * @synonyms bgain
+ * @param {number | Pattern} number
+ */
+export const { busgain, bgain } = registerControl('busgain', 'bgain');
+
 // TODO: what is this? not found in tidal doc Answer: gain is limited to maximum of 2. This allows you to go over that
 export const { overgain } = registerControl('overgain');
 // TODO: what is this? not found in tidal doc. Similar to above, but limited to 1
@@ -1931,8 +2111,7 @@ export const { panorient } = registerControl('panorient');
 // ['pitch2'],
 // ['pitch3'],
 // ['portamento'],
-// TODO: LFO rate see https://tidalcycles.org/docs/patternlib/tutorials/synthesizers/#supersquare
-export const { rate } = registerControl('rate');
+
 // TODO: slide param for certain synths
 export const { slide } = registerControl('slide');
 // TODO: detune? https://tidalcycles.org/docs/patternlib/tutorials/synthesizers/#supersquare
@@ -2358,7 +2537,6 @@ export const { curve } = registerControl('curve');
 export const { deltaSlide } = registerControl('deltaSlide');
 export const { pitchJump } = registerControl('pitchJump');
 export const { pitchJumpTime } = registerControl('pitchJumpTime');
-export const { lfo, repeatTime } = registerControl('lfo', 'repeatTime');
 // noise on the frequency or as bubo calls it "frequency fog" :)
 export const { znoise } = registerControl('znoise');
 export const { zmod } = registerControl('zmod');
@@ -2596,8 +2774,13 @@ export const as = register('as', (mapping, pat) => {
   mapping = Array.isArray(mapping) ? mapping : [mapping];
   return pat.fmap((v) => {
     v = Array.isArray(v) ? v : [v];
-    v = Object.fromEntries(mapping.map((prop, i) => [getControlName(prop), v[i]]));
-    return v;
+    const entries = [];
+    for (let i = 0; i < mapping.length; ++i) {
+      if (v[i] !== undefined) {
+        entries.push([getControlName(mapping[i]), v[i]]);
+      }
+    }
+    return Object.fromEntries(entries);
   });
 });
 
@@ -2629,3 +2812,267 @@ export const scrub = register(
   },
   false,
 );
+
+const subControlAliases = new Map();
+const registerSubControl = (control, subControl, ...aliases) => {
+  const aliasMap = subControlAliases.get(control) ?? new Map();
+  const allKeys = new Set([subControl, ...aliases]);
+  for (const alias of allKeys) {
+    aliasMap.set(String(alias).toLowerCase(), subControl);
+  }
+  subControlAliases.set(control, aliasMap);
+};
+
+const registerSubControls = (control, subControlAliases = []) => {
+  for (const [subControl, ...aliases] of subControlAliases) {
+    registerSubControl(control, subControl, ...aliases);
+  }
+};
+
+const getMainSubcontrolName = (control, subKey) => {
+  const aliasMap = subControlAliases.get(control);
+  if (!aliasMap) return subKey;
+  return aliasMap.get(String(subKey).toLowerCase()) ?? subKey;
+};
+
+registerSubControls('lfo', [
+  ['control', 'c'],
+  ['subControl', 'sc'],
+  ['rate', 'r'],
+  ['depth', 'dep', 'dr'],
+  ['depthabs', 'da'],
+  ['dcoffset', 'dc'],
+  ['shape', 'sh'],
+  ['skew', 'sk'],
+  ['curve', 'cu'],
+  ['sync', 's'],
+  ['fxi'],
+]);
+registerSubControls('env', [
+  ['control', 'c'],
+  ['subControl', 'sc'],
+  ['attack', 'att', 'a'],
+  ['decay', 'dec', 'd'],
+  ['sustain', 'sus', 's'],
+  ['release', 'rel', 'r'],
+  ['depth', 'dep', 'dr'],
+  ['depthabs', 'da'],
+  ['acurve', 'ac'],
+  ['dcurve', 'dc'],
+  ['rcurve', 'rc'],
+  ['fxi'],
+]);
+registerSubControls('bmod', [
+  ['bus', 'b'],
+  ['control', 'c'],
+  ['subControl', 'sc'],
+  ['depth', 'dep', 'dr'],
+  ['depthabs', 'da'],
+  ['dc'],
+  ['fxi'],
+]);
+
+Pattern.prototype.modulate = function (type, config, idPat) {
+  config = { control: undefined, ...config };
+  const modulatorKeys = ['lfo', 'env', 'bmod'];
+  if (!modulatorKeys.includes(type)) {
+    logger(`[core] Modulation type ${type} not found. Please use one of 'lfo', 'env', 'bmod'`);
+    return this;
+  }
+  let output = this;
+  let defaultValue = undefined;
+  // Copy value into a temporary `v` container and attach a single `id` (to be shared across
+  // each config entry). At the output we destructure and throw away the id
+  output = output.fmap((v) => (id) => ({ v, id })).appLeft(reify(idPat));
+  for (const [rawKey, value] of Object.entries(config)) {
+    const key = getMainSubcontrolName(type, rawKey);
+    const valuePat = reify(value);
+    output = output
+      .fmap(({ v, id }) => (c) => {
+        if (defaultValue === undefined) {
+          // default control to the control set just before this in the chain
+          // e.g. pat.gain(0.5).lfo({..}) will be a gain-LFO
+          let control = getControlName(Object.keys(v).at(-1));
+          if (modulatorKeys.includes(control)) {
+            control = `${control}_${[...v[control].__ids].at(-1)}`;
+          }
+          defaultValue = control;
+        }
+        v[type] ??= { __ids: new Set() };
+        const t = v[type];
+        id ??= t.__ids.size;
+        t[id] ??= { control: defaultValue };
+        t.__ids.add(id); // keeps track of insertion order
+        if (c === undefined) return { v, id };
+        if (key === 'control' || key === 'subControl') {
+          t[id][key] = getControlName(c);
+        } else {
+          t[id][key] = c;
+        }
+        return { v, id };
+      })
+      .appLeft(valuePat);
+  }
+  return output.fmap(({ v }) => v);
+};
+
+/**
+ * Configures an LFO. Can be called in sequence like pat.lfo(...).lfo(...) to set up multiple LFOs.
+ * There are two ways to declare which control will be modulated:
+ * 1. Explicitly put `control` in the config (e.g. `lfo({ c: "lpf" })`)
+ * 2. If the control parameter is absent, the control _immediately before_ the `lfo` call will be used
+ *   (e.g. `s("saw").lpf(500).lfo()` to modulate `lpf`)
+ *
+ * Modulators can be referred to by `id` so that they can be updated later e.g. inside
+ * a `sometimes`. See example below.
+ *
+ * @name lfo
+ * @param {Object} config LFO configuration.
+ * @param {string | Pattern} [config.control] Node to modulate. Aliases: c
+ * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc
+ * @param {number | Pattern} [config.rate] Modulation rate. Aliases: r
+ * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
+ * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
+ * @param {number | Pattern} [config.dcoffset] DC offset / bias for the waveform. Aliases: dc
+ * @param {number | Pattern} [config.shape] Shape index. Aliases: sh
+ * @param {number | Pattern} [config.skew] Skew amount. Aliases: sk
+ * @param {number | Pattern} [config.curve] Exponential curve amount. Aliases: cu
+ * @param {number | Pattern} [config.sync] Tempo-synced modulation rate. Aliases: s
+ * @param {number | Pattern} [config.fxi] FX index to target
+ * @param {string | Pattern} id ID to use for this modulator
+ * @returns Pattern
+ *
+ * @example
+ * s("saw").note("F1").lpf(500).lfo()
+ *
+ * @example
+ * s("saw").lfo().lpf(500).lfo({ s: 0.3 })
+ *
+ * @example
+ * s("saw").lpf(500).diode(0.3)
+ *   .lfo({ c: "lpf" })
+ *
+ * @example
+ * s("pulse").lpf(500).lfo()
+ *   .lfo({ c: "s" })
+ *   .diode(0.3)
+ *   .sometimes(x => x.lfo({ s: "8" }, 1)) // lfo #1 (0-indexed)
+ *
+ * @example
+ * s("pulse").lpf(500).lfo({ depth: 4 }, 'lpf_mod')
+ *   .lfo({ c: "s" })
+ *   .diode(0.3)
+ *   .sometimes(x => x.lfo({ s: "8" }, 'lpf_mod'))
+ */
+Pattern.prototype.lfo = function (config, id) {
+  return this.modulate('lfo', config, id);
+};
+export const lfo = (config) => pure({}).lfo(config);
+
+/**
+ * Configures an envelope. Can be called in sequence like pat.env(...).env(...) to set up multiple envelopes
+ * There are two ways to declare which control will be modulated:
+ * 1. Explicitly put `control` in the config (e.g. `env({ c: "lpf" })`)
+ * 2. If the control parameter is absent, the control _immediately before_ the `env` call will be used
+ *   (e.g. `s("saw").lpf(500).env({ a: 1 })` to modulate `lpf`)
+ *
+ * Modulators can be referred to by `id` so that they can be updated later e.g. inside
+ * a `sometimes`. See example below.
+ *
+ * @name env
+ * @param {Object} config Envelope configuration.
+ * @param {string | Pattern} [config.control] Node to modulate. Aliases: c
+ * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc
+ * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
+ * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
+ * @param {number | Pattern} [config.attack] Time to reach depth. Aliases: att, a
+ * @param {number | Pattern} [config.decay] Time to reach sustain. Aliases: dec, d
+ * @param {number | Pattern} [config.sustain] Sustain depth. Aliases: sus, s
+ * @param {number | Pattern} [config.release] Time to return to nominal value. Aliases: rel, r
+ * @param {number | Pattern} [config.acurve] Snappiness of attack curve (-1 = relaxed, 1 = snappy). Aliases: ac
+ * @param {number | Pattern} [config.dcurve] Snappiness of decay curve (-1 = relaxed, 1 = snappy). Aliases: dc
+ * @param {number | Pattern} [config.rcurve] Snappiness of release curve (-1 = relaxed, 1 = snappy). Aliases: rc
+ * @param {number | Pattern} [config.fxi] FX index to target
+ * @param {string | Pattern} id ID to use for this modulator
+ * @returns Pattern
+ *
+ * @example
+ * s("saw").note("F1").lpf(500).env({ a: 1 })
+ *
+ * @example
+ * s("saw").env({ d: 1 }).note("F1")
+ *   .lpq(4).lpf(50)
+ *   .env({ a: 0.1, d: 1, ac: 0.8, dc: 0.3, depth: 50 })
+ *
+ * @example
+ * s("saw").lpf(500).diode(0.3)
+ *   .env({ c: "lpf", a: 0.5, d: 0.5 })
+ *
+ * @example
+ * s("pulse").lpf(500).env({ a: 1 })
+ *   .env({ c: "s", a: 1 })
+ *   .diode(0.3)
+ *   .sometimes(x => x.env({ a: "0.5" }, 1)) // envelope #1 (0-indexed)
+ *
+ * @example
+ * s("pulse").lpf(500).env({ a: 1 }, 'lpf_mod')
+ *   .env({ c: "s", a: 1 })
+ *   .diode(0.3)
+ *   .sometimes(x => x.env({ a: "0.5" }, 'lpf_mod'))
+ */
+Pattern.prototype.env = function (config, id) {
+  return this.modulate('env', config, id);
+};
+export const env = (config) => pure({}).env(config);
+
+/**
+ * Modulates with the output from a given `bus`.
+ * Can be called in sequence like pat.bmod(...).bmod(...) to set up multiple modulators
+ *
+ * Send to an audio bus with `otherPat.bus(..)`.
+ *
+ * There are two ways to declare which control will be modulated:
+ * 1. Explicitly put `control` in the config (e.g. `bmod({ id: 2, c: "lpf" })`)
+ * 2. If the control parameter is absent, the control _immediately before_ the `bmod` call will be used
+ *   (e.g. `s("saw").lpf(500).bmod({ id: 2 })` to modulate `lpf`)
+ *
+ * Modulators can be referred to by `id` so that they can be updated later e.g. inside
+ * a `sometimes`. See example below.
+ *
+ * @name bmod
+ * @param {Object} config Bus modulation configuration.
+ * @param {string | Pattern} [config.bus] Bus to get modulation signal from
+ * @param {string | Pattern} [config.control] Node to modulate. Aliases: c
+ * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc
+ * @param {number | Pattern} [config.depth] Relative modulation depth. Aliases: dep, dr
+ * @param {number | Pattern} [config.depthabs] Absolute modulation depth. Aliases: da
+ * @param {number | Pattern} [config.dc] DC offset prior to application
+ * @param {number | Pattern} [config.fxi] FX index to target
+ * @param {string | Pattern} id ID to use for this modulator
+ * @returns Pattern
+ *
+ * @example
+ * modulator: s("one").seg(64).gain(slider(0, 0, 1)).bus(1).dry(0)
+ * carrier: s("saw").bmod({ b: 1 })
+ *
+ */
+Pattern.prototype.bmod = function (config, id) {
+  return this.modulate('bmod', config, id);
+};
+export const bmod = (config) => pure({}).bmod(config);
+
+/**
+ * Transient shaper. Gives independent control over the emphasis on transients
+ * and sustains
+ *
+ * @name transient
+ * @param {number | Pattern} attack Emphasis on transients; between -1 (deaccentuate) and 1 (accentuate)
+ * @param {number | Pattern} sustain Emphasis on the sustains; between -1 (deaccentuate) and 1 (accentuate)
+ * @example
+ * s("bd").transient("<-1 -0.5 0 0.5 1>")
+ * @example
+ * s("hh*16").bank("tr909").transient("<-1:1 1:-1>")
+ */
+export const { transient } = registerControl(['transient', 'transsustain']);
+
+export const { FXrelease, FXrel, FXr, fxr } = registerControl('FXrelease', 'FXrel', 'FXr', 'fxr');
