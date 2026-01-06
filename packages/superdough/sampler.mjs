@@ -302,7 +302,7 @@ export async function onTriggerSample(t, value, onended, bank, resolveUrl) {
   }
 
   // vibrato
-  let vibratoOscillator = getVibratoOscillator(bufferSource.detune, value, t);
+  const vibratoHandle = getVibratoOscillator(bufferSource.detune, value, t);
 
   const time = t + nudge;
   bufferSource.start(time, offset);
@@ -325,7 +325,7 @@ export async function onTriggerSample(t, value, onended, bank, resolveUrl) {
   node.connect(out);
   onceEnded(bufferSource, function () {
     releaseAudioNode(bufferSource);
-    releaseAudioNode(vibratoOscillator);
+    vibratoHandle?.stop();
     releaseAudioNode(node);
     releaseAudioNode(out);
     onended();
@@ -335,7 +335,7 @@ export async function onTriggerSample(t, value, onended, bank, resolveUrl) {
   const stop = (endTime) => {
     bufferSource.stop(endTime);
   };
-  const handle = { node: out, bufferSource, stop };
+  const handle = { node: out, nodes: { source: [bufferSource], ...vibratoHandle?.nodes }, stop };
 
   // cut groups
   if (cut !== undefined) {
