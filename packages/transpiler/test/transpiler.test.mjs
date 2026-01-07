@@ -26,6 +26,15 @@ describe('transpiler', () => {
   it('adds await to bare samples call', () => {
     expect(transpiler("samples('xxx');", simple).output).toEqual("await samples('xxx');");
   });
+  it('treats mini strings in K(...) as strudel', () => {
+    expect(transpiler('K("bd")', simple).output).toEqual("worklet('pat[0]', m('bd', 2));");
+  });
+  it('treats K(...) as kabelsalat', () => {
+    expect(transpiler('K(1+2)', simple).output).toEqual("worklet('1 + 2');");
+  });
+  it('handles strudel S(...) inside kabelsalat K(...)', () => {
+    expect(transpiler('K(S("bd"))', simple).output).toEqual("worklet('pat[0]', m('bd', 4));");
+  });
   /*   it('parses dynamic imports', () => {
     expect(
       transpiler("const { default: foo } = await import('https://bar.com/foo.js');", {

@@ -223,8 +223,10 @@ function extractPatternPlaceholders(expr) {
   walk(templateExpr, {
     enter(node, parent, prop, index) {
       parents.set(node, { parent, prop, index });
-      if (isStrudelPatternCall(node)) {
-        targets.push(node);
+      const patternExpr = getStrudelPatternExpr(node);
+      if (patternExpr) {
+        targets.push({ node, patternExpr });
+        this.skip();
       }
     },
   });
@@ -233,18 +235,12 @@ function extractPatternPlaceholders(expr) {
     return { template: genExprSource(templateExpr), patternExprs: [] };
   }
 
-  targets.sort((a, b) => (a.start ?? 0) - (b.start ?? 0));
+  targets.sort((a, b) => getPatternNodeOrder(a.node) - getPatternNodeOrder(b.node));
 
-  const patternExprs = targets.map((node) => {
-    const arg = node.arguments?.[0];
-    if (!arg) {
-      throw new Error('S(...) requires an argument');
-    }
-    return cloneNode(arg);
-  });
+  const patternExprs = targets.map(({ patternExpr }) => cloneNode(patternExpr));
 
   let currentExpr = templateExpr;
-  targets.forEach((node, index) => {
+  targets.forEach(({ node }, index) => {
     currentExpr = replaceNode(node, placeholderAst(index), parents, currentExpr);
   });
 
@@ -252,7 +248,21 @@ function extractPatternPlaceholders(expr) {
   return { template, patternExprs };
 }
 
-function isStrudelPatternCall(node) {
+function getStrudelPatternExpr(node) {
+  if (isStrudelPatternWrap(node)) {
+    const arg = node.arguments?.[0];
+    if (!arg) {
+      throw new Error('S(...) requires an argument');
+    }
+    return arg;
+  }
+  if (isMiniCall(node)) {
+    return node;
+  }
+  return null;
+}
+
+function isStrudelPatternWrap(node) {
   if (node.type !== 'CallExpression') {
     return false;
   }
@@ -264,6 +274,43 @@ function isStrudelPatternCall(node) {
     return callee.property?.name === 'S';
   }
   return false;
+}
+
+function getMinilangName() {
+  const minilang = languages.get('minilang');
+  return minilang?.name || 'm';
+}
+
+// Used to identify transpiled `m(...)` calls for proper conversion
+// to, say, kabelsalat placeholders
+function isMiniCall(node) {
+  if (node.type !== 'CallExpression') {
+    return false;
+  }
+  const callee = node.callee;
+  if (callee.type !== 'Identifier') {
+    return false;
+  }
+  if (callee.name !== getMinilangName()) {
+    return false;
+  }
+  const firstArg = node.arguments?.[0];
+  return firstArg?.type === 'Literal' && typeof firstArg.value === 'string';
+}
+
+// If `start` is available, we use it. If it's already been transpiled
+// to `m(...)`, use the provided offset
+function getPatternNodeOrder(node) {
+  if (typeof node.start === 'number') {
+    return node.start;
+  }
+  if (isMiniCall(node)) {
+    const offsetArg = node.arguments?.[1];
+    if (offsetArg?.type === 'Literal' && typeof offsetArg.value === 'number') {
+      return offsetArg.value;
+    }
+  }
+  return 0;
 }
 
 function placeholderAst(index) {
