@@ -3753,3 +3753,32 @@ Pattern.prototype.FX = function (...effects) {
     return { ...v, FX: currFX.concat(vEff) };
   }).appLeft(parray(effects));
 };
+
+const _asArrayPattern = (pats) => {
+  const pack = (...xs) => xs;
+  let acc = pure(curry(pack, null, pats.length));
+  for (const p of pats) acc = acc.appLeft(p);
+  return acc;
+};
+
+/**
+ * Creates a worklet effect. Typically derived by writing K(...) in the REPL which will parse
+ * Kabelsalat code.
+ *
+ * @name worklet
+ * @param {string} src Source code of the worklet update function
+ * @param {...number | ...Pattern} inputs Worklet inputs
+ * @memberof Pattern
+ * @returns Pattern
+ */
+Pattern.prototype.worklet = function (src, ...inputs) {
+  inputs = inputs.map(reify);
+  return this.outerBind((v) => {
+    return _asArrayPattern(inputs).withValue((vInput) => {
+      const currInputs = v.workletInputs ?? [];
+      return { ...v, workletSrc: src, workletInputs: currInputs.concat(vInput) };
+    });
+  });
+};
+
+export const worklet = (...args) => pure(0).worklet(...args);

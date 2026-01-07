@@ -6,6 +6,7 @@ import { setTime } from './time.mjs';
 import { evalScope } from './evaluate.mjs';
 import { register, Pattern, isPattern, silence, stack } from './pattern.mjs';
 import { reset_state } from './impure.mjs';
+import { SalatRepl } from '@kabelsalat/web';
 
 export function repl({
   defaultOutput,
@@ -24,6 +25,7 @@ export function repl({
   id,
   mondo = false,
 }) {
+  const kabel = new SalatRepl({ localScope: true });
   const state = {
     schedulerError: undefined,
     evalError: undefined,
@@ -76,6 +78,11 @@ export function repl({
     allTransform = undefined;
     eachTransform = undefined;
     return silence;
+  };
+
+  const compileKabel = (code) => {
+    const node = kabel.evaluate(code);
+    return node.compile({ log: false });
   };
 
   // helper to get a patternified pure value out
@@ -198,6 +205,7 @@ export function repl({
       setcps: setCps,
       setCpm,
       setcpm: setCpm,
+      compileKabel,
     });
   };
 
