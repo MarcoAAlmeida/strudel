@@ -123,8 +123,17 @@ export function transpiler(input, options = {}) {
     leave(node, parent, prop, index) {
       if (!isKabelCall(node)) return;
 
-      const [expr, ...rest] = node.arguments;
+      let [expr, ...rest] = node.arguments;
       if (!expr) throw new Error('K(...) requires an expression');
+
+      if (shouldCallKabelExpression(expr)) {
+        expr = {
+          type: 'CallExpression',
+          callee: expr,
+          arguments: [],
+          optional: false,
+        };
+      }
 
       const { template, patternExprs } = extractPatternPlaceholders(expr);
       if (patternExprs.length) {
@@ -209,6 +218,16 @@ function isKabelCall(node) {
   if (callee.type === 'ChainExpression') callee = callee.expression;
   if (callee.type === 'MemberExpression') return !callee.computed && callee.property?.name === 'K';
   return callee.type === 'Identifier' && callee.name === 'K';
+}
+
+function shouldCallKabelExpression(expr) {
+  if (expr.type !== 'ArrowFunctionExpression' && expr.type !== 'FunctionExpression') {
+    return false;
+  }
+  if (expr.params.length) {
+    return false;
+  }
+  return expr.body?.type === 'BlockStatement';
 }
 
 function genExprSource(expr) {

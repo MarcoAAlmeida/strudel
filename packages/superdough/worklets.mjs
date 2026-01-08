@@ -1496,9 +1496,11 @@ class GenericProcessor extends AudioWorkletProcessor {
         src,
         schema: { ugens, registers },
         start,
+        gateEnd,
         end,
       } = event.data;
       this.start = start;
+      this.gateEnd = gateEnd;
       this.end = end;
       this.registers = new Array(registers).fill(0);
       this.src = `o.fill(0); // reset outputs\n${src}`;
@@ -1526,7 +1528,10 @@ class GenericProcessor extends AudioWorkletProcessor {
   }
   process(inputs, outputs) {
     const input = inputs[0]?.[0];
-    if (this.genSample === undefined || currentTime < this.start) {
+    if (currentTime > this.end) {
+      return false;
+    }
+    else if (this.genSample === undefined || currentTime < this.start) {
       // pending
       return true;
     } else if (input === undefined) {
@@ -1535,7 +1540,7 @@ class GenericProcessor extends AudioWorkletProcessor {
       return !this.started;
     }
     this.started = true;
-    if (!this.gateEnded && currentTime > this.end) {
+    if (!this.gateEnded && currentTime > this.gateEnd) {
       this.gateNode?.setValue(0);
       this.gateEnded = true;
     }

@@ -32,6 +32,11 @@ describe('transpiler', () => {
   it('treats K(...) as kabelsalat', () => {
     expect(transpiler('K(1+2)', simple).output).toEqual("worklet('1 + 2');");
   });
+  it('automatically calls functions in K(...)', () => {
+    expect(transpiler('K(() => { return 1 + 2 })', simple).output).toEqual(
+      "worklet('(() => {\\n    return 1 + 2\\n})()');",
+    );
+  });
   it('handles strudel S(...) inside kabelsalat K(...)', () => {
     expect(transpiler('K(S("bd".fast(4)))', simple).output).toEqual("worklet('pat[0]', m('bd', 4).fast(4));");
   });

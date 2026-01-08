@@ -610,6 +610,19 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     gain *= velocity; // velocity currently only multiplies with gain. it might do other things in the future
     delaytime = delaytime ?? cycleToSeconds(delaysync, cps);
 
+    // Kabelsalat
+    if (fx.workletSrc !== undefined) {
+      const workletNode = getWorklet(ac, 'generic-processor', {});
+      chain.connect(workletNode);
+      const workletSrc = fx.workletSrc
+        .replace(/\bpat\[(\d+)\]/g, (_, i) => fx.workletInputs[i])
+        .replaceAll('sFreq', getFrequencyFromValue(value))
+        .replaceAll('sGate', `cc('strudel-gate-${chainID}')`);
+      /* global compileKabel */
+      const { src, ugens, registers } = compileKabel(workletSrc);
+      workletNode.port.postMessage({ src, schema: { ugens, registers }, start: t, gateEnd: end, end: endWithRelease });
+    }
+
     if (fx.stretch !== undefined) {
       const phaseVocoder = getWorklet(ac, 'phase-vocoder-processor', { pitchFactor: fx.stretch });
       chain.connect(phaseVocoder);
@@ -846,17 +859,6 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       fxNodes['phaser_lfo'] = [lfo];
       filterChain.forEach((f) => chain.connect(f));
       chain.audioNodes.push(lfo);
-    }
-    if (fx.workletSrc !== undefined) {
-      const workletNode = getWorklet(ac, 'generic-processor', {});
-      chain.connect(workletNode);
-      const workletSrc = fx.workletSrc
-        .replace(/\bpat\[(\d+)\]/g, (_, i) => fx.workletInputs[i])
-        .replaceAll('sFreq', getFrequencyFromValue(value))
-        .replaceAll('sGate', `cc('strudel-gate-${chainID}')`);
-      /* global compileKabel */
-      const { src, ugens, registers } = compileKabel(workletSrc);
-      workletNode.port.postMessage({ src, schema: { ugens, registers }, start: t, end });
     }
     // delay
     if (key !== 'main' && delay > 0 && delaytime > 0 && delayfeedback > 0) {
