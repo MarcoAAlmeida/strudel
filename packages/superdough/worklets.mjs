@@ -1528,16 +1528,11 @@ class GenericProcessor extends AudioWorkletProcessor {
   }
   process(inputs, outputs) {
     const input = inputs[0]?.[0];
-    if (currentTime > this.end) {
+    if (currentTime >= this.end) {
       return false;
-    }
-    else if (this.genSample === undefined || currentTime < this.start) {
+    } else if (this.genSample === undefined || currentTime < this.start) {
       // pending
       return true;
-    } else if (input === undefined) {
-      // if no input and started, return false and close worklet
-      // else just keep waiting (true)
-      return !this.started;
     }
     this.started = true;
     if (!this.gateEnded && currentTime > this.gateEnd) {

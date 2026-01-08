@@ -3795,7 +3795,21 @@ const _asArrayPattern = (pats) => {
  *     .add(x => x.delay(.13).mul(0.7))
  *     .out()
  *   )
- *   ._pianoroll()
+ *
+ * @example
+ * n("<0 1 <2 3 2 4>>*16")
+ *   .scale("G#2:minor").sometimes(x => x.transpose("12 | 24"))
+ *   .K(() => {
+ *     const att = S(rand.range(0, 0.05))
+ *     const dec = S(rand.range(0.05, 0.2))
+ *     let f = n(sFreq);
+ *     const mod = sine(f).mul("0.1 | 0.2 | 0.3")
+ *       .add("[[1.5 1] | 1 | 2 | 4 | [6 4@3]]*2")
+ *     saw(f.mul(mod))
+ *     .mul(sGate.ad(att, dec))
+ *     .add(x => x.delay(0.4).mul(0.3))
+ *     .out()
+ *   }).fxr(1).room(0.3)
  */
 /**
  * Creates a worklet effect. Typically derived by writing K(...) in the REPL which will parse
