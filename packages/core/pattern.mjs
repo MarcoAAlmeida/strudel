@@ -3770,6 +3770,7 @@ const _asArrayPattern = (pats) => {
  * @param {...number | ...Pattern} inputs Worklet inputs
  * @memberof Pattern
  * @returns Pattern
+ * @noAutocomplete
  */
 Pattern.prototype.worklet = function (src, ...inputs) {
   inputs = inputs.map(reify);
@@ -3781,4 +3782,4 @@ Pattern.prototype.worklet = function (src, ...inputs) {
   });
 };
 
-export const worklet = (...args) => pure(0).worklet(...args);
+export const worklet = (...args) => pure({}).worklet(...args);
