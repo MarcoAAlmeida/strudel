@@ -540,18 +540,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       chain.releaseNodes();
       activeSoundSources.delete(chainID);
     };
-    // We have to use onEnded because some sources (e.g. `sampler`) have
-    // an internal duration which is longer than `value.duration`
-    // const onEnded = () =>
-    //   webAudioTimeout(
-    //     ac,
-    //     () => {
-    //       chain.releaseNodes();
-    //       activeSoundSources.delete(chainID);
-    //     },
-    //     0,
-    //     endWithRelease,
-    //   );
+    
     const soundHandle = await onTrigger(t, value, onEnded, cps);
 
     if (soundHandle) {
