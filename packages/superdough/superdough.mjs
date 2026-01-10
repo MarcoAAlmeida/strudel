@@ -10,7 +10,17 @@ import './vowel.mjs';
 import { clamp, nanFallback, _mod, cycleToSeconds, pickAndRename } from './util.mjs';
 import workletsUrl from './worklets.mjs?audioworklet';
 import { getNodeFromPool, isPoolable, releaseNodeToPool } from './nodePools.mjs';
-import { createFilter, effectSend, gainNode, getCompressor, getDistortion, getLfo, getWorklet } from './helpers.mjs';
+import {
+  createFilter,
+  effectSend,
+  gainNode,
+  getCompressor,
+  getDistortion,
+  getLfo,
+  getWorklet,
+  releaseAudioNode,
+  webAudioTimeout,
+} from './helpers.mjs';
 import { map } from 'nanostores';
 import { logger } from './logger.mjs';
 import { connectLFO, connectEnvelope, connectBusModulator } from './modulators.mjs';
