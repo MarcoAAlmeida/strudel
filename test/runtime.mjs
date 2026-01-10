@@ -131,7 +131,7 @@ const midin = () => {
   return (ccNum) => strudel.ref(() => 0); // returns ref with default value 0
 };
 
-const keyboard = async () => {
+const midikeys = async () => {
   return () => strudel.silence;
 };
 
@@ -154,7 +154,7 @@ evalScope(
   */
   {
     midin,
-    keyboard,
+    midikeys,
     sysex,
     // gist,
     // euclid,

@@ -558,16 +558,16 @@ export async function midin(input) {
  * The note length is fixed as Superdough is not currently set up for undetermined
  * note durations
  *
- * @name keyboard
+ * @name midikeys
  * @param {string | number} input MIDI device name or index defaulting to 0
  * @returns {function((number | Pattern)=): Pattern} A function that produces a pattern.
  *   When queried, the pattern will produces the most recently played midi notes and velocities,
  *   lasting for the specified duration
  * @example
- * const kb = await keyboard('Arturia KeyStep 32')
+ * const kb = await midikeys('Arturia KeyStep 32')
  * kb().s("tri").lpf(80).lpe(6).lpd(0.1).room(2).delay(0.35)
  * @example
- * const kb = await keyboard('Arturia KeyStep 32')
+ * const kb = await midikeys('Arturia KeyStep 32')
  * kb("0.5 1")
  *   .s("saw")
  *   .add(note(rand.mul(0.3)))
@@ -575,7 +575,7 @@ export async function midin(input) {
  */
 const kHaps = {};
 const kListeners = {};
-export async function keyboard(input) {
+export async function midikeys(input) {
   const device = await _initialize(input);
   if (!kHaps[input]) {
     kHaps[input] = [];
@@ -586,7 +586,7 @@ export async function keyboard(input) {
     const [note, velocity] = dataBytes;
     const noteoff = message.command === 8;
     const key = `${input}_${note}`;
-    const t = getTime() + 0.1; // slight delay so it's not too late for cyclist to catch
+    const t = getTime() + 0.03; // slight delay so it's not too late for cyclist to catch
     const span = new TimeSpan(t, t);
     let value = { midikey: key };
     if (noteoff) {
