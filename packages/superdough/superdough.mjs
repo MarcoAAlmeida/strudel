@@ -540,7 +540,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       chain.releaseNodes();
       activeSoundSources.delete(chainID);
     };
-    
+
     const soundHandle = await onTrigger(t, value, onEnded, cps);
 
     if (soundHandle) {

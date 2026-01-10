@@ -9,7 +9,7 @@ import {
   getPitchEnvelope,
   getVibratoOscillator,
   webAudioTimeout,
-  releaseAudioNode
+  releaseAudioNode,
 } from './helpers.mjs';
 import { getNodeFromPool, markWorkletAsDead, releaseNodeToPool } from './nodePools.mjs';
 import { logger } from './logger.mjs';
