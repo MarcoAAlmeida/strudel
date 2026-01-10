@@ -461,10 +461,11 @@ export function applyFM(param, value, begin) {
           nodes[`fm_${idx}`] = [osc];
         }
         const { input, output, freq, osc, toCleanup } = fms[idx];
-        const g = gainNode(amt * freq);
-        io.push(isMod ? output.connect(g) : input);
-        cleanupOnEnd(osc, [...toCleanup, g]);
-        nodes[`fm_${idx}_gain`] = [g];
+        const gAmt = gainNode(amt);
+        const gFreq = gainNode(freq);
+        io.push(isMod ? output.connect(gAmt).connect(gFreq) : input);
+        cleanupOnEnd(osc, [...toCleanup, gAmt, gFreq]);
+        nodes[`fm_${idx}_gain`] = [gAmt];
       }
       if (!io[1]) {
         logger(
