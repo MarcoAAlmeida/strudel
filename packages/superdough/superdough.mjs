@@ -419,7 +419,7 @@ class Chain {
     return this;
   }
   releaseNodes() {
-    this.audioNodes.forEach((n) => (isPoolable(n) ? releaseNodeToPool(n) : n?.disconnect()));
+    this.audioNodes.forEach((n) => (isPoolable(n) ? releaseNodeToPool(n) : releaseAudioNode(n)));
     this.audioNodes = [];
     this.tails = [];
   }
@@ -536,10 +536,17 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     nodes.main['source'] = [sourceNode];
   } else if (getSound(s)) {
     const { onTrigger } = getSound(s);
-    const onEnded = () => {
-      chain.releaseNodes();
-      activeSoundSources.delete(chainID);
-    };
+
+    const onEnded = () =>
+      webAudioTimeout(
+        ac,
+        () => {
+          chain.releaseNodes();
+          activeSoundSources.delete(chainID);
+        },
+        0,
+        endWithRelease,
+      );
 
     const soundHandle = await onTrigger(t, value, onEnded, cps);
 
