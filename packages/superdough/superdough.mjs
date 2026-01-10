@@ -10,17 +10,7 @@ import './vowel.mjs';
 import { clamp, nanFallback, _mod, cycleToSeconds, pickAndRename } from './util.mjs';
 import workletsUrl from './worklets.mjs?audioworklet';
 import { getNodeFromPool, isPoolable, releaseNodeToPool } from './nodePools.mjs';
-import {
-  createFilter,
-  effectSend,
-  gainNode,
-  getCompressor,
-  getDistortion,
-  getLfo,
-  getWorklet,
-  releaseAudioNode,
-  webAudioTimeout,
-} from './helpers.mjs';
+import { createFilter, effectSend, gainNode, getCompressor, getDistortion, getLfo, getWorklet } from './helpers.mjs';
 import { map } from 'nanostores';
 import { logger } from './logger.mjs';
 import { connectLFO, connectEnvelope, connectBusModulator } from './modulators.mjs';
@@ -429,7 +419,7 @@ class Chain {
     return this;
   }
   releaseNodes() {
-    this.audioNodes.forEach((n) => releaseAudioNode(n));
+    this.audioNodes.forEach((n) => (isPoolable(n) ? releaseNodeToPool(n) : n?.disconnect()));
     this.audioNodes = [];
     this.tails = [];
   }
@@ -548,7 +538,6 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     const { onTrigger } = getSound(s);
     const onEnded = () => {
       chain.releaseNodes();
-      audioNodes.forEach((n) => (isPoolable(n) ? releaseNodeToPool(n) : n?.disconnect()));
       activeSoundSources.delete(chainID);
     };
     // We have to use onEnded because some sources (e.g. `sampler`) have
