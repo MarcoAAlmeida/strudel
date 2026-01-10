@@ -547,6 +547,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
   } else if (getSound(s)) {
     const { onTrigger } = getSound(s);
     const onEnded = () => {
+      chain.releaseNodes();
       audioNodes.forEach((n) => (isPoolable(n) ? releaseNodeToPool(n) : n?.disconnect()));
       activeSoundSources.delete(chainID);
     };
