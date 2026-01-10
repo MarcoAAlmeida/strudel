@@ -5,7 +5,7 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 import * as _WebMidi from 'webmidi';
-import { Hap, Pattern, TimeSpan, getTime, isPattern, logger, ref, reify } from '@strudel/core';
+import { Hap, Pattern, TimeSpan, getCps, getTime, isPattern, logger, ref, reify } from '@strudel/core';
 import { noteToMidi, getControlName } from '@strudel/core';
 import { Note } from 'webmidi';
 import { scheduleAtTime } from '../superdough/helpers.mjs';
@@ -586,7 +586,9 @@ export async function midikeys(input) {
     const [note, velocity] = dataBytes;
     const noteoff = message.command === 8;
     const key = `${input}_${note}`;
-    const t = getTime() + 0.03; // slight delay so it's not too late for cyclist to catch
+    const cps = getCps() ?? 0.5;
+    const latencySeconds = 0.06; // slight delay so it's not too late for cyclist to catch
+    const t = getTime() + latencySeconds * cps;
     const span = new TimeSpan(t, t);
     let value = { midikey: key };
     if (noteoff) {
