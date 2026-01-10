@@ -488,7 +488,7 @@ const refsByChan = {};
  * MIDI input: Opens a MIDI input port to receive MIDI control change messages.
  *
  * The output is a function that accepts a midi cc value to query as well as (optionally) a midi channel
- * @tags external_io 
+ * @tags external_io
  * @param {string | number} input MIDI device name or index defaulting to 0
  * @returns {function(number, number=): Pattern} A function from (cc, channel?) to a pattern.
  *   When queried, the pattern will produces the most recently received midi value (normalized to 0 to 1)
