@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { releaseAudioNode } from './helpers.mjs';
+
 var reverbGen = {};
 
 /** Generates a reverb impulse response.
@@ -107,6 +109,8 @@ var applyGradualLowpass = function (input, lpFreqStart, lpFreqEnd, lpFreqEndAt, 
   player.start();
   context.oncomplete = function (event) {
     callback(event.renderedBuffer);
+    releaseAudioNode(filter);
+    releaseAudioNode(player);
   };
   context.startRendering();
 

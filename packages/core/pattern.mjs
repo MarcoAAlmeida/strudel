@@ -25,7 +25,7 @@ import {
   stringifyValues,
 } from './util.mjs';
 import drawLine from './drawLine.mjs';
-import { logger } from './logger.mjs';
+import { errorLogger, logger } from './logger.mjs';
 
 let stringParser;
 
@@ -420,7 +420,7 @@ export class Pattern {
     try {
       return this.query(new State(new TimeSpan(begin, end), controls));
     } catch (err) {
-      logger(`[query]: ${err.message}`, 'error');
+      errorLogger(err, 'query');
       return [];
     }
   }
@@ -592,7 +592,8 @@ export class Pattern {
    * @tags internals
    * @param {Function} hap_test - a function which returns false for haps to be removed from the pattern
    * @returns Pattern
-   * @noAutocomplete
+   * @example
+   * s("bd*8").velocity(rand).filterHaps((h) => (h.whole.begin % 1) < h.value.velocity)
    */
   filterHaps(hap_test) {
     return new Pattern((state) => this.query(state).filter(hap_test));
@@ -604,7 +605,11 @@ export class Pattern {
    * @tags internals
    * @param {Function} value_test
    * @returns Pattern
-   * @noAutocomplete
+   * @example
+   * const drums = s("bd sd bd sd")
+   * kick: drums.filterValues((v) => v.s === 'bd').duck(2)
+   * snare: drums.filterValues((v) => v.s === 'sd')
+   * bass: s("saw!4").note("G#1").lpf(80).lpenv(4).orbit(2)
    */
   filterValues(value_test) {
     return new Pattern((state) => this.query(state).filter((hap) => value_test(hap.value))).setSteps(this._steps);
@@ -1646,7 +1651,13 @@ export const func = curry((a, b) => reify(b).func(a));
  *
  * @param {string | string[]} name name of the function, or an array of names to be used as synonyms
  * @param {function} func function with 1 or more params, where last is the current pattern
- * @noAutocomplete
+ * @param {bool} patternify defaults to true; if set to false, you will have more control over the arguments to `func` as they will be
+ *   in their raw form and it will be up to you to patternify them and/or query them for values
+ * @example
+ * const vlpf = register('vlpf', (freq, pat) => {
+ *   return pat.fmap((v) => ({...v, cutoff: freq * (v.velocity ?? 1) }));
+ * })
+ * s("saw").seg(8).velocity(rand).vlpf(800)
  *
  */
 export function register(name, func, patternify = true, preserveSteps = false, join = (x) => x.innerJoin()) {
@@ -2326,7 +2337,7 @@ export const brak = register('brak', function (pat) {
 });
 
 /**
- * Reverse all haps in a pattern
+ * Reverse all cycles in a pattern. See also `revv` for reversing a whole pattern.
  *
  * @tags temporal
  * @name rev
@@ -2358,6 +2369,23 @@ export const rev = register(
   false,
   true,
 );
+
+/**
+ * Reverse a whole pattern. See also `rev` for reversing each cycle.
+ *
+ * @name revv
+ * @memberof Pattern
+ * @returns Pattern
+ * @example
+ * // This is the same as `<[g e] [d c]>`. If `rev()` is used, you get
+ * // the same as `<[d c] [g e]>`, where each cycle reverses, but the order of
+ * // cycles stays the same.
+ * note("<[c d] [e g]>").revv()
+ */
+export const revv = register('revv', function (pat) {
+  const negateSpan = (span) => new TimeSpan(Fraction(0).sub(span.end), Fraction(0).sub(span.begin));
+  return pat.withQuerySpan(negateSpan).withHapSpan(negateSpan);
+});
 
 /** Like press, but allows you to specify the amount by which each
  * event is shifted. pressBy(0.5) is the same as press, while
@@ -2684,8 +2712,8 @@ export const { chunkBack, chunkback } = register(
  * @returns Pattern
  * @example
  * "<0 8> 1 2 3 4 5 6 7"
- * .fastChunk(4, x => x.color('red')).slow(2)
  * .scale("C2:major").note()
+ * .fastChunk(4, x => x.color('red')).slow(2)
  */
 export const { fastchunk, fastChunk } = register(
   ['fastchunk', 'fastChunk'],
@@ -2773,8 +2801,13 @@ export const hsl = register('hsl', (h, s, l, pat) => {
  * Tags each Hap with an identifier. Good for filtering. The function populates Hap.context.tags (Array).
  * @name tag
  * @tags temporal
- * @noAutocomplete
  * @param {string} tag anything unique
+ * @example
+ * s("saw!16").note("F1")
+ *   .lpf(tri.range(40, 80).slow(4)).lpenv(5).lpq(4).lpd(0.15)
+ *   .when(rand.late(0.1).gte(0.5), x => x.transpose("12").tag('altered'))
+ *   .when(rand.late(0.2).gte(0.5), x => x.s("square").tag('altered'))
+ *   .when("<0 1>", x => x.filter((hap) => hap.hasTag('altered')))
  */
 Pattern.prototype.tag = function (tag) {
   return this.withContext((ctx) => ({ ...ctx, tags: (ctx.tags || []).concat([tag]) }));
@@ -2786,7 +2819,7 @@ Pattern.prototype.tag = function (tag) {
  * @tags temporal
  * @param {Function} test function to test Hap
  * @example
- * s("hh!7 oh").filter(hap => hap.value.s==='hh')
+ * s("hh!7 oh").filter(hap => hap.value.s === 'hh')
  */
 export const filter = register('filter', (test, pat) => pat.withHaps((haps) => haps.filter(test)));
 
@@ -2794,8 +2827,9 @@ export const filter = register('filter', (test, pat) => pat.withHaps((haps) => h
  * Filters haps by their begin time
  * @name filterWhen
  * @tags temporal
- * @noAutocomplete
  * @param {Function} test function to test Hap.whole.begin
+ * @example
+ * oneCycle: s("bd*4").filterWhen((t) => t < 1)
  */
 export const filterWhen = register('filterWhen', (test, pat) => pat.filter((h) => test(h.whole.begin)));
 
@@ -3776,3 +3810,98 @@ for (const name of distAlgoNames) {
     return this.distort(argsPat);
   };
 }
+
+/**
+ * Turns a list of patterns into a single pattern which outputs list-values
+ *
+ * @name parray
+ * @returns Pattern
+ */
+export const parray = (pats) => {
+  const pack = (...xs) => xs;
+  let acc = pure(curry(pack, null, pats.length));
+  for (const p of pats) acc = acc.appBoth(reify(p));
+  return acc;
+};
+
+const _ensureListPattern = (list) => {
+  if (Array.isArray(list)) {
+    return parray(list);
+  }
+  return reify(list);
+};
+
+/**
+ * Scale the magnitude of the harmonics of one of the core synths ('sine', 'tri', 'saw', ..)
+ *
+ * Can also be used to create a new synth via `s('user').partials(...)`
+ *
+ * @name partials
+ * @param {number[] | Pattern} magnitudes List of [0, 1] magnitudes for partials. 0th entry is the fundamental harmonic (i.e. DC offset is skipped)
+ * @example
+ * s("user").seg(16).n(irand(8)).scale("A:major")
+ *   .partials([1, 0, 1, 0, 0, 1])
+ * @example
+ * s("saw").seg(8).n(irand(12)).scale("G#:minor")
+ *   .partials(binaryL(irand(256).add("1")))
+ */
+Pattern.prototype.partials = function (list) {
+  return this.withValue((v) => (l) => ({ ...v, partials: l })).appLeft(_ensureListPattern(list));
+};
+
+// Also create a top-level function
+export const partials = (list) => {
+  return _ensureListPattern(list).as('partials');
+};
+
+/**
+ * Rotates the harmonics of one of the core synths ('sine', 'tri', 'saw', 'user', ..) by a list of phases
+ *
+ * @name phases
+ * @param {number[] | Pattern} phases List of [0, 1) phases for partials. 0th entry is the fundamental phase (i.e. DC offset is skipped)
+ * @example
+ * // Phase cancellation
+ * s("saw").seg(8).n(irand(12)).scale("G#1:minor")
+ *   .partials(partials([1, 1, 1]))
+ *   .superimpose(x => x.phases([0.5, 0.5, 0.5]))
+ */
+Pattern.prototype.phases = function (list) {
+  return this.withValue((v) => (l) => ({ ...v, phases: l })).appLeft(_ensureListPattern(list));
+};
+
+// Also create a top-level function
+export const phases = (list) => {
+  return _ensureListPattern(list).as('phases');
+};
+
+/**
+ * Establishes an FX chain. Can be called by chaining .FX(fx1).FX(fx2)..
+ * calls and/or in a single .FX(fx1, fx2, ..) call. The fx1, .. are _patterns_ which
+ * establish the controls of the given effect. See examples.
+ * @name FX
+ * @memberof Pattern
+ * @returns Pattern
+ * @example
+ * $: s("[sbd <hh [bd | lt | oh]>]*4").dec(.4)
+ *   .FX(
+ *     phaser(0.5).gain(2),
+ *     bpf(800),
+ *     distort(1.3),
+ *     room(0.2),
+ *     delay(0.5).gain(1.25),
+ *     distort(0.3),
+ *   ).fxr(1.7) // sets release time of effects (like delay)
+ * @example
+ * $: s("saw").fm(0.5)
+ *   .delay(0.3) // outer effects are applied *last*
+ *   .FX(coarse(4)) // first coarse
+ *   .FX(lpf(500).lpe(4).lpa(1).lpd(2)) // then lpf
+ *   .FX(distort(1)) // then distort
+ */
+Pattern.prototype.FX = function (...effects) {
+  effects = effects.map(reify);
+  return this.withValue((v) => (vEff) => {
+    const currFX = v.FX ?? [];
+    return { ...v, FX: currFX.concat(vEff) };
+  }).appLeft(parray(effects));
+};
