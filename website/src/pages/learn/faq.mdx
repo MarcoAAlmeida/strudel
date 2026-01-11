@@ -8,27 +8,26 @@ import { JsDoc } from '../../docs/JsDoc';
 
 # Frequently Asked Questions
 
-This page contains frequently asked questions. Usually, the topic is explained in more detail in a section which is linked in the answer. This page's aim is to give an overview over topics which are important to the users of strudel.
+This page contains frequently asked questions, with answers. Usually, the topic is explained in more detail in a section which is linked in the answer.
 
 ## Is Strudel/Tidal free?
 
-Yes - there is no charge, this is a collective open source project, and the music you make with it is your own.
+Yes - there is no charge, this is a collective open source project, and the music you make with it is your own. However if you can, please make a one-off or regular donation to our [opencollective fund](https://opencollective.com/tidalcycles), that supports the software and cultural development of Strudel and other Uzu languages.
 
-However there are some caveats - the source code must stay free, i.e. you cannot distribute strudel or tidal as part of projects with incompatible licenses - see the [license](https://www.gnu.org/licenses/agpl-3.0.en.html) for details. The contributed examples and tracks are also separately licensed, and must not e.g. be used to train AI models without permission.
+While there is no charge there are some caveats, e.g.:
+
+* the source code must stay free, i.e. you cannot distribute strudel or tidal as part of projects with incompatible licenses - see the [license](https://www.gnu.org/licenses/agpl-3.0.en.html) for details. 
+* the contributed examples and tracks are also separately licensed, and must not e.g. be used to train AI models without permission.
 
 ## How to record or export audio?
 
-There are multiple ways to record the audio -- and video -- output of Strudel:
+Strudel is not a digital audio workstation and does not operate following the same principles shared by most traditional audio softwares. However, there are multiple ways to record the audio -- and video -- output of Strudel:
 
-    - capture the raw stereo signal coming out of your web browser.
-
-    - use the alternative SuperDirt audio engine. Read [this page](/learn/input-output/#oscsuperdirtstrudeldirt) to know more about it.
-
-    - capture the audio/video stream using a capture tool such as [OBS](<https://obsproject.com/fr>).
-
-    - don't record anything and code it again in front of your friends.
-
-You will need an external audio editor/DAW such as Reaper/Audacity/Ardour, etc. Strudel itself does not have functionality for exporting stems / individual tracks to an audio or midi file. Strudel is not a digital audio workstation and does not operate following the same principles shared by most traditional audio softwares.
+* Use the 'export' tab to render and download as an audio file.
+* capture the raw stereo signal coming out of your web browser. You will need an external audio editor/DAW such as Reaper/Audacity/Ardour, etc. 
+* use the alternative SuperDirt audio engine. Read [this page](/learn/input-output/#oscsuperdirtstrudeldirt) to know more about it.
+* capture the audio/video stream using a capture tool such as [OBS](<https://obsproject.com/fr>), which is designed for live streaming, but also works very well for recording.
+* don't record anything and code it again in front of your friends.
 
 ## Can I use strudel with my IDE?
 
@@ -37,13 +36,13 @@ Yes you can. There are experimental modes, made by community members, for severa
 - VS Code: [Strudel VS](https://marketplace.visualstudio.com/items?itemName=cmillsdev.strudelvs): an experimental mode for Microsoft VSCode. A revived version of [TidalStrudel](https://marketplace.visualstudio.com/items?itemName=roipoussiere.tidal-strudel), which is defunct.
 - nvim: [strudel.nvim](https://github.com/gruvw/strudel.nvim)
 
-## How can I record samples?
+## How can I use my own samples?
 
-You can use your own samples with Strudel. There are multiple ways to load your sample collection. Some methods are good for quick experimentation, some others are good to share your audio collection with other musicians:
+There are multiple ways to load your sample collection. Some methods are good for quick experimentation, some others are good to share your audio collection with other musicians:
 
-    - Import folders [from the interface](/learn/samples/#from-disk-via-import-sounds-folder)
-    -
-    - Host your sound library e.g. on github and [load them from an URL](/learn/samples/#loading-custom-samples)
+- Import folders [from the interface](/learn/samples/#from-disk-via-import-sounds-folder). These are stored locally in your web browser, and not uploaded. 
+- Serve a folder of samples locally using the [strudel 'sampler' commandline tool](https://strudel.cc/learn/samples/#from-disk-via-strudelsampler). This can be most reliable method, but requires [nodejs](https://nodejs.org) to be installed.
+- Host your sound library online on the web and [load them from an URL](/learn/samples/#loading-custom-samples)
 
 ## Can I use Strudel with AI/LLM tools?
 
