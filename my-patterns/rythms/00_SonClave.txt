@@ -1,0 +1,29 @@
+/* "SonClave" */
+/**
+[18 Rhythms you should know ](https://www.youtube.com/watch?v=ZROR_E5bFEI)
+[Dulce Embeleso](https://www.youtube.com/watch?v=T5lDyoubJtU&list=RDT5lDyoubJtU&start_radio=1)
+[Chan Chan] (https://www.youtube.com/watch?v=lh85dCURaeo&list=RDlh85dCURaeo&start_radio=1)
+[Yo no soy mentrioso](https://www.youtube.com/watch?v=WkZAsZmKTlY&list=RDWkZAsZmKTlY&start_radio=1)
+
+**/
+
+
+setcpm(100/4)
+
+let wood = s(`[bd*8]`).sound(`clave`);
+let son_clave_3_by_2 = s(`[bd@1.5 bd@1.5 bd] [~ bd bd ~]`).bank(`tr909`);
+let son_clave_2_by_3 = s(`[~ bd bd ~] [bd@1.5 bd@1.5 bd] `).bank(`tr909`);
+let tresillo = s(`[bd@1.5 bd@1.5 bd]*2`).bank(`rolandtr909`);
+let shape_of_you = note(`[C#@1.5 E@1.5 C#]!3 [D#@1.5 C#@1.5 B]`).slow(2.2).sound("gm_epiano2")
+
+
+arrange (
+  [1, wood],
+  [4, son_clave_3_by_2],
+  [1, wood],
+  [4, son_clave_2_by_3],
+  [1, wood],
+  [4, tresillo],
+  [1, wood],
+  [4, shape_of_you],
+).room(.02)
