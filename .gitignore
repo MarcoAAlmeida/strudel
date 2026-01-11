@@ -134,3 +134,4 @@ samples/*
 # MIDI Tokenizer Gradle build artifacts
 midi_tokenizer/.gradle/
 midi_tokenizer/build/
+midi_tokenizer/spring-shell.log
