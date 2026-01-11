@@ -574,7 +574,8 @@ export class Pattern {
    * Returns a new Pattern, which only returns haps that meet the given test.
    * @param {Function} hap_test - a function which returns false for haps to be removed from the pattern
    * @returns Pattern
-   * @noAutocomplete
+   * @example
+   * s("bd*8").velocity(rand).filterHaps((h) => (h.whole.begin % 1) < h.value.velocity)
    */
   filterHaps(hap_test) {
     return new Pattern((state) => this.query(state).filter(hap_test));
@@ -585,7 +586,11 @@ export class Pattern {
    * inside haps.
    * @param {Function} value_test
    * @returns Pattern
-   * @noAutocomplete
+   * @example
+   * const drums = s("bd sd bd sd")
+   * kick: drums.filterValues((v) => v.s === 'bd').duck(2)
+   * snare: drums.filterValues((v) => v.s === 'sd')
+   * bass: s("saw!4").note("G#1").lpf(80).lpenv(4).orbit(2)
    */
   filterValues(value_test) {
     return new Pattern((state) => this.query(state).filter((hap) => value_test(hap.value))).setSteps(this._steps);
@@ -1587,7 +1592,13 @@ export const func = curry((a, b) => reify(b).func(a));
  *
  * @param {string | string[]} name name of the function, or an array of names to be used as synonyms
  * @param {function} func function with 1 or more params, where last is the current pattern
- * @noAutocomplete
+ * @param {bool} patternify defaults to true; if set to false, you will have more control over the arguments to `func` as they will be
+ *   in their raw form and it will be up to you to patternify them and/or query them for values
+ * @example
+ * const vlpf = register('vlpf', (freq, pat) => {
+ *   return pat.fmap((v) => ({...v, cutoff: freq * (v.velocity ?? 1) }));
+ * })
+ * s("saw").seg(8).velocity(rand).vlpf(800)
  *
  */
 export function register(name, func, patternify = true, preserveSteps = false, join = (x) => x.innerJoin()) {
@@ -2676,8 +2687,13 @@ export const hsl = register('hsl', (h, s, l, pat) => {
 /**
  * Tags each Hap with an identifier. Good for filtering. The function populates Hap.context.tags (Array).
  * @name tag
- * @noAutocomplete
  * @param {string} tag anything unique
+ * @example
+ * s("saw!16").note("F1")
+ *   .lpf(tri.range(40, 80).slow(4)).lpenv(5).lpq(4).lpd(0.15)
+ *   .when(rand.late(0.1).gte(0.5), x => x.transpose("12").tag('altered'))
+ *   .when(rand.late(0.2).gte(0.5), x => x.s("square").tag('altered'))
+ *   .when("<0 1>", x => x.filter((hap) => hap.hasTag('altered')))
  */
 Pattern.prototype.tag = function (tag) {
   return this.withContext((ctx) => ({ ...ctx, tags: (ctx.tags || []).concat([tag]) }));
@@ -2688,15 +2704,16 @@ Pattern.prototype.tag = function (tag) {
  * @name filter
  * @param {Function} test function to test Hap
  * @example
- * s("hh!7 oh").filter(hap => hap.value.s==='hh')
+ * s("hh!7 oh").filter(hap => hap.value.s === 'hh')
  */
 export const filter = register('filter', (test, pat) => pat.withHaps((haps) => haps.filter(test)));
 
 /**
  * Filters haps by their begin time
  * @name filterWhen
- * @noAutocomplete
  * @param {Function} test function to test Hap.whole.begin
+ * @example
+ * oneCycle: s("bd*4").filterWhen((t) => t < 1)
  */
 export const filterWhen = register('filterWhen', (test, pat) => pat.filter((h) => test(h.whole.begin)));
 
@@ -3569,6 +3586,20 @@ export const morph = (frompat, topat, bypat) => {
   return frompat.innerBind((from) => topat.innerBind((to) => bypat.innerBind((by) => _morph(from, to, by))));
 };
 
+const _distortWithAlg = function (name) {
+  const func = function (args, pat) {
+    const argsPat = reify(args).fmap((v) => (Array.isArray(v) ? [...v, name] : [v, 1, name]));
+    if (!pat) {
+      return pure({}).distort(argsPat);
+    }
+    return pat.distort(argsPat);
+  };
+  Pattern.prototype[name] = function (args) {
+    return func(args, this);
+  };
+  return func;
+};
+
 /**
  * Soft-clipping distortion
  *
@@ -3577,6 +3608,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const soft = _distortWithAlg('soft');
+
 /**
  * Hard-clipping distortion
  *
@@ -3585,6 +3618,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const hard = _distortWithAlg('hard');
+
 /**
  * Cubic polynomial distortion
  *
@@ -3593,6 +3628,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const cubic = _distortWithAlg('cubic');
+
 /**
  * Diode-emulating distortion
  *
@@ -3601,6 +3638,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const diode = _distortWithAlg('diode');
+
 /**
  * Asymmetrical diode distortion
  *
@@ -3609,6 +3648,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const asym = _distortWithAlg('asym');
+
 /**
  * Wavefolding distortion
  *
@@ -3617,6 +3658,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const fold = _distortWithAlg('fold');
+
 /**
  * Wavefolding distortion composed with sinusoid
  *
@@ -3625,6 +3668,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const sinefold = _distortWithAlg('sinefold');
+
 /**
  * Distortion via Chebyshev polynomials
  *
@@ -3633,14 +3678,7 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
-const distAlgoNames = ['scurve', 'soft', 'hard', 'cubic', 'diode', 'asym', 'fold', 'sinefold', 'chebyshev'];
-for (const name of distAlgoNames) {
-  // Add aliases for distortion algorithms
-  Pattern.prototype[name] = function (args) {
-    const argsPat = reify(args).fmap((v) => (Array.isArray(v) ? [...v, name] : [v, 1, name]));
-    return this.distort(argsPat);
-  };
-}
+export const chebyshev = _distortWithAlg('chebyshev');
 
 /**
  * Turns a list of patterns into a single pattern which outputs list-values
@@ -3703,4 +3741,36 @@ Pattern.prototype.phases = function (list) {
 // Also create a top-level function
 export const phases = (list) => {
   return _ensureListPattern(list).as('phases');
+};
+
+/**
+ * Establishes an FX chain. Can be called by chaining .FX(fx1).FX(fx2)..
+ * calls and/or in a single .FX(fx1, fx2, ..) call. The fx1, .. are _patterns_ which
+ * establish the controls of the given effect. See examples.
+ * @name FX
+ * @memberof Pattern
+ * @returns Pattern
+ * @example
+ * $: s("[sbd <hh [bd | lt | oh]>]*4").dec(.4)
+ *   .FX(
+ *     phaser(0.5).gain(2),
+ *     bpf(800),
+ *     distort(1.3),
+ *     room(0.2),
+ *     delay(0.5).gain(1.25),
+ *     distort(0.3),
+ *   ).fxr(1.7) // sets release time of effects (like delay)
+ * @example
+ * $: s("saw").fm(0.5)
+ *   .delay(0.3) // outer effects are applied *last*
+ *   .FX(coarse(4)) // first coarse
+ *   .FX(lpf(500).lpe(4).lpa(1).lpd(2)) // then lpf
+ *   .FX(distort(1)) // then distort
+ */
+Pattern.prototype.FX = function (...effects) {
+  effects = effects.map(reify);
+  return this.withValue((v) => (vEff) => {
+    const currFX = v.FX ?? [];
+    return { ...v, FX: currFX.concat(vEff) };
+  }).appLeft(parray(effects));
 };
