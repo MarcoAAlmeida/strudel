@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, Fragment } from 'react';
 
 import jsdocJson from '../../../../../doc.json';
 import { Textbox } from '../textbox/Textbox';
@@ -109,9 +109,8 @@ export function Reference() {
         </div>
         <div className="h-full gap-1.5 bg-background bg-opacity-50 rounded-md overflow-y-auto">
           {visibleFunctions.map((entry, i) => (
-            <>
+            <Fragment key={`entry-${entry.name}`}>
               <a
-                key={`entry-${entry.name}`}
                 className="cursor-pointer text-foreground flex-none hover:bg-lineHighlight overflow-x-hidden px-1 text-ellipsis"
                 onClick={() => {
                   const el = document.getElementById(`doc-${entry.name}`);
@@ -121,7 +120,7 @@ export function Reference() {
               >
                 {entry.name}
               </a>{' '}
-            </>
+            </Fragment>
           ))}
         </div>
       </div>
