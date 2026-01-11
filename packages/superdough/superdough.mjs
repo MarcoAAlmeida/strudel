@@ -9,6 +9,7 @@ import './reverb.mjs';
 import './vowel.mjs';
 import { clamp, nanFallback, _mod, cycleToSeconds, pickAndRename } from './util.mjs';
 import workletsUrl from './worklets.mjs?audioworklet';
+import { getNodeFromPool, isPoolable, releaseNodeToPool } from './nodePools.mjs';
 import {
   createFilter,
   effectSend,
@@ -342,7 +343,7 @@ function getPhaser(begin, end, frequency = 1, depth = 0.5, centerFrequency = 100
   let fOffset = 282; //for backward compat in #1800
   const filterChain = [];
   for (let i = 0; i < numStages; i++) {
-    const filter = ac.createBiquadFilter();
+    const filter = getNodeFromPool('filter', () => ac.createBiquadFilter());
     filter.type = 'notch';
     filter.gain.value = 1;
     filter.frequency.value = centerFrequency + fOffset;
@@ -428,7 +429,7 @@ class Chain {
     return this;
   }
   releaseNodes() {
-    this.audioNodes.forEach((n) => releaseAudioNode(n));
+    this.audioNodes.forEach((n) => (isPoolable(n) ? releaseNodeToPool(n) : releaseAudioNode(n)));
     this.audioNodes = [];
     this.tails = [];
   }
@@ -545,8 +546,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     nodes.main['source'] = [sourceNode];
   } else if (getSound(s)) {
     const { onTrigger } = getSound(s);
-    // We have to use onEnded because some sources (e.g. `sampler`) have
-    // an internal duration which is longer than `value.duration`
+
     const onEnded = () =>
       webAudioTimeout(
         ac,
@@ -557,6 +557,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
         0,
         endWithRelease,
       );
+
     const soundHandle = await onTrigger(t, value, onEnded, cps);
 
     if (soundHandle) {
@@ -607,7 +608,11 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     gain *= velocity; // velocity currently only multiplies with gain. it might do other things in the future
     delaytime = delaytime ?? cycleToSeconds(delaysync, cps);
 
-    stretch !== undefined && chain.connect(getWorklet(ac, 'phase-vocoder-processor', { pitchFactor: stretch }));
+    if (stretch !== undefined) {
+      const phaseVocoder = getWorklet(ac, 'phase-vocoder-processor', { pitchFactor: stretch });
+      chain.connect(phaseVocoder);
+      fxNodes['stretch'] = [phaseVocoder];
+    }
 
     if (fx.transient !== undefined) {
       const transProcessor = getWorklet(
@@ -821,6 +826,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     // panning
     if (fx.pan !== undefined) {
       const panner = ac.createStereoPanner();
+      fxNodes['pan'] = [panner];
       panner.pan.value = 2 * fx.pan - 1;
       chain.connect(panner);
     }
