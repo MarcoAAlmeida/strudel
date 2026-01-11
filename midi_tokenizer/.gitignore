@@ -30,3 +30,6 @@ nbdist/
 
 # Build outputs
 target/
+
+# Spring Shell
+spring-shell.log

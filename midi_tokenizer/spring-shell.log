@@ -1,4 +1,0 @@
-1768162927873:parse --input /tmp/test_scale.mid
-1768162928015:exit
-1768162940183:parse --input /tmp/test_scale.mid --output /tmp/test_output.json
-1768162940315:exit
