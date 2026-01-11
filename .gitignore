@@ -131,3 +131,7 @@ fabric.properties
 samples/*
 !samples/README.md
 .idea/
+
+# Java/Gradle artifacts from midi_tokenizer module
+midi_tokenizer/build/
+midi_tokenizer/.gradle/
