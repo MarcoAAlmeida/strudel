@@ -5,7 +5,7 @@
 
 
 // [offbeat](https://youtu.be/5acGxguFiyo?t=150)
-setcpm(60);
+setcpm(40);
 
 let reggae = s(`[~ hh cp hh], [~ ~ sd ~]`)
   .fast(1).bank(`rolandtr909`);

@@ -29,17 +29,13 @@ This creates `build/libs/midi-tokenizer.jar`.
 
 ## Running
 
-### Using Gradle
+Build and run the JAR directly for proper Spring Shell compatibility:
 
 ```bash
-./gradlew bootRun
+./gradlew bootJar && java -jar build/libs/midi-tokenizer.jar
 ```
 
-### Using the JAR directly
-
-```bash
-java -jar build/libs/midi-tokenizer.jar
-```
+**Note:** Do not use `./gradlew bootRun` - it has terminal compatibility issues with Spring Shell on all platforms because Gradle intercepts stdin/stdout, preventing the interactive shell from working properly.
 
 ## Usage
 

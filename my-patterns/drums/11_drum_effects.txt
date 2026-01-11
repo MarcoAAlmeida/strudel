@@ -1,0 +1,37 @@
+/* "gain_drum_effects" */
+/**
+[Snare Technique Lvl 1 84 bpm by M. Nir](https://www.youtube.com/watch?v=L2kIuv81DIc)
+**/
+
+
+// [drum_gain_effects](https://www.youtube.com/watch?v=L2kIuv81DIc)
+setcpm(84/4)
+
+let sixteen_stress_fourth = s(`[hh*16]`)
+  .gain(`[1 1 1 4 1 1 1 1]*2`)
+  .fast(1).bank(`rolandtr909`)
+
+let sixteen_stress_fourth_sixth_pause =s(`[hh*16]`)
+  .gain(`[1 1 1 10 1 1 1 1 10 1 1 10 0 0 0 0]`)
+  .fast(1).bank(`rolandtr909`)
+
+let sixteen_stress_fourth_sixth_pause_normalized_gain_exaggerated =s(`[hh*16]`)
+  .gain(`[.25 .25 .25 1 .25 .25 .25 .25 1 .25 .25 1 0 0 0 0]`)
+  .fast(1).bank(`rolandtr909`)
+
+let sixteen_stress_fourth_sixth_pause_normalized_gain =s(`[hh*16]`)
+  .gain(`[.8 .8 .8 1 .8 .8 .8 .8 1 .8 .8 1 0 0 0 0]`)
+  .fast(1).bank(`rolandtr909`)
+
+
+
+
+let wood = s(`bd*4`).sound(`east`);
+
+arrange (
+  [1, wood],
+  [4, sixteen_stress_fourth],
+  [4, sixteen_stress_fourth_sixth_pause],
+  [4, sixteen_stress_fourth_sixth_pause_normalized_gain],
+  [4, sixteen_stress_fourth_sixth_pause_normalized_gain_exaggerated],
+).room(.05)
