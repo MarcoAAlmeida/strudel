@@ -124,8 +124,8 @@ class LFOProcessor extends AudioWorkletProcessor {
       { name: 'shape', defaultValue: 0 },
       { name: 'curve', defaultValue: 1 },
       { name: 'dcoffset', defaultValue: 0 },
-      { name: 'min', defaultValue: 0 },
-      { name: 'max', defaultValue: 1 },
+      { name: 'min', defaultValue: -1e9 },
+      { name: 'max', defaultValue: 1e9 },
     ];
   }
 
@@ -143,7 +143,8 @@ class LFOProcessor extends AudioWorkletProcessor {
 
   process(_inputs, outputs, parameters) {
     const begin = parameters['begin'][0];
-    if (currentTime >= parameters.end[0]) {
+    const end = parameters['end'][0];
+    if (currentTime >= end) {
       return false;
     }
     if (currentTime <= begin) {
@@ -161,6 +162,7 @@ class LFOProcessor extends AudioWorkletProcessor {
     const curve = parameters['curve'][0];
 
     const dcoffset = parameters['dcoffset'][0];
+
     const min = parameters['min'][0];
     const max = parameters['max'][0];
     const shape = waveShapeNames[parameters['shape'][0]];
@@ -461,6 +463,16 @@ registerProcessor('distort-processor', DistortProcessor);
 class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
+    this.isAlive = true; // used internally to prevent multiple death messages
+    this.port.onmessage = (e) => {
+      const { type, payload } = e.data || {};
+      if (type === 'initialize') {
+        this.initialize(payload);
+      }
+    };
+    this.initialize();
+  }
+  initialize(_options) {
     this.phase = [];
   }
   static get parameterDescriptors() {
@@ -511,12 +523,16 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
     ];
   }
   process(_input, outputs, params) {
-    if (currentTime >= params.end[0]) {
-      // should terminate
+    if (currentTime >= params.end[0] + 0.5) {
+      // Outside of grace period - should terminate
+      if (this.isAlive) {
+        this.port.postMessage({ type: 'died' });
+        this.isAlive = false;
+      }
       return false;
     }
-    if (currentTime <= params.begin[0]) {
-      // keep alive
+    if (currentTime >= params.end[0] || currentTime <= params.begin[0]) {
+      // Inside of grace period or not yet started
       return true;
     }
     const output = outputs[0];
@@ -967,7 +983,9 @@ class EnvelopeProcessor extends AudioWorkletProcessor {
       { name: 'attackCurve', defaultValue: 0, minValue: -1, maxValue: 1 },
       { name: 'decayCurve', defaultValue: 0, minValue: -1, maxValue: 1 },
       { name: 'releaseCurve', defaultValue: 0, minValue: -1, maxValue: 1 },
-      { name: 'peak', defaultValue: 1 },
+      { name: 'depth', defaultValue: 1 },
+      { name: 'min', defaultValue: -1e9 },
+      { name: 'max', defaultValue: 1e9 },
       { name: 'retrigger', defaultValue: 1, minValue: 0, maxValue: 1 },
     ];
   }
@@ -1009,9 +1027,15 @@ class EnvelopeProcessor extends AudioWorkletProcessor {
   }
 
   process(_inputs, outputs, params) {
+    const begin = params['begin'][0];
+    const end = params['end'][0];
+    if (currentTime >= end) {
+      return false;
+    }
+    if (currentTime <= begin) {
+      return true;
+    }
     const out = outputs[0][0];
-    if (!out) return true;
-    const begin = pv(params.begin, 0);
     const retrigger = pv(params.retrigger, 0) >= 0.5; // convert to bool
     if (begin !== this.beginTime && (this.state === 0 || retrigger)) {
       // triggered
@@ -1029,7 +1053,9 @@ class EnvelopeProcessor extends AudioWorkletProcessor {
       const aCurve = pv(params.attackCurve, i);
       const dCurve = pv(params.decayCurve, i);
       const rCurve = pv(params.releaseCurve, i);
-      const peak = pv(params.peak, i);
+      const depth = pv(params.depth, i);
+      const min = pv(params.min, i);
+      const max = pv(params.max, i);
       const states = [
         { time: Number.POSITIVE_INFINITY, start: 0, target: 0 }, // idle
         { time: attack, start: this.attackStart, target: 1, curve: aCurve },
@@ -1043,7 +1069,7 @@ class EnvelopeProcessor extends AudioWorkletProcessor {
         this.state = (this.state + 1) % states.length;
         time = states[this.state].time;
       }
-      out[i] = this.val * peak;
+      out[i] = clamp(this.val * depth, min, max);
     }
     return true;
   }
@@ -1138,37 +1164,29 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
 
   constructor(options) {
     super(options);
-    this.frameLen = 0;
-    this.numFrames = 0;
-    this.phase = [];
-
+    this.isAlive = true; // used internally to prevent multiple death messages
     this.port.onmessage = (e) => {
       const { type, payload } = e.data || {};
-      if (type === 'table') {
-        const key = payload.key;
-        this.frameLen = payload.frameLen;
-        if (!tablesCache[key]) {
-          const tables = [payload.frames];
-          let table = tables[0];
-          for (let level = 1; level < 1; level++) {
-            const nextLen = table.length >> 1;
-            const nextTable = table.map((frame) => {
-              const avg = new Float32Array(nextLen);
-              for (let i = 0; i < nextLen; i++) {
-                avg[i] = (frame[2 * i] + frame[2 * i + 1]) / 2;
-              }
-              return avg;
-            });
-            tables.push(nextTable);
-            table = nextTable;
-            if (nextLen <= 32) break;
-          }
-          tablesCache[key] = tables;
-        }
-        this.tables = tablesCache[key];
-        this.numFrames = this.tables[0].length;
+      if (type === 'initialize') {
+        this.initialize(payload);
       }
     };
+    this.initialize();
+  }
+  initialize(options) {
+    this.table = null;
+    this.frameLen = null;
+    this.numFrames = null;
+    this.phase = [];
+    if (options?.key) {
+      const key = options.key;
+      this.frameLen = options.frameLen;
+      if (!tablesCache[key]) {
+        tablesCache[key] = options.frames;
+      }
+      this.table = tablesCache[key];
+      this.numFrames = this.table.length;
+    }
   }
 
   _mirror(x) {
@@ -1313,25 +1331,22 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
     return a + (b - a) * frac;
   }
 
-  _chooseMip(dphi) {
-    const approxHarm = clamp(dphi, 1e-6, 64);
-    let level = 0;
-    while (level + 1 < (this.tables?.length || 1) && approxHarm < this.tables[level][0].length / 8) {
-      level++;
-    }
-    return level;
-  }
-
   process(_inputs, outputs, parameters) {
-    if (currentTime >= parameters.end[0]) {
+    if (currentTime >= parameters.end[0] + 0.5) {
+      // Outside of grace period - should terminate
+      if (this.isAlive) {
+        this.port.postMessage({ type: 'died' });
+        this.isAlive = false;
+      }
       return false;
     }
-    if (currentTime <= parameters.begin[0]) {
+    if (currentTime >= parameters.end[0] || currentTime <= parameters.begin[0]) {
+      // Inside of grace period or not yet started
       return true;
     }
     const outL = outputs[0][0];
     const outR = outputs[0][1] || outputs[0][0];
-    if (!this.tables) {
+    if (!this.table) {
       outL.fill(0);
       if (outR !== outL) outR.set(outL);
       return true;
@@ -1365,14 +1380,12 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
         }
         const fVoice = applySemitoneDetuneToFrequency(f, detuner(n)); // voice detune
         const dPhase = fVoice * INVSR;
-        const level = this._chooseMip(dPhase);
-        const table = this.tables[level];
 
         // warp phase then sample
         this.phase[n] = this.phase[n] ?? Math.random() * phaseRand;
         const ph = this._warpPhase(this.phase[n], warpAmount, warpMode);
-        const s0 = this._sampleFrame(table[fIdx], ph);
-        const s1 = this._sampleFrame(table[Math.min(this.numFrames - 1, fIdx + 1)], ph);
+        const s0 = this._sampleFrame(this.table[fIdx], ph);
+        const s1 = this._sampleFrame(this.table[Math.min(this.numFrames - 1, fIdx + 1)], ph);
         let s = lerp(s0, s1, interpT);
         if (warpMode === WarpMode.FLIP && this.phase[n] < warpAmount) {
           s = -s;
