@@ -5,9 +5,22 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 import * as _WebMidi from 'webmidi';
-import { Hap, Pattern, TimeSpan, getCps, getTime, isPattern, logger, ref, reify } from '@strudel/core';
+import {
+  Hap,
+  Pattern,
+  TimeSpan,
+  getCps,
+  getPattern,
+  getTime,
+  getTriggerFunc,
+  isPattern,
+  logger,
+  ref,
+  reify,
+} from '@strudel/core';
 import { noteToMidi, getControlName } from '@strudel/core';
 import { Note } from 'webmidi';
+import { getAudioContext } from '@strudel/webaudio';
 import { scheduleAtTime } from '../superdough/helpers.mjs';
 
 // if you use WebMidi from outside of this package, make sure to import that instance:
@@ -575,6 +588,33 @@ export async function midin(input) {
  */
 const kHaps = {};
 const kListeners = {};
+
+function triggerKbNow(input, cps, now, latencyCycles) {
+  const pattern = getPattern();
+  const trigger = getTriggerFunc();
+  if (!pattern || !trigger) {
+    return false;
+  }
+  const t = now + latencyCycles;
+  const eps = 1e-6;
+  const haps = pattern.queryArc(t - eps, t + eps, { _cps: cps });
+  // Only keep haps coming from `midikeys`
+  const kbHaps = haps.filter((hap) => hap.value?.midikey?.startsWith(`${input}_`));
+  const ctxNow = getAudioContext().currentTime;
+  if (!kbHaps.length) {
+    return false;
+  }
+  kbHaps.forEach((hap) => {
+    if (!hap.hasOnset()) {
+      return;
+    }
+    const t = ctxNow + (hap.whole.begin - now) / cps;
+    const duration = hap.duration / cps;
+    trigger(hap, t - ctxNow, duration, cps, t);
+  });
+
+  return true;
+}
 export async function midikeys(input) {
   const device = await _initialize(input);
   if (!kHaps[input]) {
@@ -584,11 +624,14 @@ export async function midikeys(input) {
   kListeners[input] = (e) => {
     const { dataBytes, message } = e;
     const [note, velocity] = dataBytes;
-    const noteoff = message.command === 8;
+    const noteon = message.command === 9;
+    const noteoff = message.command === 8 || (noteon && velocity === 0);
     const key = `${input}_${note}`;
     const cps = getCps() ?? 0.5;
-    const latencySeconds = 0.06; // slight delay so it's not too late for cyclist to catch
-    const t = getTime() + latencySeconds * cps;
+    const triggerAvailable = !!(getPattern() && getTriggerFunc());
+    const latencySeconds = triggerAvailable ? 0.01 : 0.06; // avoid missing notes due to cyclist / trigger latency
+    const now = getTime();
+    const t = now + latencySeconds * cps;
     const span = new TimeSpan(t, t);
     let value = { midikey: key };
     if (noteoff) {
@@ -609,6 +652,14 @@ export async function midikeys(input) {
       value = { ...value, note: Math.round(note), velocity: velocity / 127 };
     }
     kHaps[input].push(new Hap(span, span, value, {}));
+    if (!noteoff && triggerAvailable) {
+      // If we have access to a trigger function, we call it to immediately
+      // dispatch to the audio engine, rather than waiting for cyclist to catch these haps
+      const triggered = triggerKbNow(input, cps, now, latencySeconds * cps);
+      if (triggered) {
+        kHaps[input] = [];
+      }
+    }
   };
   device.addListener('midimessage', kListeners[input]);
   const kb = (noteLength = 0.5) => {
