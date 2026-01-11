@@ -53,7 +53,7 @@ class MidiParserTest {
         Track track = sequence.createTrack();
         
         // Add a C4 (middle C) note starting at tick 0, duration 480 ticks
-        addNoteToTrack(track, 0, 60, 100, 0, 480);
+        addNoteToTrack(track, 0, 0, 60, 100, 480);
         
         // Set tempo to 120 BPM (500000 microseconds per quarter note)
         addTempoToTrack(track, 0, 500000);
@@ -107,7 +107,7 @@ class MidiParserTest {
         Track track = sequence.createTrack();
         
         // Add multiple notes
-        addNoteToTrack(track, 0, 60, 100, 0, 480);      // C4
+        addNoteToTrack(track, 0, 0, 60, 100, 480);      // C4
         addNoteToTrack(track, 0, 480, 64, 90, 480);     // E4
         addNoteToTrack(track, 0, 960, 67, 80, 480);     // G4
         
@@ -140,7 +140,7 @@ class MidiParserTest {
         programChange.setMessage(ShortMessage.PROGRAM_CHANGE, 0, 42, 0);
         track.add(new MidiEvent(programChange, 0));
         
-        addNoteToTrack(track, 0, 480, 60, 100, 480);
+        addNoteToTrack(track, 0, 0, 60, 100, 480);
         addTempoToTrack(track, 0, 500000);
         addEndOfTrack(track, 960);
         
