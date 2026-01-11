@@ -1,0 +1,418 @@
+---
+title: MIDI Tokenizer
+description: Parse MIDI files to LLM-friendly JSON with the MIDI Tokenizer Java module
+layout: ../../layouts/MainLayout.astro
+---
+
+# MIDI Tokenizer
+
+The MIDI Tokenizer is a proof-of-concept Java 21 CLI tool that parses Standard MIDI Files (SMF) and converts them to an LLM-friendly JSON representation. It can also produce human-readable text output.
+
+## Overview
+
+This standalone module uses Java's built-in `javax.sound.midi` package to parse MIDI files (types 0 and 1) and extract:
+
+- **File metadata**: Format, division (ticks per quarter note), duration
+- **Tempo map**: Tempo changes throughout the file
+- **Time signatures**: Musical meter information
+- **Key signatures**: Tonality information
+- **Note events**: Note number, pitch name, velocity, duration (in ticks and seconds)
+- **Control changes**: Volume, pan, modulation, etc.
+- **Program changes**: Instrument selections
+- **Meta events**: Track names, lyrics, markers, etc.
+
+The output is designed to be consumed by Large Language Models for music analysis, generation, or conversion tasks.
+
+## Installation & Usage
+
+The module is located in the `midi_tokenizer/` directory at the repository root. It includes its own Gradle wrapper for standalone builds.
+
+### Build
+
+```bash
+cd midi_tokenizer
+./gradlew build
+```
+
+### Run
+
+```bash
+./gradlew bootRun
+```
+
+This starts an interactive Spring Shell CLI.
+
+### Parse Command
+
+```
+parse --input <file> [--output <file>] [--format json|text] [--time seconds|ticks] [--include-meta true|false]
+```
+
+**Options:**
+
+- `--input`: Path to input MIDI file (required)
+- `--output`: Output file path (optional; defaults to stdout)
+- `--format`: Output format - `json` (default) or `text`
+- `--time`: Time representation - `seconds` (default) or `ticks`
+- `--include-meta`: Include meta events (default: `true`)
+
+**Examples:**
+
+```
+parse --input song.mid
+parse --input song.mid --output analysis.json
+parse --input song.mid --format text
+parse --input song.mid --time ticks --include-meta false
+```
+
+## MIDI Primer
+
+Understanding MIDI concepts is essential for working with the tokenizer output.
+
+### Standard MIDI Files (SMF)
+
+SMF is a file format that stores MIDI performance data. Three format types exist:
+
+- **Format 0**: Single multi-channel track
+- **Format 1**: Multiple simultaneous tracks (most common)
+- **Format 2**: Multiple independent sequences (rare)
+
+The tokenizer supports formats 0 and 1.
+
+### Time Representation
+
+#### Ticks vs. Microseconds
+
+MIDI time is measured in **ticks** (pulses). The **division** (resolution) defines how many ticks equal one quarter note.
+
+Common divisions: 96, 120, 192, 384, 480, 960 ticks/quarter
+
+Example with division = 480:
+- Quarter note = 480 ticks
+- Half note = 960 ticks
+- Eighth note = 240 ticks
+
+#### Tempo
+
+Tempo is specified in **microseconds per quarter note** (µs/quarter), not BPM directly.
+
+**Conversion:**
+```
+microseconds_per_quarter = 60,000,000 / BPM
+```
+
+Examples:
+- 120 BPM → 500,000 µs/quarter
+- 100 BPM → 600,000 µs/quarter
+
+**Default tempo**: 120 BPM (500,000 µs/quarter) if no tempo event is present.
+
+#### Converting Ticks to Seconds
+
+```
+time_seconds = (ticks × microseconds_per_quarter) / (division × 1,000,000)
+```
+
+The tokenizer builds a **tempo map** from tempo change events (meta type 0x51) and applies tempo changes at their respective tick positions.
+
+### Note Events
+
+#### Note On and Note Off
+
+- **Note On** (0x90-0x9F): Starts a note with a velocity (loudness)
+- **Note Off** (0x80-0x8F): Ends a note
+
+**Important**: A Note On with velocity 0 is treated as Note Off (common optimization).
+
+#### Note Pairing
+
+The tokenizer pairs Note On and Note Off events to compute **note durations**:
+
+1. When Note On arrives (velocity > 0), store it
+2. When Note Off arrives (or Note On with velocity 0), find matching Note On
+3. Calculate duration: `note_off_tick - note_on_tick`
+4. Output the complete note event
+
+Pairing uses a key: `(channel << 8) | noteNumber`
+
+### Note Numbering and Scientific Pitch
+
+MIDI notes range from 0 to 127. The tokenizer converts these to **scientific pitch notation** for readability.
+
+**Convention**: Middle C (MIDI note 60) = **C4**
+
+**Formula:**
+```
+octave = (note_number / 12) - 1
+pitch_class = note_number % 12
+```
+
+**Pitch classes:**
+```
+0=C, 1=C#, 2=D, 3=D#, 4=E, 5=F, 6=F#, 7=G, 8=G#, 9=A, 10=A#, 11=B
+```
+
+**Examples:**
+- MIDI 60 → C4 (middle C)
+- MIDI 69 → A4 (440 Hz)
+- MIDI 72 → C5
+
+### Meta Events
+
+Meta events carry non-performance data:
+
+| Type | Name            | Description                    |
+|------|-----------------|--------------------------------|
+| 0x03 | Track Name      | Name of track/sequence         |
+| 0x04 | Instrument Name | Instrument identification      |
+| 0x05 | Lyric           | Lyric text                     |
+| 0x06 | Marker          | Rehearsal mark or section name |
+| 0x2F | End of Track    | Marks track end                |
+| 0x51 | Set Tempo       | Tempo in µs/quarter note       |
+| 0x58 | Time Signature  | Musical meter (e.g., 4/4)      |
+| 0x59 | Key Signature   | Key and scale (major/minor)    |
+
+#### Time Signature (0x58)
+
+Format: `[nn dd cc bb]`
+
+- `nn`: Numerator (e.g., 4 for 4/4)
+- `dd`: Denominator as power of 2 (e.g., 2 for 4, meaning 2² = 4)
+- `cc`: MIDI clocks per metronome click
+- `bb`: 32nd notes per quarter note
+
+Example: 4/4 time = `04 02 18 08`
+
+#### Key Signature (0x59)
+
+Format: `[sf mi]`
+
+- `sf`: Sharps (+) or flats (-), range -7 to +7
+  - 0 = C major / A minor
+  - 1 = G major / E minor
+  - -1 = F major / D minor
+- `mi`: 0 = major, 1 = minor
+
+Example: D major = `02 00` (2 sharps, major)
+
+## JSON Output Schema
+
+### Top-Level Structure
+
+```json
+{
+  "schema_version": "1.0",
+  "file": { ... },
+  "metadata": { ... },
+  "tracks": [ ... ]
+}
+```
+
+### File Object
+
+```json
+{
+  "filename": "song.mid",
+  "format": 1,
+  "division": 480,
+  "duration_ticks": 1920,
+  "duration_seconds": 4.0
+}
+```
+
+### Metadata Object
+
+```json
+{
+  "tempo_map": [
+    { "tick": 0, "microseconds_per_quarter": 500000, "bpm": 120.0 }
+  ],
+  "time_signatures": [
+    { "tick": 0, "numerator": 4, "denominator": 4 }
+  ],
+  "key_signatures": [
+    { "tick": 0, "key": 0, "scale": "major" }
+  ]
+}
+```
+
+### Track Object
+
+```json
+{
+  "track_index": 0,
+  "name": "Piano",
+  "program_changes": [0],
+  "events": [ ... ]
+}
+```
+
+### Event Types
+
+**Note Event:**
+```json
+{
+  "type": "note",
+  "tick": 0,
+  "time_seconds": 0.0,
+  "channel": 0,
+  "note_number": 60,
+  "note_name": "C4",
+  "velocity": 100,
+  "duration_ticks": 480,
+  "duration_seconds": 0.5
+}
+```
+
+**Control Change Event:**
+```json
+{
+  "type": "control_change",
+  "tick": 100,
+  "time_seconds": 0.104,
+  "channel": 0,
+  "controller": 7,
+  "value": 100
+}
+```
+
+**Program Change Event:**
+```json
+{
+  "type": "program_change",
+  "tick": 0,
+  "time_seconds": 0.0,
+  "channel": 0,
+  "program": 0
+}
+```
+
+**Meta Event:**
+```json
+{
+  "type": "meta",
+  "tick": 0,
+  "time_seconds": 0.0,
+  "meta_type": 3,
+  "meta_type_name": "track_name",
+  "data": "Piano"
+}
+```
+
+## Implementation Details
+
+### Technologies
+
+- **Java 21**: Modern Java with toolchain support
+- **Spring Boot 3.2**: Application framework
+- **Spring Shell 3.2**: Interactive CLI
+- **Jackson**: JSON serialization
+- **javax.sound.midi**: Built-in MIDI parsing (no native libraries)
+- **JUnit 5**: Testing framework
+- **Gradle 8.5**: Build system with wrapper
+
+### Architecture
+
+The module is organized into packages:
+
+- `com.marcoalmeida.midi_tokenizer`: Main application class
+- `.cli`: Spring Shell commands
+- `.midi`: MIDI parsing logic
+- `.model`: Data model (POJOs) for JSON output
+- `.util`: Utility classes (note number conversion)
+
+### Testing
+
+Tests use JUnit 5 and programmatically create MIDI sequences (no binary fixtures). They verify:
+
+- Note pairing and duration calculation
+- Tempo map construction
+- Time signature and key signature extraction
+- Tick-to-seconds conversion
+- JSON serialization
+
+Run tests:
+```bash
+./gradlew test
+```
+
+## Limitations (POC)
+
+This is a proof-of-concept with known limitations:
+
+1. **Format detection**: Inferred from track count (heuristic)
+2. **No SMPTE support**: Only PPQ (ticks per quarter note) division
+3. **Simple tempo mapping**: Straightforward conversion, no complex edge cases
+4. **No SMF format 2 support**: Only formats 0 and 1
+5. **No running status**: Handled by `javax.sound.midi`, not explicit
+6. **LIFO note pairing**: Simple approach for overlapping same-pitch notes
+
+## Future Enhancements
+
+Potential improvements for future versions:
+
+1. **Robust tempo handling**: Optimize with binary search or interval trees
+2. **Instrument name mapping**: Map General MIDI program numbers to names
+3. **LLM chunking**: Split large files for token limits
+4. **Strudel conversion**: Experimental MIDI-to-Strudel pattern notation
+5. **SMPTE support**: Handle frame-based timing
+6. **Performance metrics**: Report parsing time and memory usage
+
+## Example Use Cases
+
+### Music Analysis
+
+Feed the JSON output to an LLM for:
+- Chord progression analysis
+- Rhythm pattern detection
+- Genre classification
+- Complexity metrics
+
+### Music Generation
+
+Use MIDI structure as a prompt:
+- Generate variations on a theme
+- Create accompaniment for a melody
+- Suggest chord progressions
+
+### Educational Tools
+
+Analyze student compositions:
+- Identify voice leading issues
+- Check harmonic progressions
+- Suggest improvements
+
+### Strudel Integration (Future)
+
+Potential conversion to Strudel patterns:
+
+```javascript
+// MIDI: C4 E4 G4 C5 (quarter notes)
+// → Strudel:
+s("piano").note("c4 e4 g4 c5")
+```
+
+This would enable MIDI files as input for live coding workflows.
+
+## Related Documentation
+
+- **Module README**: `midi_tokenizer/README.md` - Build and usage instructions
+- **MIDI Primer**: `midi_tokenizer/docs/midi-primer.md` - Detailed MIDI concepts
+- **Source Code**: `midi_tokenizer/src/main/java/` - Implementation
+
+## Contributing
+
+The MIDI Tokenizer is part of the Strudel project. Contributions welcome:
+
+1. Report issues on the repository issue tracker
+2. Submit pull requests with tests
+3. Suggest features or improvements
+4. Share example MIDI files for testing
+
+## License
+
+AGPL-3.0-or-later (follows Strudel repository license)
+
+---
+
+**Note**: This module does NOT modify any root-level build files. It's a standalone Gradle project with its own wrapper and dependencies.
