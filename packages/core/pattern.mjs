@@ -3586,6 +3586,20 @@ export const morph = (frompat, topat, bypat) => {
   return frompat.innerBind((from) => topat.innerBind((to) => bypat.innerBind((by) => _morph(from, to, by))));
 };
 
+const _distortWithAlg = function (name) {
+  const func = function (args, pat) {
+    const argsPat = reify(args).fmap((v) => (Array.isArray(v) ? [...v, name] : [v, 1, name]));
+    if (!pat) {
+      return pure({}).distort(argsPat);
+    }
+    return pat.distort(argsPat);
+  };
+  Pattern.prototype[name] = function (args) {
+    return func(args, this);
+  };
+  return func;
+};
+
 /**
  * Soft-clipping distortion
  *
@@ -3594,6 +3608,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const soft = _distortWithAlg('soft');
+
 /**
  * Hard-clipping distortion
  *
@@ -3602,6 +3618,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const hard = _distortWithAlg('hard');
+
 /**
  * Cubic polynomial distortion
  *
@@ -3610,6 +3628,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const cubic = _distortWithAlg('cubic');
+
 /**
  * Diode-emulating distortion
  *
@@ -3618,6 +3638,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const diode = _distortWithAlg('diode');
+
 /**
  * Asymmetrical diode distortion
  *
@@ -3626,6 +3648,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const asym = _distortWithAlg('asym');
+
 /**
  * Wavefolding distortion
  *
@@ -3634,6 +3658,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const fold = _distortWithAlg('fold');
+
 /**
  * Wavefolding distortion composed with sinusoid
  *
@@ -3642,6 +3668,8 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
+export const sinefold = _distortWithAlg('sinefold');
+
 /**
  * Distortion via Chebyshev polynomials
  *
@@ -3650,14 +3678,7 @@ export const morph = (frompat, topat, bypat) => {
  * @param {number | Pattern} volume linear postgain of the distortion
  *
  */
-const distAlgoNames = ['scurve', 'soft', 'hard', 'cubic', 'diode', 'asym', 'fold', 'sinefold', 'chebyshev'];
-for (const name of distAlgoNames) {
-  // Add aliases for distortion algorithms
-  Pattern.prototype[name] = function (args) {
-    const argsPat = reify(args).fmap((v) => (Array.isArray(v) ? [...v, name] : [v, 1, name]));
-    return this.distort(argsPat);
-  };
-}
+export const chebyshev = _distortWithAlg('chebyshev');
 
 /**
  * Turns a list of patterns into a single pattern which outputs list-values
