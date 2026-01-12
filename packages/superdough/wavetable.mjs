@@ -11,7 +11,7 @@ import {
   webAudioTimeout,
   releaseAudioNode,
 } from './helpers.mjs';
-import { getNodeFromPool, markWorkletAsDead, releaseNodeToPool } from './nodePools.mjs';
+import { getNodeFromPool, releaseNodeToPool } from './nodePools.mjs';
 import { logger } from './logger.mjs';
 
 export const Warpmode = Object.freeze({
@@ -251,13 +251,6 @@ export async function onTriggerSynth(t, value, onended, tables, cps, frameLen) {
     param.setValueAtTime(target, now);
   });
   source.port.postMessage({ type: 'initialize', payload });
-  source.port.onmessage = (e) => {
-    if (e.data.type === 'died') {
-      markWorkletAsDead(source);
-      source.port.postMessage({ type: 'diedACK' });
-    }
-    source.port.onmessage = null;
-  };
   if (ac.currentTime > t) {
     logger(`[wavetable] still loading sound "${s}:${n}"`, 'highlight');
     return;

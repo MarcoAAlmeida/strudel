@@ -463,19 +463,10 @@ registerProcessor('distort-processor', DistortProcessor);
 class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.isAlive = true; // used internally to prevent multiple death messages
-    // diedACK is used for the main thread to acknowledge that the worklet has died
-    // This is so that we don't risk simultaneously killing the worklet (`return false`)
-    // and pooling the worklet (main thread) before the async `died` message hits
-    // the main thread
-    this.diedACK = false;
     this.port.onmessage = (e) => {
       const { type, payload } = e.data || {};
       if (type === 'initialize') {
         this.initialize(payload);
-      }
-      if (type === 'diedACK') {
-        this.diedACK = true;
       }
     };
     this.initialize();
@@ -487,16 +478,16 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
     return [
       {
         name: 'begin',
-        defaultValue: 0,
+        defaultValue: -1,
         max: Number.POSITIVE_INFINITY,
-        min: 0,
+        min: -1,
       },
 
       {
         name: 'end',
-        defaultValue: 0,
+        defaultValue: -1,
         max: Number.POSITIVE_INFINITY,
-        min: 0,
+        min: -1,
       },
 
       {
@@ -531,19 +522,17 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
     ];
   }
   process(_input, outputs, params) {
-    if (currentTime >= params.end[0] + 0.5) {
-      // Outside of grace period - should terminate
-      if (this.isAlive) {
-        this.port.postMessage({ type: 'died' });
-        this.isAlive = false;
-      }
-      if (this.diedACK || currentTime >= params.end[1] + 1) {
-        return false;
-      }
-      return true;
-    }
-    if (currentTime >= params.end[0] || currentTime <= params.begin[0]) {
-      // Inside of grace period or not yet started
+    const begin = params.begin[0];
+    const end = params.end[0];
+    const beginDefined = begin >= 0;
+    const endDefined = end >= 0;
+    // We give a 0.5s grace period (for node pooling) before termination
+    const shouldTerminate = endDefined && currentTime >= end + 0.5;
+    const ended = endDefined && currentTime >= end;
+    const notStarted = currentTime <= begin;
+    if (shouldTerminate) {
+      return false;
+    } else if (ended || notStarted || !beginDefined) {
       return true;
     }
     const output = outputs[0];
@@ -1159,8 +1148,8 @@ const tablesCache = {};
 class WavetableOscillatorProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
-      { name: 'begin', defaultValue: 0, min: 0, max: Number.POSITIVE_INFINITY },
-      { name: 'end', defaultValue: 0, min: 0, max: Number.POSITIVE_INFINITY },
+      { name: 'begin', defaultValue: -1, min: -1, max: Number.POSITIVE_INFINITY },
+      { name: 'end', defaultValue: -1, min: -1, max: Number.POSITIVE_INFINITY },
       { name: 'frequency', defaultValue: 440, min: Number.EPSILON },
       { name: 'detune', defaultValue: 0 },
       { name: 'freqspread', defaultValue: 0.18, min: 0 },
@@ -1175,19 +1164,10 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
 
   constructor(options) {
     super(options);
-    this.isAlive = true; // used internally to prevent multiple death messages
-    // diedACK is used for the main thread to acknowledge that the worklet has died
-    // This is so that we don't risk simultaneously killing the worklet (`return false`)
-    // and pooling the worklet (main thread) before the async `died` message hits
-    // the main thread
-    this.diedACK = false;
     this.port.onmessage = (e) => {
       const { type, payload } = e.data || {};
       if (type === 'initialize') {
         this.initialize(payload);
-      }
-      if (type === 'diedACK') {
-        this.diedACK = true;
       }
     };
     this.initialize();
@@ -1351,19 +1331,17 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
   }
 
   process(_inputs, outputs, parameters) {
-    if (currentTime >= parameters.end[0] + 0.5) {
-      // Outside of grace period - should terminate
-      if (this.isAlive) {
-        this.port.postMessage({ type: 'died' });
-        this.isAlive = false;
-      }
-      if (this.diedACK || currentTime >= parameters.end[1] + 1) {
-        return false;
-      }
-      return true;
-    }
-    if (currentTime >= parameters.end[0] || currentTime <= parameters.begin[0]) {
-      // Inside of grace period or not yet started
+    const begin = parameters.begin[0];
+    const end = parameters.end[0];
+    const beginDefined = begin >= 0;
+    const endDefined = end >= 0;
+    // We give a 0.5s grace period (for node pooling) before termination
+    const shouldTerminate = endDefined && currentTime >= end + 0.5;
+    const ended = endDefined && currentTime >= end;
+    const notStarted = currentTime <= begin;
+    if (shouldTerminate) {
+      return false;
+    } else if (ended || notStarted || !beginDefined) {
       return true;
     }
     const outL = outputs[0][0];

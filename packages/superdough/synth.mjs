@@ -18,7 +18,7 @@ import {
 } from './helpers.mjs';
 import { logger } from './logger.mjs';
 import { getNoiseMix, getNoiseOscillator } from './noise.mjs';
-import { getNodeFromPool, markWorkletAsDead, releaseNodeToPool } from './nodePools.mjs';
+import { getNodeFromPool, releaseNodeToPool } from './nodePools.mjs';
 
 const waveforms = ['triangle', 'square', 'sawtooth', 'sine', 'user', 'one'];
 const waveformAliases = [
@@ -185,13 +185,6 @@ export function registerSynthSounds() {
         param.setValueAtTime(target, now);
       });
       o.port.postMessage({ type: 'initialize' });
-      o.port.onmessage = (e) => {
-        if (e.data.type === 'died') {
-          markWorkletAsDead(o);
-          o.port.postMessage({ type: 'diedACK' });
-        }
-        o.port.onmessage = null;
-      };
       const gainAdjustment = 1 / Math.sqrt(voices);
       getPitchEnvelope(o.parameters.get('detune'), value, begin, holdend);
       const vibratoHandle = getVibratoOscillator(o.parameters.get('detune'), value, begin);
