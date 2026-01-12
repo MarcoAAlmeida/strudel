@@ -1,0 +1,47 @@
+name: MIDI Tokenizer CI
+
+on:
+  push:
+    paths:
+      - 'midi_tokenizer/**'
+  pull_request:
+    paths:
+      - 'midi_tokenizer/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      
+    - name: Build with Gradle
+      working-directory: midi_tokenizer
+      run: ./gradlew build
+      
+    - name: Run tests
+      working-directory: midi_tokenizer
+      run: ./gradlew test
+      
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: midi_tokenizer/build/test-results/
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: midi-tokenizer-jar
+        path: midi_tokenizer/build/libs/midi-tokenizer.jar
