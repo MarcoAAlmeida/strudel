@@ -1685,7 +1685,7 @@ export function register(name, func, patternify = true, preserveSteps = false, j
   // toplevel functions get curried as well as patternified
   // because pfunc uses spread args, we need to state the arity explicitly!
   const curried = curry(pfunc, null, arity);
-  strudelScope[name] = pfunc;
+  strudelScope[name] = curried;
   return curried;
 }
 
