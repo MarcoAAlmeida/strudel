@@ -186,7 +186,10 @@ export function registerSynthSounds() {
       });
       o.port.postMessage({ type: 'initialize' });
       o.port.onmessage = (e) => {
-        if (e.data.type === 'died') markWorkletAsDead(o);
+        if (e.data.type === 'died') {
+          markWorkletAsDead(o);
+          o.port.postMessage({ type: 'diedACK' });
+        }
         o.port.onmessage = null;
       };
       const gainAdjustment = 1 / Math.sqrt(voices);

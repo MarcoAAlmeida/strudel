@@ -252,7 +252,10 @@ export async function onTriggerSynth(t, value, onended, tables, cps, frameLen) {
   });
   source.port.postMessage({ type: 'initialize', payload });
   source.port.onmessage = (e) => {
-    if (e.data.type === 'died') markWorkletAsDead(source);
+    if (e.data.type === 'died') {
+      markWorkletAsDead(source);
+      source.port.postMessage({ type: 'diedACK' });
+    }
     source.port.onmessage = null;
   };
   if (ac.currentTime > t) {

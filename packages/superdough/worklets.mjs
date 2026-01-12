@@ -464,10 +464,18 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
     this.isAlive = true; // used internally to prevent multiple death messages
+    // diedACK is used for the main thread to acknowledge that the worklet has died
+    // This is so that we don't risk simultaneously killing the worklet (`return false`)
+    // and pooling the worklet (main thread) before the async `died` message hits
+    // the main thread
+    this.diedACK = false;
     this.port.onmessage = (e) => {
       const { type, payload } = e.data || {};
       if (type === 'initialize') {
         this.initialize(payload);
+      }
+      if (type === 'diedACK') {
+        this.diedACK = true;
       }
     };
     this.initialize();
@@ -529,7 +537,10 @@ class SuperSawOscillatorProcessor extends AudioWorkletProcessor {
         this.port.postMessage({ type: 'died' });
         this.isAlive = false;
       }
-      return false;
+      if (this.diedACK || currentTime >= params.end[1] + 1) {
+        return false;
+      }
+      return true;
     }
     if (currentTime >= params.end[0] || currentTime <= params.begin[0]) {
       // Inside of grace period or not yet started
@@ -1165,10 +1176,18 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
   constructor(options) {
     super(options);
     this.isAlive = true; // used internally to prevent multiple death messages
+    // diedACK is used for the main thread to acknowledge that the worklet has died
+    // This is so that we don't risk simultaneously killing the worklet (`return false`)
+    // and pooling the worklet (main thread) before the async `died` message hits
+    // the main thread
+    this.diedACK = false;
     this.port.onmessage = (e) => {
       const { type, payload } = e.data || {};
       if (type === 'initialize') {
         this.initialize(payload);
+      }
+      if (type === 'diedACK') {
+        this.diedACK = true;
       }
     };
     this.initialize();
@@ -1338,7 +1357,10 @@ class WavetableOscillatorProcessor extends AudioWorkletProcessor {
         this.port.postMessage({ type: 'died' });
         this.isAlive = false;
       }
-      return false;
+      if (this.diedACK || currentTime >= parameters.end[1] + 1) {
+        return false;
+      }
+      return true;
     }
     if (currentTime >= parameters.end[0] || currentTime <= parameters.begin[0]) {
       // Inside of grace period or not yet started

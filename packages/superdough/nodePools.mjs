@@ -8,7 +8,6 @@ This program is free software: you can redistribute it and/or modify it under th
 const nodePools = new Map();
 const POOL_KEY = Symbol('nodePoolKey');
 const IS_WORKLET_DEAD = Symbol('nodePoolIsWorkletDead');
-const MAX_POOL_SIZE = 64;
 
 export const isPoolable = (node) => !!node[POOL_KEY];
 
@@ -47,10 +46,8 @@ export const releaseNodeToPool = (node) => {
   const now = node.context?.currentTime ?? 0;
   getParams(node).forEach((param) => param.cancelScheduledValues(now));
   const pool = nodePools.get(key) ?? [];
-  if (pool.length < MAX_POOL_SIZE) {
-    pool.push(new WeakRef(node));
-    nodePools.set(key, pool);
-  }
+  pool.push(new WeakRef(node));
+  nodePools.set(key, pool);
 };
 
 export const markWorkletAsDead = (worklet) => (worklet[IS_WORKLET_DEAD] = true);
