@@ -589,7 +589,7 @@ export async function midin(input) {
 const kHaps = {};
 const kListeners = {};
 
-function triggerKbNow(input, cps, now, latencyCycles) {
+function _triggerKeyboard(input, cps, now, latencyCycles) {
   const pattern = getPattern();
   const trigger = getTriggerFunc();
   if (!pattern || !trigger) {
@@ -623,9 +623,14 @@ export async function midikeys(input) {
   kListeners[input] && device.removeListener('midimessage', kListeners[input]);
   kListeners[input] = (e) => {
     const { dataBytes, message } = e;
-    const [note, velocity] = dataBytes;
     const noteon = message.command === 9;
-    const noteoff = message.command === 8 || (noteon && velocity === 0);
+    let noteoff = message.command === 8;
+    if (!noteon && !noteoff) {
+      // Ignore non-note messages (e.g. CC, pitchbend, modwheel, etc.)
+      return;
+    }
+    const [note, velocity] = dataBytes;
+    noteoff ||= noteon && velocity === 0; // handle devices which may use velocity = 0 to signal noteoff
     const key = `${input}_${note}`;
     const cps = getCps() ?? 0.5;
     const triggerAvailable = !!(getPattern() && getTriggerFunc());
@@ -655,7 +660,7 @@ export async function midikeys(input) {
     if (!noteoff && triggerAvailable) {
       // If we have access to a trigger function, we call it to immediately
       // dispatch to the audio engine, rather than waiting for cyclist to catch these haps
-      const triggered = triggerKbNow(input, cps, now, latencySeconds * cps);
+      const triggered = _triggerKeyboard(input, cps, now, latencySeconds * cps);
       if (triggered) {
         kHaps[input] = [];
       }
