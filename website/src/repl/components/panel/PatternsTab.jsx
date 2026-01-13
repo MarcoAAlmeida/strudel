@@ -89,12 +89,11 @@ export function PatternsTab({ context }) {
   const viewingPatternID = viewingPatternData?.id;
 
   const visiblePatterns = useMemo(() => {
+    if (!search) {
+      return userPatterns;
+    }
     return Object.fromEntries(
       Object.entries(userPatterns).filter(([_key, pattern]) => {
-        if (!search) {
-          return true;
-        }
-
         const meta = getMetadata(pattern.code);
 
         // Search for specific meta keys
