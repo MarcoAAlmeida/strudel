@@ -29,7 +29,7 @@ export function PatternLabel({ pattern } /* : { pattern: Tables<'code'> } */) {
     if (!isNaN(date)) {
       title = date.toLocaleDateString();
     } else {
-      title = 'unnamed';
+      title = pattern.id || 'unnamed';
     }
   }
 
