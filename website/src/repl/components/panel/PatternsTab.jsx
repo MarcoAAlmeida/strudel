@@ -126,7 +126,7 @@ export function PatternsTab({ context }) {
 
   return (
     <div className="px-4 w-full text-foreground  space-y-2  flex flex-col overflow-hidden max-h-full h-full">
-      <div class="w-full flex">
+      <div className="w-full flex">
         <Textbox className="w-full" placeholder="Search" value={search} onChange={setSearch} />
       </div>
       <div className="flex flex-col gap-2 flex-grow overflow-hidden h-full pb-2 ">
