@@ -3,6 +3,7 @@ package com.marcoalmeida.midi_tokenizer.midi;
 import com.marcoalmeida.midi_tokenizer.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.springframework.stereotype.Component;
 
 import javax.sound.midi.*;
 import java.io.File;
@@ -13,6 +14,7 @@ import java.util.*;
  * Core MIDI parser that reads Standard MIDI Files (types 0 and 1)
  * and converts them to an LLM-friendly JSON representation.
  */
+@Component
 public class MidiParser {
     
     private static final int NOTE_ON = 0x90;
