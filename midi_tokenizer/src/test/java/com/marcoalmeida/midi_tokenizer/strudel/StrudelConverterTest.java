@@ -55,7 +55,7 @@ class StrudelConverterTest {
     void testConvert_WithTempoOverride() throws Exception {
         File midiFile = createTestMidiFile("tempo.mid", new int[]{60, 64, 67});
 
-        ConversionOptions options = new ConversionOptions(140, 0, 16);
+        ConversionOptions options = new ConversionOptions(140, 0);
         String result = converter.convert(midiFile.getAbsolutePath(), options);
 
         assertTrue(result.contains("setcpm(140/")); // bpm/beatsPerCycle format
@@ -66,7 +66,7 @@ class StrudelConverterTest {
     void testConvert_InvalidTrackIndex() throws Exception {
         File midiFile = createTestMidiFile("test.mid", new int[]{60});
 
-        ConversionOptions options = new ConversionOptions(null, 5, 16);
+        ConversionOptions options = new ConversionOptions(null, 5);
         
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,

@@ -68,18 +68,32 @@ public class StrudelConverter {
         int timeSignatureNumerator = 4;
         int timeSignatureDenominator = 4;
         if (!midiOutput.getMetadata().getTimeSignatures().isEmpty()) {
+            // Validate single time signature only
+            if (midiOutput.getMetadata().getTimeSignatures().size() > 1) {
+                List<Long> tickPositions = midiOutput.getMetadata().getTimeSignatures().stream()
+                    .map(ts -> ts.getTick())
+                    .collect(Collectors.toList());
+                throw new UnsupportedOperationException(
+                    String.format(
+                        "Multiple time signatures detected (%d changes at ticks: %s). " +
+                        "Only single time signature files are supported. " +
+                        "Split your MIDI file by time signature before conversion.",
+                        midiOutput.getMetadata().getTimeSignatures().size(),
+                        tickPositions.stream().map(String::valueOf).collect(Collectors.joining(", "))
+                    )
+                );
+            }
             var timeSignature = midiOutput.getMetadata().getTimeSignatures().get(0);
             timeSignatureNumerator = timeSignature.getNumerator();
             timeSignatureDenominator = timeSignature.getDenominator();
         }
 
-        // Convert to quantized cycle-based pattern
+        // Convert to quantized cycle-based pattern (24-grid auto-calculated)
         String pattern = RhythmConverter.toQuantizedCyclePattern(
             noteEvents,
             midiOutput.getFile().getDivision(),
             timeSignatureNumerator,
-            timeSignatureDenominator,
-            options.getEffectiveQuantization()
+            timeSignatureDenominator
         );
 
         // Determine instrument
@@ -91,6 +105,9 @@ public class StrudelConverter {
         // Calculate beats per cycle (for 4/4 time = 4 beats, for 3/4 time = 3 beats, etc.)
         int beatsPerCycle = timeSignatureNumerator * (4 / timeSignatureDenominator);
 
+        // Calculate slices per measure for 8-grid
+        int slicesPerMeasure = 8 * timeSignatureNumerator / timeSignatureDenominator;
+
         // Render template
         return StrudelTemplate.render(
             patternName,
@@ -99,7 +116,9 @@ public class StrudelConverter {
             beatsPerCycle,
             trackIndex,
             track.getName(),
-            options.getEffectiveQuantization(),
+            timeSignatureNumerator,
+            timeSignatureDenominator,
+            slicesPerMeasure,
             pattern,
             instrument
         );

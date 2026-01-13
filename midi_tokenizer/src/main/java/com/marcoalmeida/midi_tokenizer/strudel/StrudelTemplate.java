@@ -13,15 +13,17 @@ public class StrudelTemplate {
     /**
      * Renders a complete Strudel pattern file.
      *
-     * @param patternName    Pattern variable name
-     * @param sourceFile     Source MIDI filename
-     * @param bpm            Tempo in beats per minute
-     * @param beatsPerCycle  Number of beats per cycle (typically 4 for 4/4 time)
-     * @param trackIndex     MIDI track index
-     * @param trackName      Name of the MIDI track
-     * @param quantization   Quantization level (8, 16, or 32)
-     * @param pattern        Strudel pattern string (e.g., "c4 d4 e4")
-     * @param instrument     Strudel instrument/sound name
+     * @param patternName               Pattern variable name
+     * @param sourceFile                Source MIDI filename
+     * @param bpm                       Tempo in beats per minute
+     * @param beatsPerCycle             Number of beats per cycle (typically 4 for 4/4 time)
+     * @param trackIndex                MIDI track index
+     * @param trackName                 Name of the MIDI track
+     * @param timeSignatureNumerator    Time signature numerator (e.g., 4 for 4/4)
+     * @param timeSignatureDenominator  Time signature denominator (e.g., 4 for 4/4)
+     * @param slicesPerMeasure          Number of slices per measure (24-grid calculation)
+     * @param pattern                   Strudel pattern string (e.g., "c4 d4 e4")
+     * @param instrument                Strudel instrument/sound name
      * @return Complete Strudel pattern file content
      */
     public static String render(
@@ -31,7 +33,9 @@ public class StrudelTemplate {
         int beatsPerCycle,
         int trackIndex,
         String trackName,
-        int quantization,
+        int timeSignatureNumerator,
+        int timeSignatureDenominator,
+        int slicesPerMeasure,
         String pattern,
         String instrument
     ) {
@@ -49,12 +53,17 @@ public class StrudelTemplate {
         sb.append("/**\n");
         sb.append("Source: ").append(sourceFile).append("\n");
         sb.append("Tempo: ").append((int) bpm).append(" BPM\n");
+        sb.append("Time Signature: ").append(timeSignatureNumerator).append("/").append(timeSignatureDenominator).append("\n");
+        sb.append("Grid: 8-base (").append(slicesPerMeasure).append(" slices per measure)\n");
         sb.append("Track: ").append(trackIndex);
         if (trackName != null && !trackName.isEmpty()) {
-            sb.append(" (").append(trackName).append(")");
+            // Remove NUL characters and other control characters from track name
+            String sanitizedTrackName = trackName.replaceAll("[\u0000-\u001F\u007F]", "");
+            if (!sanitizedTrackName.isEmpty()) {
+                sb.append(" (").append(sanitizedTrackName).append(")");
+            }
         }
         sb.append("\n");
-        sb.append("Quantization: ").append(quantization).append("th notes\n");
         sb.append("Converted: ").append(convertedDate).append("\n");
         sb.append("**/\n\n");
         

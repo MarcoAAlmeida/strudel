@@ -15,7 +15,9 @@ class StrudelTemplateTest {
             4,        // beatsPerCycle
             0,        // trackIndex
             "Piano",  // trackName
-            16,       // quantization
+            4,        // timeSignatureNumerator
+            4,        // timeSignatureDenominator
+            8,       // slicesPerMeasure (8-grid for 4/4)
             "c4 d4 e4",
             "piano"
         );
@@ -24,6 +26,8 @@ class StrudelTemplateTest {
         assertTrue(result.contains("/* \"melody\" */"));
         assertTrue(result.contains("Source: test.mid"));
         assertTrue(result.contains("Tempo: 120 BPM"));
+        assertTrue(result.contains("Time Signature: 4/4"));
+        assertTrue(result.contains("Grid: 8-base (8 slices per measure)"));
         assertTrue(result.contains("Track: 0 (Piano)"));
         assertTrue(result.contains("setcpm(120/4)")); // bpm/beatsPerCycle
         assertTrue(result.contains("let melody = note(`<"));
@@ -40,7 +44,9 @@ class StrudelTemplateTest {
             4,
             0,
             "Track",
-            16,
+            4,
+            4,
+            12,
             "c4",
             "piano"
         );
@@ -57,7 +63,9 @@ class StrudelTemplateTest {
             4,
             0,
             "Track",
-            16,
+            4,
+            4,
+            12,
             "c4",
             "piano"
         );
@@ -76,7 +84,9 @@ class StrudelTemplateTest {
             4,
             0,
             "Bass Track",
-            16,
+            4,
+            4,
+            8,
             "c2 e2 g2",
             "triangle"
         );
@@ -95,7 +105,9 @@ class StrudelTemplateTest {
             4,
             0,
             "Track 1",
-            16,
+            4,
+            4,
+            8,
             "c4 d4",
             "piano"
         );

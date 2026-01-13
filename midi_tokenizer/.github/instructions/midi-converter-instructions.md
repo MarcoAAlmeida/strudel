@@ -21,14 +21,11 @@ shell:>convert --input input.mid --output output.txt
 # Convert existing JSON to Strudel pattern
 shell:>convert --input input.json --output output.txt
 
-# Convert with options
-shell:>convert --input input.mid --output output.txt --tempo 120 --quantize 8
+# Convert with tempo override
+shell:>convert --input input.mid --output output.txt --tempo 120
 
 # Auto-generate output filename (input.mid -> input.txt)
 shell:>convert --input input.mid
-
-# Convert specific track with finer quantization
-shell:>convert --input song.mid --track 1 --quantize 32
 ```
 
 ### Command Options
@@ -36,10 +33,6 @@ shell:>convert --input song.mid --track 1 --quantize 32
 - `--input` (required) - Path to MIDI file (.mid, .midi) or JSON file (.json)
 - `--output` (optional) - Output file path (auto-generated from input filename if omitted)
 - `--tempo` (optional) - Override tempo/BPM
-- `--track` (optional) - Convert specific track only by index (default: 0)
-- `--quantize` (required) - Quantization level (slices per measure in 4/4): any integer value works
-  - Common values: 8 (eighth notes), 12 (triplet eighths), 16 (sixteenth notes), 24 (triplet sixteenths), 32 (thirty-second notes)
-  - Default: 16
 
 ## File Structure Template
 
@@ -84,26 +77,6 @@ arrange(
 - ✅ Support both MIDI (.mid, .midi) and JSON (.json) input
 - ✅ Auto-generate output filename if not specified
 - ✅ 22 unit tests across 4 test classes (NoteConverter, RhythmConverter, StrudelConverter, StrudelTemplate)
-
-**Input**: MIDI file with single or multiple melody tracks
-
-**Output Example**:
-```javascript
-/* "azul" */
-/**
-Source: azul.mid
-Tempo: 160 BPM  
-Time Signature: 4/4
-Track: 1
-Quantization: 8th notes
-**/
-
-setcpm(40)
-
-let pattern = note(`<[~@8] [f6 ~ d6 ~ g#5 ~ g5 f5] [f5 g5 ~ a5 f5@2 d5 ~]>`).room(0.2)
-
-pattern
-```
 
 **Quantization Approach**:
 
@@ -154,6 +127,11 @@ Phase 1 uses a **fixed-grid time-slicing approach** rather than continuous time 
 - ✅ Handle time signatures (4/4, 3/4, etc.)
 - ✅ Support tempo override
 - ✅ Comprehensive test coverage
+- ✅ Musical output quality good (simple, readable patterns)
+
+**Input**: MIDI file with single or multiple melody tracks
+
+**Output Example**:
 
 **Files Created**: ✅
 - `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelConverter.java` - Main conversion service (@Service)
@@ -169,171 +147,478 @@ Phase 1 uses a **fixed-grid time-slicing approach** rather than continuous time 
 **Updated Files**: ✅
 - `src/main/java/com/marcoalmeida/midi_tokenizer/cli/MidiShellCommands.java` - Added `convert` command
 
-**Known Gaps**:
+**Known Gaps from Phase 1**:
 - ⚠️ Missing `--verbose` flag for debugging output
-- ⚠️ No pattern simplification (collapsing `[~@8] [~@8]` → longer rests)
-- ⚠️ Static utility classes instead of injectable services (testing limitation)
+- ⚠️ No pattern simplification (collapsing consecutive rests)
+- ⚠️ Static utility classes instead of injectable services
+- ❌ Polyphony Lost (fixed in Phase 1.5)
+- ❌ Manual Quantization (fixed in Phase 1.5)
+- ❌ Context-Dependent @N (partially addressed in Phase 1.5)
 
 ---
 
-### Phase 2: Multi-Track Support with Arrangement
+### Phase 1.5: Polyphonic 8-Grid Conversion ✅ **COMPLETE** (⚠️ Results Not Satisfactory)
 
-**Goal**: Convert multiple MIDI tracks and use `arrange()` for structure.
+**Goal**: Fix polyphony loss and implement automatic time-signature-aware quantization.
 
-**⚠️ Quantization Considerations**: 
-- All tracks must use **same quantization level** to maintain synchronization
-- Global time grid prevents timing drift between tracks
-- Different rhythmic densities may require different quantization per track (drums=16, melody=8)
-- Need to preserve measure alignment across all tracks
+**Status**: ✅ Implemented and tested - polyphony preserved, but musical output quality worse than Phase 1
+
+**Problem Statement**:
+
+Phase 1 had fundamental limitations:
+1. **Polyphony Loss**: Multiple simultaneous notes (chords) were dropped - only longest note survived
+2. **Manual Quantization**: User must guess appropriate --quantize value
+3. **Context-Dependent Durations**: `@4` meant different things at 8th vs 16th quantization
+4. **50% Occupancy Rule**: Notes occupying <50% of slice were silently ignored
+
+**Example of Polyphony Bug**:
+```json
+// interstellar.json has 5 simultaneous notes at tick 0:
+{ "tick": 0, "note": 53, "name": "F2" },  // F2
+{ "tick": 0, "note": 60, "name": "C4" },  // C4
+{ "tick": 0, "note": 64, "name": "E4" },  // E4
+{ "tick": 0, "note": 65, "name": "F4" },  // F4
+{ "tick": 0, "note": 69, "name": "A4" }   // A4
+
+// Phase 1 output (ONLY 2 notes!):
+[f2 a4@11]  // C4, E4, F4 dropped by conflict resolution!
+```
+
+**Actual Implementation (Phase 1.5)**:
+
+The implementation went through iterative refinement to find optimal grid size:
+
+**Iteration 1 - 24-Grid** (Initial attempt):
+- Formula: `slicesPerMeasure = 24 * numerator / denominator`
+- 4/4 → 24 slices per measure
+- **Problem**: Output sounded choppy, with weird gaps and rushed notes
+- **Root cause**: Too fine grid captured micro-timing variations from MIDI quantization errors
+
+**Iteration 2 - 12-Grid** (Refinement):
+- Changed GRID_BASE from 24 to 12
+- 4/4 → 12 slices per measure
+- **Problem**: Still had fractional durations and leading rests
+
+**Iteration 3 - 8-Grid** (Final):
+- Changed GRID_BASE from 12 to 8
+- 4/4 → 8 slices per measure (8th-note resolution)
+- **Result**: Clean output, closest to original MIDI feel
+- **Trade-off**: Coarser grid, but musically more coherent
+
+**What Was Successfully Implemented**:
+
+1. ✅ **Removed --quantize Parameter**: Fully automatic grid calculation
+   - No user input needed for quantization level
+   - Auto-calculates from time signature
+
+2. ✅ **Polyphony Preservation**: ALL simultaneous notes preserved
+   - Changed from `String[]` to `List<NoteEvent>[]` 
+   - Bracket notation: `[f2,c4,e4,f4,a4@11]`
+   - All 5 notes from interstellar.mid now appear in output
+
+3. ✅ **Grid Snapping**: Math.round() instead of floor division
+   - Snaps notes to nearest grid slot
+   - Prevents micro-timing issues
+
+4. ✅ **Per-Note Duration Tracking**: Quarter-precision rounding
+   - `Math.round(duration * 4.0) / 4.0`
+   - Allowed values: 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, etc.
+   - Implicit @1: Notes with duration=1 don't show `@1` suffix
+
+5. ✅ **Multi-Time-Signature Validation**: 
+   - Throws error if MIDI has multiple time signatures
+   - Clear error message with tick positions
+
+6. ✅ **All Tests Passing**: 32 tests across all test classes
+
+**8-Grid Resolution System** (Final Implementation):
+
+| Time Signature | Formula | Slices per Measure | Grid Unit |
+|----------------|---------|-------------------|-----------|
+| 4/4 | 8 * 4 / 4 | 8 | eighth = 1, quarter = 2, half = 4 |
+| 3/4 | 8 * 3 / 4 | 6 | eighth = 1, quarter = 2 |
+| 6/8 | 8 * 6 / 8 | 6 | eighth = 1, dotted quarter = 3 |
+| 5/4 | 8 * 5 / 4 | 10 | eighth = 1, quarter = 2 |
+
+**Why 8-Grid?** 
+- Balances musical accuracy with pattern cleanliness
+- 8th-note resolution sufficient for most music
+- Avoids capturing unwanted micro-timing
+- Produces clean, readable patterns
+
+**Polyphony Representation** (Implemented):
+
+Strudel uses **comma notation** for simultaneous notes:
+
+```javascript
+// Single note with duration
+[c4@2]           // C4 plays for 2 grid units
+
+// Simultaneous notes (chord) - all with same duration (1 implicit)
+[c4,e4,g4]       // C major chord, each note duration = 1
+
+// Simultaneous notes with different durations
+[c4@2,e4,g4@1.5] // C4 lasts 2 units, E4 lasts 1 unit (implicit), G4 lasts 1.5 units
+
+// Mixed notes and rests
+[~ c4@2,d4 ~ ~]  // Slot 0: rest
+                 // Slot 1: C4 (2 units) + D4 (1 unit) start together
+                 // Slot 2: rest (C4 still sounding)
+                 // Slot 3: rest
+
+// Real-world example (interstellar.mid with 8-grid):
+[f2,c4,e4,f4,a4@11 ~ ~ ...]  // All 5 notes preserved!
+```
+
+**Duration Precision**:
+
+```java
+// Quarter-precision rounding (0.25 steps)
+double rawDuration = durationTicks / ticksPerSlice;
+double roundedDuration = Math.round(rawDuration * 4.0) / 4.0;
+
+// Examples:
+// 1.23 → 1.25
+// 1.87 → 1.75  
+// 0.12 → 0.25 (minimum)
+// 2.51 → 2.5
+
+// Implicit @1 - don't output when duration = 1.0
+if (roundedDuration == 1.0) {
+    return noteName;  // "c4"
+} else {
+    return noteName + "@" + roundedDuration;  // "c4@2", "c4@1.5", "c4@0.25"
+}
+```
+
+**Multi-Time-Signature Validation**:
+
+Phase 1.5 supports **single time signature only**. Multiple time signatures within one file will error:
+
+```java
+// In StrudelConverter.java
+if (timeSignatures.size() > 1) {
+    List<Long> tickPositions = timeSignatures.stream()
+        .map(TimeSignatureEntry::tick)
+        .collect(Collectors.toList());
+    
+    throw new UnsupportedOperationException(
+        String.format(
+            "Multiple time signatures detected (%d changes at ticks: %s). " +
+            "Only single time signature files are supported. " +
+            "Split your MIDI file by time signature before conversion.",
+            timeSignatures.size(),
+            tickPositions.stream().map(String::valueOf).collect(Collectors.joining(", "))
+        )
+    );
+}
+```
+
+**Implementation Changes** (Completed):
+
+1. **MidiShellCommands.java** (line 93):
+   ```java
+   // REMOVED --quantize parameter:
+   // Before: @ShellOption(help = "Quantization level (8, 16, 32)", defaultValue = "16") Integer quantize
+   
+   // Command signature became:
+   public String convert(
+       @ShellOption(help = "Path to MIDI or JSON file") String input,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Output file path") String output,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Override tempo/BPM") Integer tempo,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Convert specific track only") Integer track
+   )
+   ```
+
+2. **ConversionOptions.java**:
+   ```java
+   // REMOVED quantization field:
+   public record ConversionOptions(
+       Integer overrideTempo,    // Override tempo in BPM
+       Integer trackIndex        // Track to convert (default: 0)
+       // quantization REMOVED - now auto-calculated
+   ) {
+       public int getEffectiveTrackIndex() {
+           return trackIndex != null ? trackIndex : 0;
+       }
+       // getEffectiveQuantization() REMOVED
+   }
+   ```
+
+3. **RhythmConverter.java**:
+   - Changed GRID_BASE from 24 → 12 → 8 (final)
+   - Changed data structure from `String[]` to `List<NoteEvent>[]`
+   - Removed 50% occupancy rule and conflict resolution
+   - Added grid snapping with `Math.round()`
+   - Added polyphonic formatting with comma notation
+   - Quarter-precision duration rounding
+
+4. **StrudelConverter.java**:
+   - Added multi-time-signature validation (throws error if multiple time sigs)
+
+5. **StrudelTemplate.java**:
+   - Updated metadata to show grid information instead of quantization level
+
+**Output Example (Polyphonic with 8-Grid)**:
+
+```javascript
+/* "interstellar" */
+/**
+Source: interstellar.mid
+Tempo: 80 BPM
+Time Signature: 3/4
+Grid: 8-base (6 slices per measure)
+Track: 0
+Converted: [timestamp]
+**/
+
+setcpm(20)
+
+// Polyphonic pattern with all notes preserved
+let pattern = note(`<
+  [f2,c4,e4,f4,a4@5.5 ~ ~ ~ ~ ~]
+  [f2,c4,e4,f4,a4@5.5 ~ ~ ~ ~ ~]
+  [g2,d4,f#4,g4,b4@5.5 ~ ~ ~ ~ ~]
+>`).room(0.2)
+
+pattern
+```
+
+**Output Example (azul.mid with 8-grid)**:
+
+```javascript
+/* "azul" */
+/**
+Source: azul.mid
+Tempo: 160 BPM
+Time Signature: 4/4
+Grid: 8-base (8 slices per measure)
+Track: 1
+Converted: [timestamp]
+**/
+
+setcpm(40)
+
+let pattern = note(`<
+  [~ ~ ~ ~] 
+  [f6 ~ d6 ~ g#5 ~ g5 f5] 
+  [f5,g5 ~ a5 ~ f5@2 ~ d5 ~]
+>`).room(0.2)
+
+pattern
+```
+
+**Test Coverage**:
+
+- ✅ Polyphony preservation (simultaneous notes)
+- ✅ Per-note duration tracking
+- ✅ Grid calculation for different time signatures
+- ✅ Quarter-precision rounding
+- ✅ Implicit @1 omission
+- ✅ Grid snapping with Math.round()
+
+**Success Criteria**: ✅ Phase 1.5 Complete (Technical Goals Met)
+
+**Technical Achievements**:
+- ✅ All simultaneous notes preserved (no polyphony loss)
+- ✅ --quantize parameter removed (fully automatic)
+- ✅ 8-grid formula working for all common time signatures
+- ✅ Per-note duration tracking with quarter-precision
+- ✅ Implicit @1 (notes with duration=1 don't show @1)
+- ✅ Multi-time-signature validation throws clear error
+- ✅ interstellar.mid converts with all 5 notes: `[f2,c4,e4,f4,a4@5.5]`
+- ✅ All 32 tests passing (no regressions, new polyphony tests added)
+- ✅ Grid snapping prevents micro-timing issues
+
+**Musical Quality Assessment**: ⚠️ NOT Satisfactory
+- ❌ Output sounds less musical than Phase 1 (non-polyphonic)
+- ❌ Polyphonic patterns feel cluttered and harder to listen to
+- ❌ Duration annotations may be adding complexity without benefit
+- ⚠️ 8-grid resolution may still be too coarse or too fine depending on material
+
+**Lessons Learned**:
+1. **Grid Size is Critical**: 24-grid too detailed (choppy), 8-grid cleaner but may lose nuance
+2. **Polyphony ≠ Better**: Technically correct doesn't mean musically superior
+3. **Duration Annotations**: Per-note durations may not be necessary for Strudel patterns
+4. **Phase 1 Strengths**: Simpler patterns (without polyphony) easier to understand and customize
+5. **Iterative Testing Required**: Musical output quality requires listening tests, not just passing unit tests
+
+**Potential Next Steps** (To Be Decided):
+1. Revert to Phase 1 approach (no polyphony, simpler patterns)
+2. Make polyphony optional (--polyphonic flag)
+3. Implement pattern simplification (remove unnecessary duration annotations)
+4. Try different grid sizes (4-grid, 16-grid) for comparison
+5. Hybrid approach: preserve polyphony only for chords (3+ simultaneous notes)
+
+**Files Modified** (Completed):
+- ✅ `src/main/java/com/marcoalmeida/midi_tokenizer/cli/MidiShellCommands.java` - Removed --quantize
+- ✅ `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/ConversionOptions.java` - Removed quantization field
+- ✅ `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/RhythmConverter.java` - 8-grid + polyphony + grid snapping
+- ✅ `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelConverter.java` - Multi-time-sig validation
+- ✅ `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelTemplate.java` - Updated metadata
+
+**Test Files Updated** (All tests passing):
+- ✅ `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/RhythmConverterTest.java` - Added polyphony tests, updated for 8-grid
+- ✅ `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelConverterTest.java` - Updated for ConversionOptions changes
+- ✅ `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelTemplateTest.java` - Updated expected metadata
+- ✅ `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/NoteConverterTest.java` - No changes (still passing)
+
+---
+
+### Phase 2: Multi-Track Output ⏳ **NEXT** (After Phase 1.5 Review)
+
+**Goal**: Output all tracks as separate patterns (user arranges manually in Strudel).
+
+**Status**: ⏳ Planned - waiting for Phase 1.5 review and decision on polyphony approach
+
+**Note**: Phase 2 implementation depends on resolution of Phase 1.5 musical quality issues. May need to:
+- Revert to Phase 1 approach (simpler, non-polyphonic patterns)
+- Make polyphony optional via flag
+- Refine grid size or pattern simplification before proceeding
+
+**Philosophy**: Keep it minimal - generate raw patterns, let users customize arrangement in Strudel.
 
 **Features**:
-- Process all tracks in MIDI file simultaneously on shared time grid
-- Generate named patterns per track
-- Use `arrange()` and `stack()` for playback structure
-- Handle track names and instruments
-- Maintain synchronization via global quantization grid
+- Process **all tracks** automatically (no --track option)
+- Simple pattern naming: `track0`, `track1`, `track2`, etc.
+- All tracks use `note()` (no instrument mapping)
+- Basic `stack()` output (user customizes manually)
+- All tracks synchronized on same 24-grid
 
 **Input**: Multi-track MIDI (drums, bass, melody)
 
 **Output Example**:
 ```javascript
-/* "Full Song" */
+/* "full-song" */
 /**
 Source: full-song.mid
 Tempo: 100 BPM
+Time Signature: 4/4
+Grid: 24-base (24 slices per measure)
 Tracks: 3
-  - Track 0: Drums
-  - Track 1: Bass
-  - Track 2: Lead
-Converted: 2024-01-15
 **/
 
-setcpm(100/4)
+setcpm(25)
 
-// Track 0: Drums
-let drums = s("bd sd bd sd").bank("RolandTR808")
+// Track 0
+let track0 = note(`<[c4,e4,g4@6 ~ ~ ~] [~@24]>`).room(0.2)
 
-// Track 1: Bass
-let bass = note("c2 ~ e2 g2").sound("sawtooth").lpf(800)
+// Track 1
+let track1 = note(`<[c2@12 e2@12] [g2@24]>`).room(0.2)
 
-// Track 2: Lead  
-let lead = note("c4 e4 g4 b4").sound("triangle")
+// Track 2
+let track2 = note(`<[c5 e5 g5 ~ c5 e5 g5 ~] [~@24]>`).room(0.2)
 
-arrange(
-  [1, drums],
-  [4, stack(drums, bass)],
-  [4, stack(drums, bass, lead)],
-  [2, drums]
-).room(0.2)
+// Play all tracks together (customize as needed)
+stack(track0, track1, track2)
 ```
 
-**Success Criteria**:
-- Extract all tracks with correct instrument mapping
-- Generate unique, meaningful variable names per track
-- Create logical arrangement structure
-- Handle track muting/volume
+**Implementation Changes**:
 
-**Implementation Steps**:
-1. **Extend RhythmConverter** to handle multiple tracks on same global grid
-2. Implement track iteration in `StrudelConverter` (already has single-track support)
-3. Create MIDI program → Strudel sound mapping system in `InstrumentMapper`
-4. Build pattern variable naming strategy in `PatternNamer` (camelCase, track names)
-5. Implement `ArrangementGenerator` for `arrange()` and `stack()` block generation
-6. Add track metadata extraction and formatting
-7. **Handle quantization conflicts** when multiple tracks have notes at same grid position
+1. **ConversionOptions.java** - Remove trackIndex:
+   ```java
+   public record ConversionOptions(
+       Integer overrideTempo    // Override tempo in BPM
+       // trackIndex REMOVED - always process all tracks
+   ) {}
+   ```
 
-**Quantization-Specific Tasks**:
-- Ensure all tracks quantized to same global grid (shared measure boundaries)
-- Detect when different tracks need different quantization levels
-- Option to use highest quantization needed across all tracks
-- Test with multi-track MIDI to verify synchronization
+2. **MidiShellCommands.java** - Remove --track option:
+   ```java
+   @ShellMethod(key = "convert", value = "Convert MIDI file to Strudel pattern")
+   public String convert(
+       @ShellOption(help = "Path to MIDI or JSON file") String input,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Output file path") String output,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Override tempo/BPM") Integer tempo
+       // --track option REMOVED
+   )
+   ```
+
+3. **StrudelConverter.java** - Loop all tracks:
+   ```java
+   // CHANGE: Process all tracks instead of single track
+   List<String> trackPatterns = new ArrayList<>();
+   for (int i = 0; i < midiData.tracks().size(); i++) {
+       TrackOutput track = midiData.tracks().get(i);
+       if (track.events().isEmpty()) {
+           continue;  // Skip empty tracks
+       }
+       
+       String pattern = RhythmConverter.toQuantizedCyclePattern(
+           track.events(), 
+           division,
+           numerator, 
+           denominator
+       );
+       trackPatterns.add(pattern);
+   }
+   ```
+
+4. **StrudelTemplate.java** - Render multiple patterns:
+   ```java
+   // Generate pattern definitions for each track
+   StringBuilder patterns = new StringBuilder();
+   for (int i = 0; i < trackPatterns.size(); i++) {
+       patterns.append(String.format("// Track %d%n", i));
+       patterns.append(String.format("let track%d = note(`%s`).room(0.2)%n%n", i, trackPatterns.get(i)));
+   }
+   
+   // Generate simple stack() call
+   String trackNames = IntStream.range(0, trackPatterns.size())
+       .mapToObj(i -> "track" + i)
+       .collect(Collectors.joining(", "));
+   patterns.append(String.format("// Play all tracks together (customize as needed)%n"));
+   patterns.append(String.format("stack(%s)", trackNames));
+   ```
+
+**Success Criteria**: ✅ Phase 2 Complete When:
+- ✅ All tracks converted (not just one)
+- ✅ Each track outputs as separate `trackN` pattern
+- ✅ Simple `stack()` call generated
+- ✅ Empty tracks skipped automatically
+- ✅ All tracks synchronized on same 24-grid
+- ✅ Multi-track test case passes
+
+**Files to Modify** (NO new files created):
+- `src/main/java/com/marcoalmeida/midi_tokenizer/cli/MidiShellCommands.java` - Remove --track option
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/ConversionOptions.java` - Remove trackIndex field
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelConverter.java` - Loop all tracks
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelTemplate.java` - Output multiple patterns + stack()
 
 **Files to Create**:
-- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/InstrumentMapper.java` - MIDI program to sound mapping
-- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/PatternNamer.java` - Variable naming from track names
-- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/ArrangementGenerator.java` - Arrangement block generation
-- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/ArrangementGeneratorTest.java` - Tests
-- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/MultiTrackTest.java` - Integration tests
+- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/MultiTrackConverterTest.java` - Multi-track integration test
 
 ---
 
-### Phase 3: Rhythm and Timing Enhancement
+## Future Enhancements
 
-**Goal**: Improve rhythm representation within quantization constraints.
+Beyond Phase 2, these features could be added:
 
-**⚠️ Quantization Considerations**:
+### Pattern Optimization
+- **Collapse consecutive rests**: `[~ ~ ~ ~]` → `[~@4]`
+- **Detect repetition**: `[a b c] [a b c]` → `[a b c]*2`
+- **Simplify durations**: Remove unnecessary @N notation when implied
 
-The quantization approach handles most rhythms but has some limitations:
-- ✅ **Triplets**: Fully supported with appropriate quantization (12, 24, etc.)
-- ⚠️ **Swing timing**: Can be approximated with fine quantization or use Strudel's `.swing()` modifier
-- ⚠️ **Polyrhythm**: Use LCM quantization (e.g., 20 for 5-against-4) or combine patterns
-- ❌ **Micro-timing variations**: All events snap to grid - humanization lost
-- ⚠️ **Complex syncopation**: Grid approximation - may need manual adjustment
+### Rhythm Detection
 
-**Features** (achievable with quantization):
-- ✅ Handle rests (already working via `~`)
-- ✅ Triplets with appropriate quantization (12, 24, etc.)
-- ✅ Basic syncopation (as long as it aligns with grid)
-- ✅ Tempo changes (multiple `setcpm()` calls)
-- ✅ Different time signatures per section
-- ✅ Pattern repetition detection (`*2`, `*4` notation)
-- ⚠️ **Triplet detection**: Auto-detect and suggest optimal quantization
-- ⚠️ **Swing detection**: Detect swing ratio and suggest `.swing()` modifier or quantization adjustment
+- **Triplet/swing detection**: Auto-detect and add Strudel modifiers in comments
+- **Tempo change support**: Multiple `setcpm()` calls for tempo changes within file
+- **--verbose flag**: Debugging output showing grid calculations and note mappings
 
-**Hybrid Approach** (recommended):
-1. Use quantization for simple, grid-aligned material
-2. **Detect complex rhythms** (triplets, swing) via pattern analysis
-3. Add **Strudel modifiers** in comments: `.fast(3/2)` for triplets, `.swing()` for swing
-4. Warn user when MIDI timing doesn't fit quantization grid
+### Advanced Arrangement (Complex)
+- **Instrument mapping**: MIDI program → Strudel sound/bank mapping
+- **Smart arrange()**: Auto-generate arrangement structure based on track patterns
+- **Pattern naming**: Use track names instead of track0, track1
+- **Track grouping**: Detect drums/bass/melody and arrange accordingly
 
-**Input**: MIDI with rhythms that align to quantization grid
-
-**Output Example**:
-```javascript
-/* "Son Clave" */
-/**
-Source: son-clave.mid
-Tempo: 100 BPM
-Time Signature: 4/4
-Style: Afro-Cuban
-[18 Rhythms you should know](https://www.youtube.com/watch?v=ZROR_E5bFEI)
-**/
-
-setcpm(100/4)
-
-// 3-2 Son Clave pattern
-let son_clave_3_by_2 = s("[bd@1.5 bd@1.5 bd] [~ bd bd ~]").bank("tr909")
-
-// 2-3 Son Clave pattern (reversed)
-let son_clave_2_by_3 = s("[~ bd bd ~] [bd@1.5 bd@1.5 bd]").bank("tr909")
-
-// Tresillo rhythm
-let tresillo = s("[bd@1.5 bd@1.5 bd]*2").bank("rolandtr909")
-
-arrange(
-  [4, son_clave_3_by_2],
-  [4, son_clave_2_by_3],
-  [4, tresillo]
-).room(0.02)
-```
-
-**Success Criteria**:
-- Accurately represent note durations using `@` notation
-- Handle rests with `~` 
-- Detect and preserve rhythmic patterns
-- Support polymeter and polyrhythm with brackets `[]` and grouping
-
-**Implementation Steps**:
-1. **Extend RhythmConverter** with pattern repetition detection (`*2`, `*4`)
-2. Create `RhythmPatternDetector` for triplet/swing detection
-3. Implement tempo change support with multiple `setcpm()` calls in template
-4. Add `--verbose` flag for debugging
-
-**Files to Create**:
-- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/RhythmPatternDetector.java` - Detect triplets, swing, polyrhythm
-- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/RhythmPatternDetectorTest.java` - Tests
-
-
+### Other
+- **Chord detection**: Better representation for dense polyphony
+- **Velocity mapping**: Map MIDI velocity to `.gain()` values
+- **Pattern library**: Detect known patterns (bossa nova, clave, etc.)
+- **MIDI export**: Reverse conversion (Strudel → MIDI)
+- **Real-time conversion**: Convert while MIDI plays
+- **Batch processing**: Convert multiple MIDI files at once
+- **Custom templates**: User-defined output templates
 
 ---
 
@@ -357,16 +642,12 @@ midi_tokenizer/
 │   │       │   ├── MidiOutput.java
 │   │       │   ├── TrackOutput.java
 │   │       │   └── ...
-│   │       └── strudel/                           # NEW: Strudel conversion package
-│   │           ├── StrudelConverter.java          # Main conversion service (Phase 1)
-│   │           ├── NoteConverter.java             # MIDI note to note name (Phase 1)
-│   │           ├── StrudelTemplate.java           # File template rendering (Phase 1)
-│   │           ├── TrackProcessor.java            # Track separation (Phase 2)
-│   │           ├── InstrumentMapper.java          # MIDI program mapping (Phase 2)
-│   │           ├── PatternGenerator.java          # Pattern generation (Phase 2)
-│   │           ├── ArrangementGenerator.java      # Arrangement blocks (Phase 2)
-│   │           ├── RhythmAnalyzer.java            # Rhythm analysis (Phase 3)
-│   │           └── DurationCalculator.java        # Tick to duration (Phase 3)
+│   │       └── strudel/                           # Strudel conversion package
+│   │           ├── StrudelConverter.java          # Main conversion service
+│   │           ├── NoteConverter.java             # MIDI note to note name
+│   │           ├── RhythmConverter.java           # 24-grid polyphonic rhythm engine
+│   │           ├── StrudelTemplate.java           # File template rendering
+│   │           └── ConversionOptions.java         # Configuration record
 │   └── test/
 │       └── java/com/marcoalmeida/midi_tokenizer/
 │           ├── MidiParserTest.java                # Existing tests
@@ -387,387 +668,114 @@ MIDI File → MidiParser → MidiOutput (JSON model) - ✅ EXISTING
   ↓
 StrudelConverter - ✅ IMPLEMENTED (@Service)
   ↓
-[Select Track] - ✅ IMPLEMENTED (via ConversionOptions)
+[Loop All Tracks] - ⏳ PHASE 2 (currently single track)
   ↓
 NoteConverter - ✅ IMPLEMENTED (MIDI note → "c4")
   ↓
-RhythmConverter - ✅ IMPLEMENTED (Quantization Grid Engine)
-  ├─ Calculate grid (8/16/32 slices per measure)
-  ├─ Map notes to slices (50% occupancy rule)
-  ├─ Resolve conflicts (longest note wins)
-  ├─ Merge durations (@N notation)
+RhythmConverter - ⏳ PHASE 1.5 (24-grid + polyphony)
+  ├─ Calculate 24-grid (auto from time signature)
+  ├─ Collect ALL notes at trigger points
+  ├─ Track per-note durations (quarter-precision)
+  ├─ Format with comma notation (polyphony)
   └─ Insert rests (~)
   ↓
-ArrangementGenerator → Multi-track arrange() - ⏳ PHASE 2
-  ↓
 StrudelTemplate - ✅ IMPLEMENTED (File template rendering)
+  ├─ ⏳ PHASE 2: Output multiple track patterns
+  └─ ⏳ PHASE 2: Generate stack() call
   ↓
 Strudel Pattern File (.txt) - ✅ OUTPUT
 ```
 
-**Current Flow (Phase 1)**:
+**Phase 1.5 Flow** (polyphonic single track):
 ```
-MIDI → Parser → Converter → Select Track → Extract Notes → 
-RhythmConverter (Quantization) → StrudelTemplate → .txt File
+MIDI → Parser → Converter → Extract Notes from Track 0 → 
+RhythmConverter (24-Grid + Polyphony) → StrudelTemplate → .txt File
 ```
 
-### Key Classes and Methods
-
-```java
-package com.marcoalmeida.midi_tokenizer.strudel;
-
-/**
- * Utility class for converting MIDI note numbers to Strudel note names.
- */
-public class NoteConverter {
-    
-    /**
-     * Convert MIDI note number to Strudel note name
-     * @param noteNumber MIDI note number (0-127)
-     * @return Note name like "c4", "d#5"
-     * 
-     * Example:
-     * midiNoteToNoteName(60) → "c4"
-     * midiNoteToNoteName(61) → "c#4"
-     */
-    public static String midiNoteToNoteName(int noteNumber) {
-        String[] notes = {"c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"};
-        int octave = (noteNumber / 12) - 1;
-        String note = notes[noteNumber % 12];
-        return note + octave;
-    }
-}
-
-/**
- * ACTUAL IMPLEMENTATION: Static utility for quantization-based rhythm conversion.
- */
-public class RhythmConverter {
-    
-    /**
-     * Convert note events to quantized Strudel pattern.
-     * Quantizes notes to a fixed grid (8th, 16th, 32nd notes).
-     * 
-     * @param noteEvents List of note events from a track
-     * @param division MIDI ticks per quarter note
-     * @param timeSignatureNumerator Time signature numerator (e.g., 4 for 4/4)
-     * @param timeSignatureDenominator Time signature denominator (e.g., 4 for 4/4)
-     * @param quantization Quantization level (8=eighth, 16=sixteenth, 32=thirty-second)
-     * @return Quantized pattern string with [measure] grouping
-     * 
-     * Example:
-     * toQuantizedCyclePattern(events, 480, 4, 4, 16) → 
-     *   "[c4@4 d4@2 e4@2] [f4@8] [~@8]"
-     * 
-     * How it works:
-     * 1. Divides each measure into N slices (N = quantization * timeSig / 4)
-     * 2. Maps each MIDI note to grid slices using 50% occupancy rule
-     * 3. Merges consecutive identical notes with @N notation
-     * 4. Wraps each measure in [...]
-     */
-    public static String toQuantizedCyclePattern(
-        List<EventOutput> noteEvents,
-        int division,
-        int timeSignatureNumerator,
-        int timeSignatureDenominator,
-        int quantization
-    ) {
-        // See actual implementation in RhythmConverter.java
-        return null;
-    }
-}
-
-/**
- * Service for generating Strudel patterns from track data.
- */
-public class PatternGenerator {
-    
-    /**
-     * Generate Strudel pattern from track data
-     * @param track Track data from MidiOutput
-     * @param options Conversion options
-     * @return Strudel pattern code
-     */
-    public String generatePattern(TrackOutput track, ConversionOptions options) {
-        // Create Strudel pattern from track data
-        return null;
-    }
-}
-
-/**
- * Template renderer for complete Strudel pattern files.
- */
-public class StrudelTemplate {
-    
-    /**
-     * Render complete pattern file using template
-     * @param metadata Song metadata
-     * @param patterns Pattern definitions
-     * @param arrangement Arrangement structure
-     * @return Complete .txt file content
-     */
-    public String renderTemplate(Metadata metadata, List<String> patterns, String arrangement) {
-        // Generate complete .txt file following 00_SonClave.txt structure
-        return null;
-    }
-}
-
-/**
- * Main conversion service coordinating all converters.
- */
-@Service
-public class StrudelConverter {
-    
-    private final MidiParser midiParser;
-    private final NoteConverter noteConverter;
-    private final RhythmAnalyzer rhythmAnalyzer;
-    private final PatternGenerator patternGenerator;
-    private final StrudelTemplate template;
-    
-    /**
-     * Convert MIDI file or JSON to Strudel pattern
-     * @param inputPath Path to .mid or .json file
-     * @param options Conversion options
-     * @return Strudel pattern text
-     */
-    public String convert(String inputPath, ConversionOptions options) throws Exception {
-        // Main conversion pipeline
-        MidiOutput midiData;
-        
-        if (inputPath.endsWith(".mid")) {
-            midiData = midiParser.parse(inputPath, options.isUseSeconds());
-        } else if (inputPath.endsWith(".json")) {
-            // Parse JSON file
-            ObjectMapper mapper = new ObjectMapper();
-            midiData = mapper.readValue(new File(inputPath), MidiOutput.class);
-        } else {
-            throw new IllegalArgumentException("Input must be .mid or .json file");
-        }
-        
-        // Process tracks and generate patterns
-        List<String> patterns = new ArrayList<>();
-        for (TrackOutput track : midiData.tracks()) {
-            String pattern = patternGenerator.generatePattern(track, options);
-            patterns.add(pattern);
-        }
-        
-        // Generate arrangement
-        String arrangement = generateArrangement(patterns);
-        
-        // Render template
-        return template.renderTemplate(midiData.metadata(), patterns, arrangement);
-    }
-}
-
-/**
- * ACTUAL IMPLEMENTATION: Options for Strudel conversion.
- */
-public record ConversionOptions(
-    Integer overrideTempo,    // Override tempo in BPM
-    Integer trackIndex,        // Track to convert (default: 0)
-    Integer quantization       // Quantization level: any integer (8, 12, 16, 24, 32, etc.) (default: 16)
-) {
-    // Provides defaults for optional parameters
-    public int getEffectiveTrackIndex() {
-        return trackIndex != null ? trackIndex : 0;
-    }
-    
-    public int getEffectiveQuantization() {
-        return quantization != null ? quantization : 16;
-    }
-    
-    // Note: simplify and verbose flags NOT YET IMPLEMENTED
-}
+**Phase 2 Flow** (multi-track):
 ```
+MIDI → Parser → Converter → Loop All Tracks → 
+RhythmConverter (24-Grid + Polyphony per track) → 
+StrudelTemplate (Multiple Patterns + stack()) → .txt File
+```
+
+### Key Classes
+
+- **NoteConverter**: Converts MIDI note numbers to Strudel note names (c4, d#5, etc.)
+- **RhythmConverter**: 8-grid polyphonic rhythm conversion with automatic grid calculation
+- **StrudelConverter**: Main service coordinating conversion pipeline
+- **StrudelTemplate**: Renders output file with metadata and patterns
+- **ConversionOptions**: Configuration record (tempo override, track selection)
 
 ---
 
 ## Testing Strategy
 
-### Unit Tests (JUnit 5)
+### Test Coverage
 
-Each class has corresponding test class:
-
-```java
-package com.marcoalmeida.midi_tokenizer;
-
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-
-import com.marcoalmeida.midi_tokenizer.strudel.NoteConverter;
-
-class NoteConverterTest {
-    
-    @Test
-    void shouldConvertMiddleCCorrectly() {
-        assertEquals("c4", NoteConverter.midiNoteToNoteName(60));
-    }
-    
-    @Test
-    void shouldHandleSharps() {
-        assertEquals("c#4", NoteConverter.midiNoteToNoteName(61));
-    }
-    
-    @Test
-    void shouldHandleDifferentOctaves() {
-        assertEquals("c5", NoteConverter.midiNoteToNoteName(72));
-        assertEquals("c3", NoteConverter.midiNoteToNoteName(48));
-    }
-}
-```
-
-### Integration Tests
-
-Test full conversion pipeline:
-
-```java
-package com.marcoalmeida.midi_tokenizer;
-
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-
-import com.marcoalmeida.midi_tokenizer.strudel.StrudelConverter;
-import com.marcoalmeida.midi_tokenizer.strudel.ConversionOptions;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-@SpringBootTest
-class StrudelConverterIntegrationTest {
-    
-    @Autowired
-    private StrudelConverter converter;
-    
-    @Test
-    void shouldConvertSimpleMelody() throws Exception {
-        var options = new ConversionOptions(null, false, false, null);
-        String output = converter.convert("test-fixtures/simple-melody.mid", options);
-        
-        assertTrue(output.contains("setcpm("));
-        assertTrue(output.contains("note("));
-        assertTrue(output.matches(".*[cdefgab]\\d.*")); // Contains note names
-    }
-    
-    @Test
-    void shouldHandleMultiTrack() throws Exception {
-        var options = new ConversionOptions(null, false, false, null);
-        String output = converter.convert("test-fixtures/multi-track.mid", options);
-        
-        assertTrue(output.contains("arrange("));
-        assertTrue(output.contains("stack("));
-    }
-}
-```
+- **Unit Tests**: 32 tests across 4 test classes (NoteConverter, RhythmConverter, StrudelConverter, StrudelTemplate)
+- **Integration Tests**: Full conversion pipeline testing
+- **Test Fixtures**: Sample MIDI files for each phase in `test-fixtures/`
 
 ### Test Fixtures
 
 Create sample MIDI files for each phase in `test-fixtures/`:
 
 - **Phase 1**: `simple-melody.mid` - Single track, simple rhythm
+- **Phase 1.5**: `interstellar.mid` - Polyphonic single track (chords)
 - **Phase 2**: `multi-track.mid` - 3 tracks (drums, bass, melody)
-- **Phase 3**: `son-clave.mid` - Complex Afro-Cuban rhythms
 
 ---
 
 ## Code Style Guidelines
 
-### Follow Java and Spring Conventions
-
-- Use standard Java naming conventions (PascalCase for classes, camelCase for methods)
-- Use Java records for immutable data classes where appropriate
+- Follow standard Java naming conventions (PascalCase for classes, camelCase for methods)
+- Use Java records for immutable data classes
 - Use `@Service`, `@Component` annotations for Spring beans
-- Follow existing code style in `MidiParser` and `MidiShellCommands`
 - Use JavaDoc for all public methods and classes
 - Run `./gradlew test` before committing
-
-### Pattern Generation Style
-
-- Use Java text blocks (`"""`) for multi-line string templates
-- Prefer declarative style (define patterns, then arrange)
-- Use meaningful variable names (not `track1`, `pattern2`)
-- Add comments explaining musical concepts
-- Follow 00_SonClave.txt template structure
-
-### Error Handling
-
-```java
-public String convert(String filepath, ConversionOptions options) throws Exception {
-    if (!filepath.endsWith(".mid") && !filepath.endsWith(".json")) {
-        throw new IllegalArgumentException("Input must be .mid or .json file");
-    }
-    
-    // Validate MIDI data
-    if (midiData.tracks() == null || midiData.tracks().isEmpty()) {
-        throw new IllegalStateException("No tracks found in MIDI file");
-    }
-    
-    // Handle conversion errors
-    try {
-        return template.renderTemplate(metadata, patterns, arrangement);
-    } catch (Exception e) {
-        throw new RuntimeException("Failed to generate Strudel pattern: " + e.getMessage(), e);
-    }
-}
-```
-
-### Spring Shell Command Example
-
-Add to `MidiShellCommands.java`:
-
-```java
-@ShellMethod(key = "convert", value = "Convert MIDI file to Strudel pattern")
-public String convert(
-    @ShellOption(help = "Path to MIDI or JSON file") String input,
-    @ShellOption(defaultValue = ShellOption.NULL, help = "Output file path") String output,
-    @ShellOption(defaultValue = ShellOption.NULL, help = "Override tempo/BPM") Integer tempo,
-    @ShellOption(defaultValue = "false", help = "Simplify pattern complexity") boolean simplify,
-    @ShellOption(defaultValue = "false", help = "Show detailed conversion info") boolean verbose,
-    @ShellOption(defaultValue = ShellOption.NULL, help = "Convert specific track only") Integer track
-) {
-    try {
-        var options = new ConversionOptions(tempo, simplify, verbose, track);
-        String result = strudelConverter.convert(input, options);
-        
-        if (output != null) {
-            Files.writeString(Path.of(output), result);
-            return "Successfully wrote output to: " + output;
-        } else {
-            return result;
-        }
-    } catch (Exception e) {
-        return "Error: " + e.getMessage();
-    }
-}
-```
 
 ---
 
 ## Phase Implementation Order
 
-1. **Start with Phase 1** - Get basic conversion working with single track
-2. **Validate output** - Manually test in Strudel REPL to ensure patterns play correctly
-3. **Add Phase 2** - Multi-track support for complete songs
-4. **Move to Phase 3** - Rhythm is critical for musical accuracy
+1. **Phase 1**: ✅ COMPLETE - Basic single-track conversion with manual quantization
+2. **Phase 1.5**: ✅ COMPLETE (Technically) - Polyphonic 8-grid with auto-calculation
+   - ⚠️ Musical quality issues identified
+   - 🔄 Under review - may need to revert or refine approach
+3. **Phase 2**: ⏳ ON HOLD - Multi-track output (waiting for Phase 1.5 resolution)
+4. **Validate output**: Manually test in Strudel REPL after each phase
 
-This order prioritizes core functionality before advanced features.
+**Current Status**: Phase 1.5 complete from technical perspective but produces less satisfactory musical results than Phase 1. Need to decide whether to:
+- Keep Phase 1.5 and refine (pattern simplification, different grid sizes)
+- Revert to Phase 1 approach (simpler patterns without polyphony)
+- Make polyphony optional (best of both worlds)
 
 ---
 
 ## Success Metrics
 
-### Phase 1 Success
+### Phase 1 Success ✅
 - ✅ Converts single-track MIDI to valid Strudel code
 - ✅ Generated code plays in Strudel REPL
 - ✅ Note names are correct
+- ✅ Musical output sounds good (simple, clean patterns)
 
-### Phase 2 Success
-- ✅ Handles multi-track MIDI files
-- ✅ Generates proper `arrange()` blocks
-- ✅ Instrument mapping sounds musical
+### Phase 1.5 Success ✅ (Technical) / ⚠️ (Musical)
+- ✅ All simultaneous notes preserved (no polyphony loss)
+- ✅ 8-grid auto-calculated from time signature
+- ✅ Per-note durations with quarter-precision
+- ✅ interstellar.mid outputs all 5 notes
+- ✅ All tests passing
+- ⚠️ Musical quality worse than Phase 1 (patterns feel cluttered)
+- ⚠️ Polyphonic output harder to customize in Strudel
+- ⚠️ May need pattern simplification or revert to Phase 1 approach
 
-### Phase 3 Success
-- ✅ Preserves complex rhythms accurately
-- ✅ Handles rests and syncopation
-- ✅ Son Clave pattern converts correctly
+### Phase 2 Success 🔜
+- 🔜 All tracks converted (not just first track)
+- 🔜 Each track outputs as separate pattern (track0, track1, etc.)
+- 🔜 Simple stack() call generated
+- 🔜 Empty tracks skipped automatically
 
 ---
 
@@ -779,36 +787,27 @@ This order prioritizes core functionality before advanced features.
 
 # Then in the shell:
 
-# Phase 1: Basic conversion (default 16th note quantization)
+# Phase 1.5: Single-track conversion (automatic 8-grid calculation)
 shell:>convert --input simple-melody.mid --output my-melody.txt
 
-# With coarser quantization (8th notes)
-shell:>convert --input simple-melody.mid --quantize 8
-
-# For triplet-based music (12 = triplet eighths)
-shell:>convert --input jazz-melody.mid --quantize 12
-
-# For mixed straight and triplet (24 = triplet sixteenths)
-shell:>convert --input afro-cuban.mid --quantize 24
-
-# With finer quantization (32nd notes)
-shell:>convert --input complex-rhythm.mid --quantize 32
-
-# Phase 2: Multi-track with specific tempo and track
-shell:>convert --input full-song.mid --track 1 --tempo 100 --quantize 16
+# With tempo override
+shell:>convert --input simple-melody.mid --tempo 120
 
 # Auto-generated output file (azul.mid → azul.txt)
-shell:>convert --input azul.mid --track 1 --quantize 8
+shell:>convert --input azul.mid
 
-# Phase 3: Complex rhythm (use finer quantization)
-shell:>convert --input son-clave.mid --quantize 32
+# Polyphonic conversion (all simultaneous notes preserved)
+shell:>convert --input interstellar.mid
+
+# Phase 2: Multi-track conversion (all tracks as separate patterns)
+shell:>convert --input full-song.mid --tempo 100
 ```
 
 ---
 
 ## Future Enhancements
 
-Beyond Phase 3:
+Beyond Phase 2, these features could be added:
 
 - **Chord detection**: Detect and represent simultaneous notes
 - **Velocity mapping**: Map MIDI velocity to `.gain()` values
@@ -946,24 +945,9 @@ Given quantization approach, recommended order:
    - Polyrhythm (5 against 4) - should warn about poor fit
    - Mixed quantization needs (drums=16, melody=8)
 
-2. **Add quantization quality metrics**:
-   - Grid fitness score (0-1, how well MIDI aligns)
-   - Suggested quantization level (8/16/32)
-   - Warning count (notes >20% off grid)
-
-3. **Document known limitations** in output:
-   ```javascript
-   /**
-   Source: jazz-swing.mid
-   \u26a0\ufe0f Quantization warnings:
-     - Detected swing ratio: 66/33 (triplet feel)
-     - 23 notes >20% off 16th note grid
-     - Suggestion: Add .swing() modifier for swing feel
-   **/
-   ```
-
 ---
 
 **Remember**: Start simple, test often, and make it work before making it perfect!
 
-The quantization approach is **good enough for most music** and **works now**. Perfect accuracy can come later through hybrid approach if needed.
+The quantization approach is **good enough for most music** and **works now**.
+Perfect accuracy can come later through hybrid approach if needed.
