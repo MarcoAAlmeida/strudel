@@ -3774,3 +3774,83 @@ Pattern.prototype.FX = function (...effects) {
     return { ...v, FX: currFX.concat(vEff) };
   }).appLeft(parray(effects));
 };
+
+const _asArrayPattern = (pats) => {
+  const pack = (...xs) => xs;
+  let acc = pure(curry(pack, null, pats.length));
+  for (const p of pats) acc = acc.appLeft(p);
+  return acc;
+};
+
+/**
+ * Produces a [Kabelsalat](https://kabel.salat.dev/) modular sound engine.
+ * This can be used as either an effect (by including `audioin()` at the beginning
+ * of your kabel expression) or as a sound source (via any expression which doesn't
+ * start with `audioin()`).
+ *
+ * Some helpers you have available to you:
+ *   * Strudel mini notation works fine in K(..) via "" or ``
+ *   * More complex Strudel expressions (like "0 1 2".fast(4) or irand(24)) can be
+ *     written by wrapping them in `S(..)` inside your Kabel code
+ *   * We expose Strudel's note frequency under `sFreq` and Strudel's gate
+ *     information under `sGate`
+ *   * You can use more complex multi-line expressions (like `let x = a; let y = b; x.lpf(y);`)
+ *     by wrapping them inside a function in K (see example).
+ *
+ * @name K
+ * @param {KabelsalatExpression | Function} expr Kabelsalat graph definition
+ * @memberof Pattern
+ * @returns Pattern
+ *
+ * @example
+ * note("A c e".fast(4)).transpose("<0 2 4 6 8>")
+ *   .scale("F:minor").transpose("12")
+ *   .s("saw")
+ *   .K(
+ *     // audioin().mul(sGate.adsr(0.001, 0.3, 0, 0.2)) // as effect
+ *     saw(saw(sFreq / "2!3 16").mul(8).add(sFreq).lag("0!3 0.1")).mul(0.3) // as source
+ *     .mul(sGate.adsr(0, 0.15, 0.5, "0.1!3 1"))
+ *     .lpf(sGate.adsr(0, 0.2, 0.3, 0.2).mul(1).add(0))
+ *     .add(x => x.delay(S("0.3 0.2".fast(2))).mul(0.7))
+ *     .add(x => x.delay("0.03 [0.08 0.01] 0.01 0.013").mul(0.77)).mul(0.7)
+ *     .add(x => x.delay(.13).mul(0.7))
+ *     .out()
+ *   )
+ *
+ * @example
+ * n("<0 1 <2 3 2 4>>*16")
+ *   .scale("G#2:minor").sometimes(x => x.transpose("12 | 24"))
+ *   .K(() => {
+ *     const att = S(rand.range(0, 0.05))
+ *     const dec = S(rand.range(0.05, 0.2))
+ *     let f = n(sFreq);
+ *     const mod = sine(f).mul("0.1 | 0.2 | 0.3")
+ *       .add("[[1.5 1] | 1 | 2 | 4 | [6 4@3]]*2")
+ *     saw(f.mul(mod))
+ *     .mul(sGate.ad(att, dec))
+ *     .add(x => x.delay(0.4).mul(0.3))
+ *     .out()
+ *   }).fxr(1).room(0.3)
+ */
+/**
+ * Creates a worklet effect. Typically derived by writing K(...) in the REPL which will parse
+ * Kabelsalat code.
+ *
+ * @name worklet
+ * @param {string} src Source code of the worklet update function
+ * @param {...number | ...Pattern} inputs Worklet inputs
+ * @memberof Pattern
+ * @returns Pattern
+ * @noAutocomplete
+ */
+Pattern.prototype.worklet = function (src, ...inputs) {
+  inputs = inputs.map(reify);
+  return this.outerBind((v) => {
+    return _asArrayPattern(inputs).withValue((vInput) => {
+      const currInputs = v.workletInputs ?? [];
+      return { ...v, workletSrc: src, workletInputs: currInputs.concat(vInput) };
+    });
+  });
+};
+
+export const worklet = (...args) => pure({}).worklet(...args);
