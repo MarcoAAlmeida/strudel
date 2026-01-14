@@ -2,7 +2,13 @@ import { NeoCyclist } from './neocyclist.mjs';
 import { Cyclist } from './cyclist.mjs';
 import { evaluate as _evaluate } from './evaluate.mjs';
 import { errorLogger, logger } from './logger.mjs';
-import { setCpsFunc, setPattern as exposeSchedulerPattern, setTime, setTriggerFunc } from './schedulerState.mjs';
+import {
+  setCpsFunc,
+  setIsStarted,
+  setPattern as exposeSchedulerPattern,
+  setTime,
+  setTriggerFunc,
+} from './schedulerState.mjs';
 import { evalScope } from './evaluate.mjs';
 import { register, Pattern, isPattern, silence, stack } from './pattern.mjs';
 import { reset_state } from './impure.mjs';
@@ -52,6 +58,7 @@ export function repl({
     getTime,
     onToggle: (started) => {
       updateState({ started });
+      setIsStarted(started);
       onToggle?.(started);
       if (!started) {
         reset_state();

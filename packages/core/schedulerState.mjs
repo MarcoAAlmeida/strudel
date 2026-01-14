@@ -8,6 +8,7 @@ let time;
 let cpsFunc;
 let pattern;
 let triggerFunc;
+let isStarted;
 export function getTime() {
   if (!time) {
     throw new Error('no time set! use setTime to define a time source');
@@ -41,4 +42,12 @@ export function setTriggerFunc(func) {
 
 export function getTriggerFunc() {
   return triggerFunc;
+}
+
+export function setIsStarted(val) {
+  isStarted = !!val;
+}
+
+export function getIsStarted() {
+  return isStarted;
 }

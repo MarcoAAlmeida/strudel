@@ -10,6 +10,7 @@ import {
   Pattern,
   TimeSpan,
   getCps,
+  getIsStarted,
   getPattern,
   getTime,
   getTriggerFunc,
@@ -625,8 +626,11 @@ export async function midikeys(input) {
     const { dataBytes, message } = e;
     const noteon = message.command === 9;
     let noteoff = message.command === 8;
-    if (!noteon && !noteoff) {
-      // Ignore non-note messages (e.g. CC, pitchbend, modwheel, etc.)
+    // Don't enqueue or trigger midi notes if scheduler is not started
+    const notStarted = !getIsStarted();
+    // Ignore non-note messages (e.g. CC, pitchbend, modwheel, etc.)
+    const notANote = !noteon && !noteoff;
+    if (notStarted || notANote) {
       return;
     }
     const [note, velocity] = dataBytes;
