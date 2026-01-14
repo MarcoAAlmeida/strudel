@@ -155,7 +155,7 @@ export function getCompressor(ac, threshold, ratio, knee, attack, release) {
     release: release ?? 0.05,
   };
   Object.entries(options).forEach(([key, value]) => {
-    node[key].value = value;;
+    node[key].value = value;
   });
   return node;
 }
