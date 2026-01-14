@@ -7,10 +7,12 @@ This program is free software: you can redistribute it and/or modify it under th
 
 const nodePools = new Map();
 const POOL_KEY = Symbol('nodePoolKey');
-const IS_WORKLET_DEAD = Symbol('nodePoolIsWorkletDead');
-const MAX_POOL_SIZE = 64;
 
 export const isPoolable = (node) => !!node[POOL_KEY];
+
+const getNodeTime = (node) => {
+  return node.context?.currentTime ?? 0;
+};
 
 const getParams = (node) => {
   const params = new Set();
@@ -38,34 +40,43 @@ export const releaseNodeToPool = (node) => {
     // not reusable
     return;
   }
-  if (node[IS_WORKLET_DEAD]) {
-    // Worklet already terminated, don't pool it
-    return;
-  }
   const key = node[POOL_KEY];
   if (key == null) return;
-  const now = node.context?.currentTime ?? 0;
+  const now = getNodeTime(node);
   getParams(node).forEach((param) => param.cancelScheduledValues(now));
   const pool = nodePools.get(key) ?? [];
-  if (pool.length < MAX_POOL_SIZE) {
-    pool.push(new WeakRef(node));
-    nodePools.set(key, pool);
-  }
+  pool.push(new WeakRef(node));
+  nodePools.set(key, pool);
 };
 
-export const markWorkletAsDead = (worklet) => (worklet[IS_WORKLET_DEAD] = true);
+// Audio worklets are given a grace period to survive (`return true`) after
+// being released. This concludes at time `end + 0.5`. We test here whether we are
+// within some safe distance of that (`end + 0.45`) and if so, permit the node to be
+// released. This helps to prevent race conditions between node termination and node
+// re-use
+const isNodeAlive = (node) => {
+  // Skip check if node is not a worklet
+  if (!(node instanceof AudioWorkletNode)) return true;
+  const now = getNodeTime(node);
+  const end = node?.parameters?.get('end').value ?? 0;
+  return now < end + 0.45;
+};
 
 // Attempt to get node from the pool. If this fails, fall back
 // to building it with the factory
 export const getNodeFromPool = (key, factory) => {
   const pool = nodePools.get(key) ?? [];
   let node;
+  let found = false;
   while (pool.length) {
     const ref = pool.pop();
     node = ref?.deref();
-    if (node != null && !node[IS_WORKLET_DEAD]) break;
+    if (node != null && isNodeAlive(node)) {
+      found = true;
+      break;
+    }
   }
-  if (node == null || node[IS_WORKLET_DEAD]) {
+  if (!found) {
     node = factory();
   }
   node[POOL_KEY] = key;
