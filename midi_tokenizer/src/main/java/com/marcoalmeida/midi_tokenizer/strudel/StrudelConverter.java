@@ -88,12 +88,22 @@ public class StrudelConverter {
             timeSignatureDenominator = timeSignature.getDenominator();
         }
 
-        // Convert to quantized cycle-based pattern (24-grid auto-calculated)
+        // Get effective quantization (override or smart default)
+        int quantization = options.getEffectiveQuantization(timeSignatureNumerator, timeSignatureDenominator);
+        
+        // Calculate slices per measure
+        int slicesPerMeasure = (quantization * timeSignatureNumerator) / timeSignatureDenominator;
+
+        // Convert to quantized cycle-based pattern (Phase 1.9: with polyphony toggle)
+        boolean polyphonicMode = options.isPolyphonicMode();
         String pattern = RhythmConverter.toQuantizedCyclePattern(
             noteEvents,
             midiOutput.getFile().getDivision(),
             timeSignatureNumerator,
-            timeSignatureDenominator
+            timeSignatureDenominator,
+            quantization,
+            (int) Math.round(bpm),
+            polyphonicMode  // Phase 1.9: polyphony flag
         );
 
         // Determine instrument
@@ -105,10 +115,13 @@ public class StrudelConverter {
         // Calculate beats per cycle (for 4/4 time = 4 beats, for 3/4 time = 3 beats, etc.)
         int beatsPerCycle = timeSignatureNumerator * (4 / timeSignatureDenominator);
 
-        // Calculate slices per measure for 8-grid
-        int slicesPerMeasure = 8 * timeSignatureNumerator / timeSignatureDenominator;
+        // Calculate grid meaning description
+        String gridMeaning = generateGridMeaning(quantization, slicesPerMeasure);
+        
+        // Determine if quantization is default or override
+        String quantizationSource = options.quantization() != null ? "override" : "default";
 
-        // Render template
+        // Render template (Phase 1.9: with polyphonic mode)
         return StrudelTemplate.render(
             patternName,
             Path.of(inputPath).getFileName().toString(),
@@ -118,9 +131,13 @@ public class StrudelConverter {
             track.getName(),
             timeSignatureNumerator,
             timeSignatureDenominator,
+            quantization,
+            quantizationSource,
+            gridMeaning,
             slicesPerMeasure,
             pattern,
-            instrument
+            instrument,
+            polyphonicMode  // Phase 1.9: polyphonic mode flag
         );
     }
 
@@ -165,6 +182,31 @@ public class StrudelConverter {
 
         int program = track.getProgramChanges().get(0).getProgram();
         return program == 0 ? "piano" : "triangle";
+    }
+
+    private String generateGridMeaning(int quantization, int slicesPerMeasure) {
+        // Generate meaningful description of what the grid represents
+        // Examples: "16 = sixteenth notes, @4 = quarter note, @8 = half note"
+        
+        if (quantization == 6) {
+            return "6 = eighth notes, @3 = dotted quarter, @6 = dotted half";
+        } else if (quantization == 8) {
+            return "8 = eighth notes, @4 = half note";
+        } else if (quantization == 12) {
+            return "12 = triplet eighths, @3 = quarter note, @6 = half note";
+        } else if (quantization == 16) {
+            return "16 = sixteenth notes, @4 = quarter note, @8 = half note";
+        } else if (quantization == 24) {
+            return "24 = triplet sixteenths, @6 = quarter note, @12 = half note";
+        } else if (quantization == 32) {
+            return "32 = thirty-second notes, @8 = quarter note, @16 = half note";
+        } else {
+            // Generic description
+            int quarterNote = quantization / 4;
+            int halfNote = quantization / 2;
+            return String.format("%d slices per measure, @%d = quarter note, @%d = half note", 
+                slicesPerMeasure, quarterNote, halfNote);
+        }
     }
 
     private String generatePatternName(String inputPath) {

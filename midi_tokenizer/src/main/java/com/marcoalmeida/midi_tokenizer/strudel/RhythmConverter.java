@@ -3,274 +3,353 @@ package com.marcoalmeida.midi_tokenizer.strudel;
 import com.marcoalmeida.midi_tokenizer.model.EventOutput;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
- * Converts MIDI note events to Strudel pattern strings with cycle-based grouping.
- * Uses 24-grid universal base for automatic time-signature-aware quantization.
- * Preserves polyphony using comma notation.
+ * Converts MIDI note events to Strudel pattern strings with polyphonic support.
+ * Phase 1.9: Dual-mode conversion - polyphonic (default) or non-polyphonic (--no-polyphony).
  */
 public class RhythmConverter {
 
-    private static final int GRID_BASE = 8;  // 8-grid for clean 8th note resolution
-
     /**
-     * NoteEvent record for tracking simultaneous notes with individual durations.
+     * Internal class to hold note with its duration.
      */
-    record NoteEvent(String noteName, double duration) {}
+    private static class NoteWithDuration {
+        final String noteName;
+        final int duration;  // Integer slices
+
+        NoteWithDuration(String noteName, int duration) {
+            this.noteName = noteName;
+            this.duration = duration;
+        }
+    }
 
     /**
-     * Converts note events to polyphonic 24-grid Strudel pattern.
-     * Uses automatic time-signature-aware grid calculation.
-     * Preserves ALL simultaneous notes using comma notation.
-     *
-     * @param noteEvents List of note events from a track
-     * @param division MIDI ticks per quarter note
-     * @param timeSignatureNumerator Time signature numerator (e.g., 4 for 4/4)
-     * @param timeSignatureDenominator Time signature denominator (e.g., 4 for 4/4)
-     * @return Polyphonic pattern string with [measure] grouping and comma notation
+     * Converts MIDI note events to Strudel cycle pattern.
+     * Supports both polyphonic and non-polyphonic modes.
+     * 
+     * @param noteEvents   MIDI note events with timeSeconds and durationSeconds
+     * @param division     MIDI division (ticks per quarter note)
+     * @param numerator    Time signature numerator
+     * @param denominator  Time signature denominator
+     * @param quantization Quantization level (slices per 4/4 measure)
+     * @param tempo        Tempo in BPM
+     * @param polyphonic   Enable polyphonic mode (true) or non-polyphonic (false)
+     * @return Strudel pattern string wrapped in <>
      */
     public static String toQuantizedCyclePattern(
         List<EventOutput> noteEvents,
         int division,
-        int timeSignatureNumerator,
-        int timeSignatureDenominator
+        int numerator,
+        int denominator,
+        int quantization,
+        int tempo,
+        boolean polyphonic
     ) {
         if (noteEvents.isEmpty()) {
             return "";
         }
 
-        // Calculate 24-grid slices per measure
-        // Formula: slicesPerMeasure = 24 * numerator / denominator
-        // Examples: 4/4 → 24, 3/4 → 18, 6/8 → 18, 5/4 → 30
-        int slicesPerMeasure = GRID_BASE * timeSignatureNumerator / timeSignatureDenominator;
+        if (polyphonic) {
+            return toPolyphonicPattern(noteEvents, division, numerator, denominator, quantization, tempo);
+        } else {
+            return toNonPolyphonicPattern(noteEvents, division, numerator, denominator, quantization, tempo);
+        }
+    }
+
+    /**
+     * Phase 1.8 algorithm: Polyphonic preservation with integer durations.
+     * - Preserves ALL simultaneous notes as chords [c4,e4,g4]
+     * - No conflict resolution, no merging
+     * - Integer durations only
+     * - Time-based positioning
+     */
+    private static String toPolyphonicPattern(
+        List<EventOutput> noteEvents,
+        int division,
+        int numerator,
+        int denominator,
+        int quantization,
+        int tempo
+    ) {
+        // Calculate grid parameters
+        int slicesPerMeasure = (quantization * numerator) / denominator;
         
-        // Calculate slice duration in ticks
-        long ticksPerQuarterNote = division;
-        long ticksPerMeasure = ticksPerQuarterNote * timeSignatureNumerator * 4 / timeSignatureDenominator;
-        double ticksPerSlice = (double) ticksPerMeasure / slicesPerMeasure;
+        // Calculate slice time in seconds
+        // BPM = beats per minute, one beat = quarter note
+        // sliceTimeSeconds = (60 / tempo) * (4 / quantization)
+        double sliceTimeSeconds = (60.0 / tempo) * (4.0 / quantization);
 
-        // Find the range of measures
-        long maxTick = noteEvents.stream()
-            .mapToLong(e -> e.getTick() + e.getDurationTicks())
-            .max()
-            .orElse(0);
-        int numMeasures = (int) Math.ceil((double) maxTick / ticksPerMeasure);
-
-        // Create List<NoteEvent>[] to collect simultaneous notes
-        @SuppressWarnings("unchecked")
-        List<NoteEvent>[] slices = new ArrayList[slicesPerMeasure * numMeasures];
-        for (int i = 0; i < slices.length; i++) {
-            slices[i] = new ArrayList<>();
-        }
-
-        // Collect notes at their START positions only (trigger-point tracking)
+        // Populate grid using Map<position, List<NoteWithDuration>>
+        Map<Integer, List<NoteWithDuration>> grid = new HashMap<>();
+        
+        // Find maximum position for measure calculation
+        int maxPosition = 0;
+        
         for (EventOutput event : noteEvents) {
-            long noteStart = event.getTick();
+            // Calculate grid position using timeSeconds (more accurate than tick division)
+            int gridPosition = (int) Math.round(event.getTimeSeconds() / sliceTimeSeconds);
             
-            // SNAP to nearest grid position to avoid micro-timing issues
-            int startSlice = (int) Math.round(noteStart / ticksPerSlice);
+            // Calculate duration in slices
+            double durationInSlices = event.getDurationSeconds() / sliceTimeSeconds;
+            int integerDuration = (int) Math.round(durationInSlices);
             
-            // Skip notes that start beyond our grid
-            if (startSlice >= slices.length) {
-                continue;
+            // Minimum duration = 1 (always round up, never drop notes)
+            if (integerDuration < 1) {
+                integerDuration = 1;
             }
-
-            // Calculate duration with quarter-precision rounding
-            double durationInSlices = event.getDurationTicks() / ticksPerSlice;
-            double roundedDuration = Math.round(durationInSlices * 4.0) / 4.0;
             
-            // Minimum duration of 0.25
-            if (roundedDuration < 0.25) {
-                roundedDuration = 0.25;
-            }
-
             String noteName = NoteConverter.toStrudelNoteName(event.getNoteNumber());
-            slices[startSlice].add(new NoteEvent(noteName, roundedDuration));
+            
+            // Add to grid (allow multiple notes at same position - polyphony)
+            grid.computeIfAbsent(gridPosition, k -> new ArrayList<>())
+                .add(new NoteWithDuration(noteName, integerDuration));
+            
+            // Track maximum position
+            if (gridPosition > maxPosition) {
+                maxPosition = gridPosition;
+            }
         }
+
+        // Calculate number of measures
+        int numMeasures = (maxPosition / slicesPerMeasure) + 1;
 
         // Build pattern measure by measure
         StringBuilder pattern = new StringBuilder();
+        pattern.append("<");
 
-        for (int measureNum = 0; measureNum < numMeasures; measureNum++) {
-            pattern.append("[");
-
-            for (int sliceIdx = 0; sliceIdx < slicesPerMeasure; sliceIdx++) {
-                int absoluteSliceIdx = measureNum * slicesPerMeasure + sliceIdx;
-                
-                if (slices[absoluteSliceIdx].isEmpty()) {
-                    // Empty slot = rest
-                    pattern.append("~");
-                } else if (slices[absoluteSliceIdx].size() == 1) {
-                    // Single note - no brackets needed
-                    NoteEvent ne = slices[absoluteSliceIdx].get(0);
-                    if (ne.duration == 1.0) {
-                        pattern.append(ne.noteName);
-                    } else {
-                        String durationStr = formatDuration(ne.duration);
-                        pattern.append(ne.noteName).append("@").append(durationStr);
-                    }
-                } else {
-                    // Multiple simultaneous notes - wrap in brackets
-                    String noteGroup = slices[absoluteSliceIdx].stream()
-                        .map(ne -> {
-                            // Omit @1 suffix (implicit duration)
-                            if (ne.duration == 1.0) {
-                                return ne.noteName;
-                            } else {
-                                // Format duration, removing unnecessary decimals
-                                String durationStr = formatDuration(ne.duration);
-                                return ne.noteName + "@" + durationStr;
-                            }
-                        })
-                        .collect(Collectors.joining(","));
-                    pattern.append("[").append(noteGroup).append("]");
-                }
-                
-                if (sliceIdx < slicesPerMeasure - 1) {
-                    pattern.append(" ");
+        for (int measure = 0; measure < numMeasures; measure++) {
+            int measureStart = measure * slicesPerMeasure;
+            int measureEnd = measureStart + slicesPerMeasure;
+            
+            // Check if entire measure is empty
+            boolean isEmpty = true;
+            for (int i = measureStart; i < measureEnd; i++) {
+                if (grid.containsKey(i)) {
+                    isEmpty = false;
+                    break;
                 }
             }
-
-            pattern.append("] ");
+            
+            if (isEmpty) {
+                // Use compact notation for empty measure
+                pattern.append("[~@").append(slicesPerMeasure).append("]");
+            } else {
+                pattern.append("[");
+                for (int i = measureStart; i < measureEnd; i++) {
+                    if (grid.containsKey(i)) {
+                        List<NoteWithDuration> notes = grid.get(i);
+                        
+                        // Format as chord if multiple notes
+                        if (notes.size() > 1) {
+                            pattern.append("[");
+                            for (int j = 0; j < notes.size(); j++) {
+                                NoteWithDuration note = notes.get(j);
+                                pattern.append(note.noteName);
+                                if (note.duration > 1) {
+                                    pattern.append("@").append(note.duration);
+                                }
+                                if (j < notes.size() - 1) {
+                                    pattern.append(",");  // No spaces in chord notation
+                                }
+                            }
+                            pattern.append("]");
+                        } else {
+                            // Single note
+                            NoteWithDuration note = notes.get(0);
+                            pattern.append(note.noteName);
+                            if (note.duration > 1) {
+                                pattern.append("@").append(note.duration);
+                            }
+                        }
+                    } else {
+                        // Empty slot
+                        pattern.append("~");
+                    }
+                    
+                    if (i < measureEnd - 1) {
+                        pattern.append(" ");
+                    }
+                }
+                pattern.append("]");
+            }
+            
+            if (measure < numMeasures - 1) {
+                pattern.append(" ");
+            }
         }
 
-        // Remove trailing space
-        if (pattern.length() > 0 && pattern.charAt(pattern.length() - 1) == ' ') {
-            pattern.setLength(pattern.length() - 1);
-        }
+        pattern.append(">");
 
         return pattern.toString();
     }
 
     /**
-     * Format duration value, removing unnecessary decimals.
-     * Examples: 2.0 → "2", 1.5 → "1.5", 0.25 → "0.25"
+     * Phase 1.7 style algorithm: Non-polyphonic with time-based positioning.
+     * - 50% occupancy rule: note must occupy >50% of slice
+     * - Conflict resolution: longest duration wins
+     * - Consecutive identical notes merged with @N notation
+     * - Uses timeSeconds for positioning (Phase 1.8 improvement)
+     * - Integer durations only (Phase 1.8 improvement)
      */
-    private static String formatDuration(double duration) {
-        if (duration == (long) duration) {
-            return String.format("%d", (long) duration);
-        } else {
-            return String.format("%s", duration).replaceAll("\\.?0+$", "");
-        }
-    }
-
-    /**
-     * Helper method to find the duration of a note by name at a given tick position.
-     * @deprecated No longer needed with polyphonic approach
-     */
-    @Deprecated
-    private static long findNoteDuration(String noteName, List<EventOutput> noteEvents, long nearTick) {
-        for (EventOutput event : noteEvents) {
-            if (NoteConverter.toStrudelNoteName(event.getNoteNumber()).equals(noteName) &&
-                Math.abs(event.getTick() - nearTick) < 100) { // Within tolerance
-                return event.getDurationTicks();
-            }
-        }
-        return 0;
-    }
-
-    /**
-     * Converts note events to Strudel pattern with cycle brackets.
-     * Each cycle (measure) is wrapped in [] brackets.
-     * Durations are added using @ notation.
-     * Rests are inserted as ~ for gaps.
-     *
-     * @deprecated Use toQuantizedCyclePattern for better rhythm preservation
-     */
-    @Deprecated
-    public static String toCyclePattern(
+    private static String toNonPolyphonicPattern(
         List<EventOutput> noteEvents,
-        double bpm,
         int division,
-        int timeSignatureNumerator,
-        int timeSignatureDenominator
+        int numerator,
+        int denominator,
+        int quantization,
+        int tempo
     ) {
-        if (noteEvents.isEmpty()) {
-            return "";
-        }
-
-        // Calculate measure duration in ticks
-        // For 4/4 time: 4 quarter notes per measure
-        // For 3/4 time: 3 quarter notes per measure
-        long ticksPerQuarterNote = division;
-        long ticksPerMeasure = ticksPerQuarterNote * timeSignatureNumerator * 4 / timeSignatureDenominator;
+        // Calculate grid parameters (same as polyphonic)
+        int slicesPerMeasure = (quantization * numerator) / denominator;
+        double sliceTimeSeconds = (60.0 / tempo) * (4.0 / quantization);
         
-        // Quarter note duration in seconds (for reference)
-        double quarterNoteSeconds = 60.0 / bpm;
-        
-        // Group notes by measure
-        Map<Integer, List<EventOutput>> measureMap = new TreeMap<>();
+        // Find maximum position
+        int maxPosition = 0;
         for (EventOutput event : noteEvents) {
-            int measureNumber = (int) (event.getTick() / ticksPerMeasure);
-            measureMap.computeIfAbsent(measureNumber, k -> new ArrayList<>()).add(event);
+            int gridPosition = (int) Math.round(event.getTimeSeconds() / sliceTimeSeconds);
+            if (gridPosition > maxPosition) {
+                maxPosition = gridPosition;
+            }
         }
         
-        // Build pattern with cycle brackets
+        int numMeasures = (maxPosition / slicesPerMeasure) + 1;
+        
+        // Create grid to hold note names (single note per slice)
+        String[] slices = new String[slicesPerMeasure * numMeasures];
+        Arrays.fill(slices, "");
+        
+        // Place notes in grid using 50% occupancy rule + conflict resolution
+        for (EventOutput event : noteEvents) {
+            double noteStartTime = event.getTimeSeconds();
+            double noteEndTime = noteStartTime + event.getDurationSeconds();
+            String noteName = NoteConverter.toStrudelNoteName(event.getNoteNumber());
+            
+            // Calculate which slices this note occupies >50%
+            int startSlice = (int) Math.round(noteStartTime / sliceTimeSeconds);
+            int endSlice = (int) Math.round(noteEndTime / sliceTimeSeconds);
+            
+            for (int sliceIdx = startSlice; sliceIdx < endSlice && sliceIdx < slices.length; sliceIdx++) {
+                // Calculate how much of this slice the note occupies
+                double sliceStart = sliceIdx * sliceTimeSeconds;
+                double sliceEnd = (sliceIdx + 1) * sliceTimeSeconds;
+                
+                // Calculate overlap
+                double overlapStart = Math.max(noteStartTime, sliceStart);
+                double overlapEnd = Math.min(noteEndTime, sliceEnd);
+                double overlapDuration = overlapEnd - overlapStart;
+                
+                // 50% occupancy rule: note must occupy >50% of slice
+                if (overlapDuration > sliceTimeSeconds / 2) {
+                    // Conflict resolution: if slot already taken, longest duration wins
+                    if (slices[sliceIdx].isEmpty()) {
+                        slices[sliceIdx] = noteName;
+                    } else {
+                        // Find duration of existing note
+                        double existingDuration = findNoteDuration(slices[sliceIdx], noteEvents);
+                        if (event.getDurationSeconds() > existingDuration) {
+                            slices[sliceIdx] = noteName;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Build pattern with consecutive note merging
         StringBuilder pattern = new StringBuilder();
+        pattern.append("<");
         
-        for (Map.Entry<Integer, List<EventOutput>> entry : measureMap.entrySet()) {
-            List<EventOutput> measureNotes = entry.getValue();
+        for (int measure = 0; measure < numMeasures; measure++) {
+            int measureStart = measure * slicesPerMeasure;
+            int measureEnd = measureStart + slicesPerMeasure;
             
-            // Sort notes by tick within measure
-            measureNotes.sort(Comparator.comparingLong(EventOutput::getTick));
-            
-            pattern.append("[");
-            
-            long measureStartTick = entry.getKey() * ticksPerMeasure;
-            long currentTick = measureStartTick;
-            
-            for (EventOutput event : measureNotes) {
-                // Check for rest before this note
-                long gapTicks = event.getTick() - currentTick;
-                double gapQuarters = (double) gapTicks / ticksPerQuarterNote;
-                
-                // Insert rest if gap is significant (> 5% of a quarter note)
-                if (gapQuarters > 0.05) {
-                    pattern.append("~ ");
+            // Check if entire measure is empty
+            boolean isEmpty = true;
+            for (int i = measureStart; i < measureEnd; i++) {
+                if (!slices[i].isEmpty()) {
+                    isEmpty = false;
+                    break;
                 }
-                
-                // Add note with duration
-                String noteName = NoteConverter.toStrudelNoteName(event.getNoteNumber());
-                double durationQuarters = (double) event.getDurationTicks() / ticksPerQuarterNote;
-                
-                // Only add duration notation if not exactly 1 quarter note
-                if (Math.abs(durationQuarters - 1.0) > 0.05) {
-                    pattern.append(String.format("%s@%.2f ", noteName, durationQuarters));
-                } else {
-                    pattern.append(noteName).append(" ");
-                }
-                
-                currentTick = event.getTick() + event.getDurationTicks();
             }
             
-            // Remove trailing space
-            if (pattern.charAt(pattern.length() - 1) == ' ') {
-                pattern.setLength(pattern.length() - 1);
+            if (isEmpty) {
+                // Compact rest notation
+                pattern.append("[~@").append(slicesPerMeasure).append("]");
+            } else {
+                pattern.append("[");
+                
+                int sliceIdx = 0;
+                while (sliceIdx < slicesPerMeasure) {
+                    int absoluteSliceIdx = measureStart + sliceIdx;
+                    
+                    if (absoluteSliceIdx >= slices.length) {
+                        break;
+                    }
+                    
+                    String currentNote = slices[absoluteSliceIdx];
+                    
+                    if (currentNote.isEmpty()) {
+                        // Rest - count consecutive
+                        int restCount = 1;
+                        while (sliceIdx + restCount < slicesPerMeasure) {
+                            int nextAbsIdx = measureStart + sliceIdx + restCount;
+                            if (nextAbsIdx >= slices.length || !slices[nextAbsIdx].isEmpty()) {
+                                break;
+                            }
+                            restCount++;
+                        }
+                        
+                        if (restCount == 1) {
+                            pattern.append("~");
+                        } else {
+                            pattern.append("~@").append(restCount);
+                        }
+                        sliceIdx += restCount;
+                    } else {
+                        // Note - count consecutive identical (merging)
+                        int noteCount = 1;
+                        while (sliceIdx + noteCount < slicesPerMeasure) {
+                            int nextAbsIdx = measureStart + sliceIdx + noteCount;
+                            if (nextAbsIdx >= slices.length || !currentNote.equals(slices[nextAbsIdx])) {
+                                break;
+                            }
+                            noteCount++;
+                        }
+                        
+                        if (noteCount == 1) {
+                            pattern.append(currentNote);
+                        } else {
+                            pattern.append(currentNote).append("@").append(noteCount);
+                        }
+                        sliceIdx += noteCount;
+                    }
+                    
+                    if (sliceIdx < slicesPerMeasure) {
+                        pattern.append(" ");
+                    }
+                }
+                
+                pattern.append("]");
             }
             
-            pattern.append("] ");
+            if (measure < numMeasures - 1) {
+                pattern.append(" ");
+            }
         }
         
-        // Remove trailing space
-        if (pattern.length() > 0 && pattern.charAt(pattern.length() - 1) == ' ') {
-            pattern.setLength(pattern.length() - 1);
-        }
-        
+        pattern.append(">");
         return pattern.toString();
     }
     
     /**
-     * Converts a list of note events to a simple space-separated Strudel pattern.
-     * Legacy method - prefer toCyclePattern for proper rhythm preservation.
-     *
-     * @param noteEvents List of note events from a track
-     * @return Space-separated pattern string (e.g., "c4 d4 e4 f4 g4")
+     * Helper method to find the duration of a note by name.
      */
-    @Deprecated
-    public static String toSimplePattern(List<EventOutput> noteEvents) {
-        return noteEvents.stream()
-            .map(event -> NoteConverter.toStrudelNoteName(event.getNoteNumber()))
-            .collect(Collectors.joining(" "));
+    private static double findNoteDuration(String noteName, List<EventOutput> noteEvents) {
+        for (EventOutput event : noteEvents) {
+            if (NoteConverter.toStrudelNoteName(event.getNoteNumber()).equals(noteName)) {
+                return event.getDurationSeconds();
+            }
+        }
+        return 0.0;
     }
 }
+

@@ -21,9 +21,13 @@ public class StrudelTemplate {
      * @param trackName                 Name of the MIDI track
      * @param timeSignatureNumerator    Time signature numerator (e.g., 4 for 4/4)
      * @param timeSignatureDenominator  Time signature denominator (e.g., 4 for 4/4)
-     * @param slicesPerMeasure          Number of slices per measure (24-grid calculation)
+     * @param quantization              Quantization level used
+     * @param quantizationSource        Source of quantization ("default" or "override")
+     * @param gridMeaning               Description of what the grid represents
+     * @param slicesPerMeasure          Number of slices per measure
      * @param pattern                   Strudel pattern string (e.g., "c4 d4 e4")
      * @param instrument                Strudel instrument/sound name
+     * @param polyphonicMode            Whether polyphonic mode was used
      * @return Complete Strudel pattern file content
      */
     public static String render(
@@ -35,9 +39,13 @@ public class StrudelTemplate {
         String trackName,
         int timeSignatureNumerator,
         int timeSignatureDenominator,
+        int quantization,
+        String quantizationSource,
+        String gridMeaning,
         int slicesPerMeasure,
         String pattern,
-        String instrument
+        String instrument,
+        boolean polyphonicMode
     ) {
         String convertedDate = LocalDateTime.now().format(DATE_FORMATTER);
 
@@ -54,7 +62,9 @@ public class StrudelTemplate {
         sb.append("Source: ").append(sourceFile).append("\n");
         sb.append("Tempo: ").append((int) bpm).append(" BPM\n");
         sb.append("Time Signature: ").append(timeSignatureNumerator).append("/").append(timeSignatureDenominator).append("\n");
-        sb.append("Grid: 8-base (").append(slicesPerMeasure).append(" slices per measure)\n");
+        sb.append("Quantization: ").append(quantization).append(" (").append(quantizationSource).append(")\n");
+        sb.append("Grid: ").append(gridMeaning).append("\n");
+        sb.append("Mode: ").append(polyphonicMode ? "Polyphonic" : "Non-polyphonic").append("\n");
         sb.append("Track: ").append(trackIndex);
         if (trackName != null && !trackName.isEmpty()) {
             // Remove NUL characters and other control characters from track name
@@ -70,10 +80,10 @@ public class StrudelTemplate {
         // Set tempo: cycles per minute = bpm / beatsPerCycle
         sb.append("setcpm(").append((int) bpm).append("/").append(beatsPerCycle).append(")\n\n");
         
-        // Pattern definition with angle brackets for sequential playback
-        sb.append("let ").append(patternName).append(" = note(`<\n");
+        // Pattern definition (angle brackets removed - already in pattern)
+        sb.append("let ").append(patternName).append(" = note(`");
         sb.append(formattedPattern);
-        sb.append("\n>`).sound(\"").append(instrument).append("\")\n\n");
+        sb.append("`).sound(\"").append(instrument).append("\")\n\n");
         
         // Room effect
         sb.append(patternName).append(".room(0.2)\n");

@@ -105,17 +105,21 @@ public class MidiShellCommands {
     /**
      * Convert a MIDI file to Strudel pattern.
      *
-     * @param input  Input MIDI (.mid) or JSON (.json) file path
-     * @param output Optional output file path (defaults to input basename with .txt)
-     * @param tempo  Optional tempo override in BPM
-     * @param track  Optional track index to convert (defaults to 0)
+     * @param input       Input MIDI (.mid) or JSON (.json) file path
+     * @param output      Optional output file path (defaults to input basename with .txt)
+     * @param tempo       Optional tempo override in BPM
+     * @param track       Optional track index to convert (defaults to 0)
+     * @param quantize    Optional quantization level (auto-detected from time signature if not provided)
+     * @param noPolyphony Disable polyphonic conversion (use simpler single-note mode)
      */
     @ShellMethod(key = "convert", value = "Convert MIDI file to Strudel pattern")
     public String convert(
             @ShellOption(help = "Path to MIDI or JSON file") String input,
             @ShellOption(help = "Output file path (optional)", defaultValue = ShellOption.NULL) String output,
             @ShellOption(help = "Tempo override in BPM", defaultValue = ShellOption.NULL) Integer tempo,
-            @ShellOption(help = "Track index to convert", defaultValue = ShellOption.NULL) Integer track
+            @ShellOption(help = "Track index to convert", defaultValue = ShellOption.NULL) Integer track,
+            @ShellOption(help = "Quantization level (optional, auto-detected)", defaultValue = ShellOption.NULL) Integer quantize,
+            @ShellOption(value = "--no-polyphony", help = "Disable polyphonic conversion (use simple single-note mode)", defaultValue = "false") boolean noPolyphony
     ) {
         try {
             File inputFile = new File(input);
@@ -130,8 +134,8 @@ public class MidiShellCommands {
                 return "Error: Input file must be a MIDI file (.mid, .midi) or JSON file (.json)";
             }
 
-            // Create conversion options
-            ConversionOptions options = new ConversionOptions(tempo, track);
+            // Create conversion options (Phase 1.9: with polyphony toggle)
+            ConversionOptions options = new ConversionOptions(tempo, track, quantize, !noPolyphony);
 
             // Convert
             String strudelPattern = strudelConverter.convert(input, options);

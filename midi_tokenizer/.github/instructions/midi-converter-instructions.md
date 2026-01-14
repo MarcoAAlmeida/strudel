@@ -15,8 +15,13 @@ This extends the current `parse` command with a new `convert` command that outpu
 ### Basic Usage
 
 ```bash
-# In Spring Shell interactive mode:
+# In Spring Shell interactive mode (Phase 1.9):
+
+# Default: Polyphonic conversion
 shell:>convert --input input.mid --output output.txt
+
+# Non-polyphonic mode (simpler, better for melodies)
+shell:>convert --input input.mid --output output.txt --no-polyphony
 
 # Convert existing JSON to Strudel pattern
 shell:>convert --input input.json --output output.txt
@@ -26,6 +31,12 @@ shell:>convert --input input.mid --output output.txt --tempo 120
 
 # Auto-generate output filename (input.mid -> input.txt)
 shell:>convert --input input.mid
+
+# With custom quantization
+shell:>convert --input jazz.mid --quantize 12
+
+# All options combined
+shell:>convert --input song.mid --output out.txt --tempo 120 --quantize 16 --track 1 --no-polyphony
 ```
 
 ### Command Options
@@ -33,6 +44,9 @@ shell:>convert --input input.mid
 - `--input` (required) - Path to MIDI file (.mid, .midi) or JSON file (.json)
 - `--output` (optional) - Output file path (auto-generated from input filename if omitted)
 - `--tempo` (optional) - Override tempo/BPM
+- `--quantize` (optional) - Quantization level (auto-detected from time signature if omitted; use 12 or 24 for triplets)
+- `--track` (optional) - Track index to convert (default: 0)
+- `--no-polyphony` (optional) - Disable polyphonic conversion, use simpler single-note mode (default: polyphonic enabled)
 
 ## File Structure Template
 
@@ -443,12 +457,7 @@ pattern
 4. **Phase 1 Strengths**: Simpler patterns (without polyphony) easier to understand and customize
 5. **Iterative Testing Required**: Musical output quality requires listening tests, not just passing unit tests
 
-**Potential Next Steps** (To Be Decided):
-1. Revert to Phase 1 approach (no polyphony, simpler patterns)
-2. Make polyphony optional (--polyphonic flag)
-3. Implement pattern simplification (remove unnecessary duration annotations)
-4. Try different grid sizes (4-grid, 16-grid) for comparison
-5. Hybrid approach: preserve polyphony only for chords (3+ simultaneous notes)
+**Decision**: ❌ Phase 1.5 approach rejected - reverting to Phase 1 simplicity with smart quantization defaults
 
 **Files Modified** (Completed):
 - ✅ `src/main/java/com/marcoalmeida/midi_tokenizer/cli/MidiShellCommands.java` - Removed --quantize
@@ -465,16 +474,924 @@ pattern
 
 ---
 
-### Phase 2: Multi-Track Output ⏳ **NEXT** (After Phase 1.5 Review)
+### Phase 1.7: Smart Quantization with Phase 1 Simplicity ⏳ **IN PROGRESS**
+
+**Goal**: Return to Phase 1's simpler non-polyphonic approach while keeping Phase 1.5's time signature detection and adding smart quantization defaults.
+
+**Status**: 📋 Planning complete, ready for implementation
+
+**Rationale**: Phase 1.5's polyphonic output with per-note durations produced less musical results than Phase 1's simpler patterns. The overhead of calculating individual note durations made output sound choppy even at the same grid resolution.
+
+**What We're Keeping from Phase 1.5**:
+- ✅ Time signature detection and validation (single time signature only)
+- ✅ Multi-time-signature error with clear message
+- ✅ Default 4/4 fallback if no time signature found
+
+**What We're Reverting from Phase 1**:
+- ✅ 50% occupancy rule (notes must occupy >50% of slice)
+- ✅ Conflict resolution (longest duration wins when multiple notes compete)
+- ✅ Slice-count `@N` notation (not per-note quarter-precision)
+- ✅ Simple `String[]` data structure (not `List<NoteEvent>[]`)
+- ✅ Non-polyphonic output (single note per slice)
+
+**What's New in Phase 1.7**:
+- ✅ **Smart quantization defaults** based on detected time signature
+- ✅ **Optional --quantize override** for triplets/complex rhythms
+- ✅ **Enhanced metadata** showing time signature, quantization, and grid meaning
+
+**Smart Quantization Defaults**:
+
+| Time Signature | Default Quantization | Slices per Measure | Grid Meaning |
+|----------------|---------------------|-------------------|--------------|
+| 4/4 | 16 | 16 | 16th note resolution, @4 = quarter note |
+| 3/4 | 6 | 6 | Eighth note resolution (waltz feel) |
+| 6/8 | 6 | 6 | Eighth note resolution (compound meter) |
+| 2/4 | 16 | 8 | 16th note resolution, @4 = quarter note |
+| Other | 16 | varies | 16th note default, user can override |
+
+**Rationale for Defaults**:
+- **4/4, 2/4**: Most common, use 16th note grid (captures sixteenth notes, works for most pop/rock/electronic)
+- **3/4**: Waltz feel typically uses eighth notes, not sixteenth notes - use 6 (not 12)
+- **6/8**: Compound meter, eighth note is the pulse - use 6 (not 12)
+- **User can override**: For triplets, use `--quantize 12` or `--quantize 24`
+
+**Command Signature** (Updated):
+
+```bash
+# Use smart default (4/4 → 16)
+shell:>convert --input song.mid
+
+# Override for triplets
+shell:>convert --input jazz.mid --quantize 12
+
+# Override for very detailed rhythms
+shell:>convert --input complex.mid --quantize 32
+
+# All parameters
+shell:>convert --input song.mid --output out.txt --tempo 120 --quantize 24 --track 1
+```
+
+**Implementation Changes**:
+
+1. **ConversionOptions.java** - Add back quantization field:
+   ```java
+   public record ConversionOptions(
+       Integer overrideTempo,    // Override tempo in BPM
+       Integer trackIndex,       // Track to convert (default: 0)
+       Integer quantization      // Quantization level (optional, auto-calculated if null)
+   ) {
+       public int getEffectiveTrackIndex() {
+           return trackIndex != null ? trackIndex : 0;
+       }
+       
+       // NEW: Get quantization level (use override or calculate from time signature)
+       public int getEffectiveQuantization(int numerator, int denominator) {
+           if (quantization != null) {
+               return quantization;
+           }
+           
+           // Smart defaults based on time signature
+           if (numerator == 3 && denominator == 4) return 6;   // 3/4 waltz
+           if (numerator == 6 && denominator == 8) return 6;   // 6/8 compound
+           if (numerator == 2 && denominator == 4) return 16;  // 2/4 march
+           return 16;  // Default: 4/4 and other time signatures
+       }
+   }
+   ```
+
+2. **MidiShellCommands.java** - Restore --quantize parameter:
+   ```java
+   @ShellMethod(key = "convert", value = "Convert MIDI file to Strudel pattern")
+   public String convert(
+       @ShellOption(help = "Path to MIDI or JSON file") String input,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Output file path") String output,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Override tempo/BPM") Integer tempo,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Convert specific track only") Integer track,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Quantization level (optional, auto-detected)") Integer quantize
+   ) {
+       ConversionOptions options = new ConversionOptions(tempo, track, quantize);
+       // ... rest of method
+   }
+   ```
+
+3. **RhythmConverter.java** - Revert to Phase 1 approach:
+   - Remove `GRID_BASE` constant (no longer needed)
+   - Change data structure from `List<NoteEvent>[]` back to `String[]`
+   - Restore 50% occupancy rule
+   - Restore conflict resolution (longest duration wins)
+   - Remove per-note duration tracking
+   - Restore slice-count `@N` notation
+   - Use floor division instead of `Math.round()` for grid snapping
+   
+   ```java
+   /**
+    * Converts MIDI note events to quantized Strudel cycle pattern using fixed-grid approach.
+    * 
+    * Algorithm:
+    * 1. Calculate slices per measure from quantization level and time signature
+    * 2. For each slice, find notes that occupy >50% of slice duration
+    * 3. If multiple notes compete, longest total duration wins
+    * 4. Merge consecutive identical notes with @N notation (slice count)
+    * 5. Empty slices become rests (~)
+    * 
+    * @param events MIDI note events (assumed sorted by tick)
+    * @param division MIDI division (ticks per quarter note)
+    * @param numerator Time signature numerator
+    * @param denominator Time signature denominator
+    * @param quantization Quantization level (slices per 4/4 measure)
+    * @return Strudel pattern string wrapped in <>
+    */
+   public static String toQuantizedCyclePattern(
+       List<NoteEvent> events, 
+       int division, 
+       int numerator, 
+       int denominator,
+       int quantization  // NEW parameter
+   ) {
+       // Calculate slices per measure based on quantization and time signature
+       int slicesPerMeasure = (quantization * numerator) / denominator;
+       
+       // ... rest of Phase 1 algorithm
+   }
+   ```
+
+4. **StrudelConverter.java** - Pass quantization to RhythmConverter:
+   ```java
+   // Get effective quantization (override or smart default)
+   int quantization = options.getEffectiveQuantization(numerator, denominator);
+   
+   // Convert to pattern
+   String pattern = RhythmConverter.toQuantizedCyclePattern(
+       track.events(), 
+       division,
+       numerator, 
+       denominator,
+       quantization  // NEW parameter
+   );
+   ```
+
+5. **StrudelTemplate.java** - Enhanced metadata:
+   ```java
+   /**
+   Source: {filename}
+   Tempo: {tempo} BPM
+   Time Signature: {numerator}/{denominator}
+   Quantization: {quantization} ({default|override})
+   Grid: {gridMeaning}
+   Track: {trackIndex}
+   Converted: {timestamp}
+   **/
+   ```
+   
+   Where `gridMeaning` examples:
+   - `16 = sixteenth notes, @4 = quarter note, @8 = half note`
+   - `6 = eighth notes (3/4), @3 = dotted quarter, @6 = dotted half`
+   - `12 = triplet eighths, @3 = quarter note, @6 = half note`
+
+**Output Example (4/4 with default quantization=16)**:
+
+```javascript
+/* "azul" */
+/**
+Source: azul.mid
+Tempo: 160 BPM
+Time Signature: 4/4
+Quantization: 16 (default)
+Grid: 16 = sixteenth notes, @4 = quarter note, @8 = half note
+Track: 1
+Converted: 2026-01-13 15:30:00
+**/
+
+setcpm(40)
+
+let pattern = note(`<
+  [~ ~ ~ ~ ~ ~ ~ ~] 
+  [f6 ~ d6 ~ g#5 ~ g5 f5] 
+  [f5 ~ a5 ~ f5@4 d5 ~]
+>`).room(0.2)
+
+pattern
+```
+
+**Output Example (3/4 with default quantization=6)**:
+
+```javascript
+/* "waltz" */
+/**
+Source: waltz.mid
+Tempo: 180 BPM
+Time Signature: 3/4
+Quantization: 6 (default)
+Grid: 6 = eighth notes, @3 = dotted quarter, @6 = dotted half
+Track: 0
+Converted: 2026-01-13 15:35:00
+**/
+
+setcpm(45)
+
+let pattern = note(`<
+  [c4 e4 g4 c4 e4 g4]
+  [d4@3 ~ ~ d4@3]
+>`).room(0.2)
+
+pattern
+```
+
+**Output Example (Override with --quantize 12)**:
+
+```javascript
+/* "triplet-song" */
+/**
+Source: triplet-song.mid
+Tempo: 120 BPM
+Time Signature: 4/4
+Quantization: 12 (override)
+Grid: 12 = triplet eighths, @3 = quarter note, @6 = half note
+Track: 0
+Converted: 2026-01-13 15:40:00
+**/
+
+setcpm(30)
+
+let pattern = note(`<
+  [c4 ~ ~ d4 ~ ~ e4 ~ ~ c4 ~ ~]
+  [f4@6 ~ ~ ~ ~ ~ g4@6]
+>`).room(0.2)
+
+pattern
+```
+
+**Test Coverage** (To Be Updated):
+
+Remove polyphony tests, add:
+- ✅ Smart default quantization for 4/4 (should be 16)
+- ✅ Smart default quantization for 3/4 (should be 6)
+- ✅ Smart default quantization for 6/8 (should be 6)
+- ✅ Smart default quantization for 2/4 (should be 16)
+- ✅ Override default with --quantize parameter
+- ✅ 50% occupancy rule edge cases (49% ignored, 51% included)
+- ✅ Conflict resolution (longest duration wins)
+- ✅ Slice-count duration merging (@N notation)
+- ✅ Multi-time-signature validation still works
+
+**Success Criteria**: ✅ Phase 1.7 Complete When:
+- ✅ Reverted to non-polyphonic output (single note per slice)
+- ✅ Restored 50% occupancy rule
+- ✅ Restored conflict resolution
+- ✅ Restored slice-count `@N` notation
+- ✅ Smart quantization defaults working (4/4→16, 3/4→6, 6/8→6)
+- ✅ --quantize override working
+- ✅ Enhanced metadata showing quantization and grid meaning
+- ✅ All tests passing
+- ✅ Musical output quality as good as or better than Phase 1
+
+**Philosophy**:
+- **Keep it simple**: No polyphony, no per-note durations, no automatic detection
+- **Smart defaults**: Good defaults for common time signatures
+- **User control**: Easy override when defaults don't fit
+- **Clear documentation**: Metadata explains what the grid means
+
+**Files to Modify** (All existing files):
+- `src/main/java/com/marcoalmeida/midi_tokenizer/cli/MidiShellCommands.java` - Add --quantize parameter
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/ConversionOptions.java` - Add quantization field + getEffectiveQuantization()
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/RhythmConverter.java` - Revert to Phase 1 algorithm + quantization parameter
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelConverter.java` - Use getEffectiveQuantization()
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelTemplate.java` - Enhanced metadata
+
+**Test Files to Update**:
+- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/RhythmConverterTest.java` - Remove polyphony tests, add smart default tests
+- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelConverterTest.java` - Update for ConversionOptions changes
+- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelTemplateTest.java` - Update expected metadata format
+- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/NoteConverterTest.java` - No changes needed
+
+---
+
+### Phase 1.8: Polyphonic Conversion with Integer Durations 📋 **PLANNED**
+
+**Goal**: Implement polyphonic preservation using grid-snapped positions with integer durations, avoiding the musical quality issues from Phase 1.5.
+
+**Status**: 📋 Planning complete, awaiting implementation
+
+**Key Differences from Phase 1.5**:
+
+| Aspect | Phase 1.5 (Rejected) | Phase 1.8 (Planned) |
+|--------|---------------------|-------------------|
+| **Position Calculation** | tickPosition / ticksPerSlice (floor) | Math.round(timeSeconds / sliceTimeSeconds) |
+| **Duration Precision** | Quarter-precision (0.25, 0.5, 0.75, 1.25) | Integer only (1, 2, 3, 4) |
+| **Minimum Duration** | 0.25 slices | 1 slice (round up) |
+| **Data Structure** | List<NoteEvent>[] with durations | Map<Integer, List<NoteWithDuration>> |
+| **Merging** | Consecutive identical notes merged | NO merging (preserve all) |
+| **Rest Notation** | ~ per slot | [~@16] for full measure |
+
+**Why These Changes?**
+
+1. **timeSeconds-based positioning**: More accurate than tick-based division, respects actual MIDI timing
+2. **Integer durations**: Simpler, more readable patterns (no 1.25, 0.75, etc.)
+3. **Round up minimum**: Never lose notes (0.4 slices → 1 slice, not dropped)
+4. **No consecutive merging**: Preserve all note events as-is (important for legato vs. re-triggered notes)
+5. **Compact rest notation**: [~@16] cleaner than [~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~]
+
+**Algorithm Pseudocode**:
+
+```java
+// Data structure
+Map<Integer, List<NoteWithDuration>> grid = new HashMap<>();
+
+class NoteWithDuration {
+    String noteName;  // "c4", "d#5", etc.
+    int duration;     // Integer slices (1, 2, 3, ...)
+}
+
+// Step 1: Calculate grid parameters
+double sliceTimeSeconds = (60.0 / tempo) * (4.0 / quantization);
+int slicesPerMeasure = (quantization * numerator) / denominator;
+
+// Step 2: Populate grid with notes (NO merging, NO conflict resolution)
+for (NoteEvent event : events) {
+    // Calculate position using timeSeconds
+    int gridPosition = (int) Math.round(event.timeSeconds / sliceTimeSeconds);
+    
+    // Calculate duration in slices
+    double durationInSlices = event.durationSeconds / sliceTimeSeconds;
+    int integerDuration = (int) Math.round(durationInSlices);
+    
+    // Minimum duration = 1 (always round up)
+    if (integerDuration < 1) {
+        integerDuration = 1;
+    }
+    
+    // Add to grid (allow multiple notes at same position)
+    grid.computeIfAbsent(gridPosition, k -> new ArrayList<>())
+        .add(new NoteWithDuration(noteName, integerDuration));
+}
+
+// Step 3: Format output measure by measure
+for (int measure = 0; measure < totalMeasures; measure++) {
+    int measureStart = measure * slicesPerMeasure;
+    int measureEnd = measureStart + slicesPerMeasure;
+    
+    // Check if entire measure is empty
+    boolean isEmpty = true;
+    for (int i = measureStart; i < measureEnd; i++) {
+        if (grid.containsKey(i)) {
+            isEmpty = false;
+            break;
+        }
+    }
+    
+    if (isEmpty) {
+        // Use compact notation for empty measure
+        output.append("[~@").append(slicesPerMeasure).append("] ");
+    } else {
+        output.append("[");
+        for (int i = measureStart; i < measureEnd; i++) {
+            if (grid.containsKey(i)) {
+                List<NoteWithDuration> notes = grid.get(i);
+                
+                // Format as chord if multiple notes
+                if (notes.size() > 1) {
+                    output.append("[");
+                    for (int j = 0; j < notes.size(); j++) {
+                        NoteWithDuration note = notes.get(j);
+                        output.append(note.noteName);
+                        if (note.duration > 1) {
+                            output.append("@").append(note.duration);
+                        }
+                        if (j < notes.size() - 1) {
+                            output.append(",");  // No spaces
+                        }
+                    }
+                    output.append("]");
+                } else {
+                    // Single note
+                    NoteWithDuration note = notes.get(0);
+                    output.append(note.noteName);
+                    if (note.duration > 1) {
+                        output.append("@").append(note.duration);
+                    }
+                }
+            } else {
+                // Empty slot
+                output.append("~");
+            }
+            
+            if (i < measureEnd - 1) {
+                output.append(" ");
+            }
+        }
+        output.append("] ");
+    }
+}
+```
+
+**Design Decisions** (User-Confirmed):
+
+1. ✅ **Minimum Duration**: Notes with duration < 0.5 slices → round up to 1 (never drop notes)
+2. ✅ **Empty Measure Notation**: Use compact `[~@16]` instead of `[~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~]`
+3. ✅ **Chord Formatting**: No spaces → `[c4,e4@2,g4]` (not `[c4, e4@2, g4]`)
+4. ✅ **Note Order**: Preserve MIDI order (don't sort by pitch)
+
+**Example Conversions**:
+
+**Input**: 3 simultaneous notes starting at tick 0, different durations
+- C4: 0→480 ticks (quarter note)
+- E4: 0→240 ticks (eighth note)  
+- G4: 0→720 ticks (dotted quarter)
+
+**Output** (quantization=16, 4/4):
+```javascript
+[[c4@4,e4@2,g4@6] ~ ~ ~ ~ ~ ~ ~ ~ ~ ~]
+// C4 lasts 4 sixteenths (quarter note)
+// E4 lasts 2 sixteenths (eighth note)
+// G4 lasts 6 sixteenths (dotted quarter)
+// All start together at position 0
+```
+
+**Empty Measure**:
+```javascript
+// Phase 1.5 (verbose):
+[~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~]
+
+// Phase 1.8 (compact):
+[~@16]
+```
+
+**Implementation Changes**:
+
+1. **RhythmConverter.java** - Complete rewrite:
+   - Change from `String[]` to `Map<Integer, List<NoteWithDuration>>`
+   - Use `timeSeconds` for position calculation (not tick-based division)
+   - Use `Math.round()` for both position and duration
+   - Integer durations only (1, 2, 3, ...) with minimum = 1
+   - NO consecutive merging (preserve all notes)
+   - Use `[~@N]` for empty measures
+
+2. **No changes needed**:
+   - ConversionOptions.java (already has quantization field)
+   - MidiShellCommands.java (already has --quantize parameter)
+   - StrudelConverter.java (already passes quantization)
+   - StrudelTemplate.java (already has metadata format)
+
+**Test Coverage** (To Be Added):
+
+- ✅ Polyphonic notes with different integer durations
+- ✅ Minimum duration rounding (0.4 slices → 1)
+- ✅ Empty measure compact notation [~@16]
+- ✅ Chord formatting without spaces [c4,e4@2,g4]
+- ✅ timeSeconds-based positioning accuracy
+- ✅ No consecutive note merging
+
+**Success Criteria**: ✅ Phase 1.8 Complete When:
+- ✅ All simultaneous notes preserved with integer durations
+- ✅ Position calculated using timeSeconds (not tick division)
+- ✅ Minimum duration = 1 (round up, never drop)
+- ✅ Empty measures use [~@N] notation
+- ✅ Chords formatted without spaces
+- ✅ NO consecutive merging (preserve note boundaries)
+- ✅ All tests passing
+- ✅ Musical output quality better than Phase 1.5
+
+**Files to Modify**:
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/RhythmConverter.java` - Complete rewrite
+
+**Test Files to Update**:
+- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/RhythmConverterTest.java` - Add Phase 1.8 tests
+
+---
+
+### Phase 1.9: Polyphonic Toggle with --no-polyphony Flag 📋 **PLANNED**
+
+**Goal**: Provide user choice between polyphonic (Phase 1.8) and non-polyphonic (Phase 1.7) output via command-line flag, combining best of both approaches.
+
+**Status**: 📋 Planning - Phase 1.8 complete, awaiting implementation
+
+**Rationale**: Real-world testing shows mixed results with polyphonic conversion:
+- ✅ **Works well**: Dense chords, piano parts, layered synths (e.g., interstellar.mid, in_blue.mid)
+- ❌ **Works poorly**: Simple melodies, monophonic instruments, some MIDI files have timing artifacts that create unwanted polyphony (e.g., azul.mid)
+- 💡 **Solution**: Let user choose based on their specific MIDI file and musical intent
+
+**Real-World Examples**:
+- **interstellar.mid**: Use default (polyphonic) - preserves beautiful chord voicings
+- **in_blue.mid**: Use default (polyphonic) - good results with layered parts
+- **azul.mid**: Use `--no-polyphony` - cleaner melodic output without timing artifacts
+
+**Command Signature**:
+
+```bash
+# Default: Polyphonic conversion (Phase 1.8)
+shell:>convert --input song.mid
+
+# Non-polyphonic: Simple single-note approach (Phase 1.7 style)
+shell:>convert --input song.mid --no-polyphony
+
+# With all parameters
+shell:>convert --input song.mid --output out.txt --tempo 120 --quantize 16 --track 1 --no-polyphony
+```
+
+**Behavioral Differences**:
+
+| Feature | Default (Polyphonic) | With --no-polyphony |
+|---------|---------------------|-------------------|
+| **Simultaneous Notes** | Preserved as chords `[c4,e4,g4]` | Conflict resolution (longest wins) |
+| **Grid Occupancy** | All notes captured | 50% occupancy rule |
+| **Duration Merging** | No merging (preserve boundaries) | Consecutive identical notes merged |
+| **Positioning** | Time-based (timeSeconds) | Time-based (timeSeconds) |
+| **Duration Precision** | Integer only (1, 2, 3) | Integer only (1, 2, 3) |
+| **Minimum Duration** | 1 slice (round up) | 1 slice (round up) |
+| **Empty Measures** | Compact `[~@16]` | Compact `[~@16]` |
+| **Best For** | Chords, piano, dense harmony | Melodies, bass lines, single instruments |
+
+**Key Design Decision**: Both modes use **Phase 1.8's improvements** (time-based positioning, integer durations) but differ in polyphony handling.
+
+**Implementation Strategy**:
+
+1. **ConversionOptions.java** - Add polyphony flag:
+   ```java
+   public record ConversionOptions(
+       Integer overrideTempo,    // Override tempo in BPM
+       Integer trackIndex,       // Track to convert (default: 0)
+       Integer quantization,     // Quantization level (optional, auto-calculated)
+       Boolean enablePolyphony   // Enable polyphonic conversion (default: true)
+   ) {
+       public int getEffectiveTrackIndex() {
+           return trackIndex != null ? trackIndex : 0;
+       }
+       
+       public int getEffectiveQuantization(int numerator, int denominator) {
+           if (quantization != null) {
+               return quantization;
+           }
+           
+           // Smart defaults based on time signature
+           if (numerator == 3 && denominator == 4) return 6;   // 3/4 waltz
+           if (numerator == 6 && denominator == 8) return 6;   // 6/8 compound
+           if (numerator == 2 && denominator == 4) return 16;  // 2/4 march
+           return 16;  // Default: 4/4 and other time signatures
+       }
+       
+       public boolean isPolyphonicMode() {
+           return enablePolyphony == null || enablePolyphony;  // Default: true
+       }
+   }
+   ```
+
+2. **MidiShellCommands.java** - Add --no-polyphony flag:
+   ```java
+   @ShellMethod(key = "convert", value = "Convert MIDI file to Strudel pattern")
+   public String convert(
+       @ShellOption(help = "Path to MIDI or JSON file") String input,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Output file path") String output,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Override tempo/BPM") Integer tempo,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Convert specific track only") Integer track,
+       @ShellOption(defaultValue = ShellOption.NULL, help = "Quantization level (optional, auto-detected)") Integer quantize,
+       @ShellOption(defaultValue = "false", help = "Disable polyphonic conversion (use simple single-note mode)") boolean noPolyphony
+   ) {
+       ConversionOptions options = new ConversionOptions(tempo, track, quantize, !noPolyphony);
+       // ... rest of method
+   }
+   ```
+
+3. **RhythmConverter.java** - Dual algorithm with shared time-based positioning:
+   ```java
+   /**
+    * Converts MIDI note events to Strudel cycle pattern.
+    * Supports both polyphonic and non-polyphonic modes.
+    * 
+    * @param noteEvents   MIDI note events with timeSeconds and durationSeconds
+    * @param division     MIDI division (ticks per quarter note)
+    * @param numerator    Time signature numerator
+    * @param denominator  Time signature denominator
+    * @param quantization Quantization level (slices per 4/4 measure)
+    * @param tempo        Tempo in BPM
+    * @param polyphonic   Enable polyphonic mode (true) or non-polyphonic (false)
+    * @return Strudel pattern string wrapped in <>
+    */
+   public static String toQuantizedCyclePattern(
+       List<EventOutput> noteEvents,
+       int division,
+       int numerator,
+       int denominator,
+       int quantization,
+       int tempo,
+       boolean polyphonic
+   ) {
+       if (noteEvents.isEmpty()) {
+           return "";
+       }
+
+       if (polyphonic) {
+           return toPolyphonicPattern(noteEvents, division, numerator, denominator, quantization, tempo);
+       } else {
+           return toNonPolyphonicPattern(noteEvents, division, numerator, denominator, quantization, tempo);
+       }
+   }
+
+   /**
+    * Phase 1.8 algorithm: Polyphonic preservation with integer durations.
+    * - Preserves ALL simultaneous notes as chords [c4,e4,g4]
+    * - No conflict resolution, no merging
+    * - Integer durations only
+    */
+   private static String toPolyphonicPattern(...) {
+       // Current Phase 1.8 implementation
+       // Map<Integer, List<NoteWithDuration>> grid
+       // ...
+   }
+
+   /**
+    * Phase 1.7 style algorithm: Non-polyphonic with time-based positioning.
+    * - 50% occupancy rule: note must occupy >50% of slice
+    * - Conflict resolution: longest duration wins
+    * - Consecutive identical notes merged with @N notation
+    * - Uses timeSeconds for positioning (Phase 1.8 improvement)
+    * - Integer durations only (Phase 1.8 improvement)
+    */
+   private static String toNonPolyphonicPattern(
+       List<EventOutput> noteEvents,
+       int division,
+       int numerator,
+       int denominator,
+       int quantization,
+       int tempo
+   ) {
+       // Calculate grid parameters (same as polyphonic)
+       int slicesPerMeasure = (quantization * numerator) / denominator;
+       double sliceTimeSeconds = (60.0 / tempo) * (4.0 / quantization);
+       
+       // Find maximum position
+       int maxPosition = 0;
+       for (EventOutput event : noteEvents) {
+           int gridPosition = (int) Math.round(event.getTimeSeconds() / sliceTimeSeconds);
+           if (gridPosition > maxPosition) {
+               maxPosition = gridPosition;
+           }
+       }
+       
+       int numMeasures = (maxPosition / slicesPerMeasure) + 1;
+       
+       // Create grid to hold note names (single note per slice)
+       String[] slices = new String[slicesPerMeasure * numMeasures];
+       Arrays.fill(slices, "");
+       
+       // Place notes in grid using 50% occupancy rule + conflict resolution
+       for (EventOutput event : noteEvents) {
+           double noteStartTime = event.getTimeSeconds();
+           double noteEndTime = noteStartTime + event.getDurationSeconds();
+           String noteName = NoteConverter.toStrudelNoteName(event.getNoteNumber());
+           
+           // Calculate which slices this note occupies >50%
+           int startSlice = (int) Math.round(noteStartTime / sliceTimeSeconds);
+           int endSlice = (int) Math.round(noteEndTime / sliceTimeSeconds);
+           
+           for (int sliceIdx = startSlice; sliceIdx < endSlice && sliceIdx < slices.length; sliceIdx++) {
+               // Calculate how much of this slice the note occupies
+               double sliceStart = sliceIdx * sliceTimeSeconds;
+               double sliceEnd = (sliceIdx + 1) * sliceTimeSeconds;
+               
+               // Calculate overlap
+               double overlapStart = Math.max(noteStartTime, sliceStart);
+               double overlapEnd = Math.min(noteEndTime, sliceEnd);
+               double overlapDuration = overlapEnd - overlapStart;
+               
+               // 50% occupancy rule: note must occupy >50% of slice
+               if (overlapDuration > sliceTimeSeconds / 2) {
+                   // Conflict resolution: if slot already taken, longest duration wins
+                   if (slices[sliceIdx].isEmpty()) {
+                       slices[sliceIdx] = noteName;
+                   } else {
+                       // Find duration of existing note
+                       double existingDuration = findNoteDuration(slices[sliceIdx], noteEvents);
+                       if (event.getDurationSeconds() > existingDuration) {
+                           slices[sliceIdx] = noteName;
+                       }
+                   }
+               }
+           }
+       }
+       
+       // Build pattern with consecutive note merging
+       StringBuilder pattern = new StringBuilder();
+       pattern.append("<");
+       
+       for (int measure = 0; measure < numMeasures; measure++) {
+           int measureStart = measure * slicesPerMeasure;
+           int measureEnd = measureStart + slicesPerMeasure;
+           
+           // Check if entire measure is empty
+           boolean isEmpty = true;
+           for (int i = measureStart; i < measureEnd; i++) {
+               if (!slices[i].isEmpty()) {
+                   isEmpty = false;
+                   break;
+               }
+           }
+           
+           if (isEmpty) {
+               // Compact rest notation
+               pattern.append("[~@").append(slicesPerMeasure).append("]");
+           } else {
+               pattern.append("[");
+               
+               int sliceIdx = 0;
+               while (sliceIdx < slicesPerMeasure) {
+                   int absoluteSliceIdx = measureStart + sliceIdx;
+                   
+                   if (absoluteSliceIdx >= slices.length) {
+                       break;
+                   }
+                   
+                   String currentNote = slices[absoluteSliceIdx];
+                   
+                   if (currentNote.isEmpty()) {
+                       // Rest - count consecutive
+                       int restCount = 1;
+                       while (sliceIdx + restCount < slicesPerMeasure) {
+                           int nextAbsIdx = measureStart + sliceIdx + restCount;
+                           if (nextAbsIdx >= slices.length || !slices[nextAbsIdx].isEmpty()) {
+                               break;
+                           }
+                           restCount++;
+                       }
+                       
+                       if (restCount == 1) {
+                           pattern.append("~");
+                       } else {
+                           pattern.append("~@").append(restCount);
+                       }
+                       sliceIdx += restCount;
+                   } else {
+                       // Note - count consecutive identical (merging)
+                       int noteCount = 1;
+                       while (sliceIdx + noteCount < slicesPerMeasure) {
+                           int nextAbsIdx = measureStart + sliceIdx + noteCount;
+                           if (nextAbsIdx >= slices.length || !currentNote.equals(slices[nextAbsIdx])) {
+                               break;
+                           }
+                           noteCount++;
+                       }
+                       
+                       if (noteCount == 1) {
+                           pattern.append(currentNote);
+                       } else {
+                           pattern.append(currentNote).append("@").append(noteCount);
+                       }
+                       sliceIdx += noteCount;
+                   }
+                   
+                   if (sliceIdx < slicesPerMeasure) {
+                       pattern.append(" ");
+                   }
+               }
+               
+               pattern.append("]");
+           }
+           
+           if (measure < numMeasures - 1) {
+               pattern.append(" ");
+           }
+       }
+       
+       pattern.append(">");
+       return pattern.toString();
+   }
+   
+   private static double findNoteDuration(String noteName, List<EventOutput> noteEvents) {
+       for (EventOutput event : noteEvents) {
+           if (NoteConverter.toStrudelNoteName(event.getNoteNumber()).equals(noteName)) {
+               return event.getDurationSeconds();
+           }
+       }
+       return 0.0;
+   }
+   ```
+
+4. **StrudelConverter.java** - Pass polyphony flag:
+   ```java
+   // Convert to quantized cycle-based pattern (Phase 1.9: with polyphony toggle)
+   String pattern = RhythmConverter.toQuantizedCyclePattern(
+       noteEvents,
+       midiOutput.getFile().getDivision(),
+       timeSignatureNumerator,
+       timeSignatureDenominator,
+       quantization,
+       (int) Math.round(bpm),
+       options.isPolyphonicMode()  // NEW: polyphony flag
+   );
+   ```
+
+5. **StrudelTemplate.java** - Updated metadata:
+   ```java
+   /**
+   Source: {filename}
+   Tempo: {tempo} BPM
+   Time Signature: {numerator}/{denominator}
+   Quantization: {quantization} ({default|override})
+   Grid: {gridMeaning}
+   Mode: {Polyphonic|Non-polyphonic}  // NEW field
+   Track: {trackIndex}
+   Converted: {timestamp}
+   **/
+   ```
+
+**Output Examples**:
+
+**Default (Polyphonic)**:
+```javascript
+/* "interstellar" */
+/**
+Source: interstellar.mid
+Tempo: 94 BPM
+Time Signature: 3/4
+Quantization: 6 (default)
+Grid: 6 = eighth notes, @3 = dotted quarter, @6 = dotted half
+Mode: Polyphonic
+Track: 0
+Converted: 2026-01-13
+**/
+
+setcpm(94/3)
+
+let track_0 = note(`<
+[[a4,a5,f2@9,c4@9,e4@9,f4@9,a4@9] e6@3 ~ ~]
+[[a4,a5] ~ e6@3 ~]
+>`).room(0.2)
+
+track_0
+```
+
+**With --no-polyphony**:
+```javascript
+/* "interstellar" */
+/**
+Source: interstellar.mid
+Tempo: 94 BPM
+Time Signature: 3/4
+Quantization: 6 (default)
+Grid: 6 = eighth notes, @3 = dotted quarter, @6 = dotted half
+Mode: Non-polyphonic
+Track: 0
+Converted: 2026-01-13
+**/
+
+setcpm(94/3)
+
+let track_0 = note(`<
+[a4@9 e6@3 ~ ~]
+[a4 ~ e6@3 ~]
+>`).room(0.2)
+
+track_0
+```
+
+**Test Coverage** (To Be Added):
+
+- ✅ Polyphonic mode preserves simultaneous notes
+- ✅ Non-polyphonic mode applies 50% occupancy rule
+- ✅ Non-polyphonic mode resolves conflicts (longest wins)
+- ✅ Non-polyphonic mode merges consecutive identical notes
+- ✅ Both modes use time-based positioning
+- ✅ Both modes use integer durations
+- ✅ Both modes use compact rest notation
+- ✅ Flag correctly toggles between modes
+- ✅ Metadata reflects current mode
+
+**Success Criteria**: ✅ Phase 1.9 Complete When:
+- ✅ --no-polyphony flag working in command line
+- ✅ Default behavior is polyphonic (Phase 1.8)
+- ✅ --no-polyphony uses non-polyphonic algorithm (Phase 1.7 style with Phase 1.8 improvements)
+- ✅ Both modes share time-based positioning and integer durations
+- ✅ Both modes tested with real MIDI files
+- ✅ Metadata shows current mode (Polyphonic/Non-polyphonic)
+- ✅ All tests passing
+- ✅ Users can choose best mode for their specific MIDI file
+
+**Philosophy**:
+- **Give users control**: Some files work better polyphonic, others non-polyphonic
+- **Same underlying tech**: Both use Phase 1.8's time-based positioning and integer durations
+- **Different use cases**: Polyphonic for chords/piano, non-polyphonic for melodies/bass
+- **Easy to compare**: Same file, different flags, choose what sounds better
+
+**Files to Modify**:
+- `src/main/java/com/marcoalmeida/midi_tokenizer/cli/MidiShellCommands.java` - Add --no-polyphony flag
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/ConversionOptions.java` - Add enablePolyphony field
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/RhythmConverter.java` - Add dual-mode logic
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelConverter.java` - Pass polyphony flag
+- `src/main/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelTemplate.java` - Add mode to metadata
+
+**Test Files to Update**:
+- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/RhythmConverterTest.java` - Add non-polyphonic mode tests
+- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelConverterTest.java` - Test flag behavior
+- `src/test/java/com/marcoalmeida/midi_tokenizer/strudel/StrudelTemplateTest.java` - Update metadata tests
+
+---
+
+### Phase 2: Multi-Track Output ⏳ **NEXT** (After Phase 1.9 Complete)
 
 **Goal**: Output all tracks as separate patterns (user arranges manually in Strudel).
 
-**Status**: ⏳ Planned - waiting for Phase 1.5 review and decision on polyphony approach
+**Status**: ⏳ Planned - waiting for Phase 1.9 completion
 
-**Note**: Phase 2 implementation depends on resolution of Phase 1.5 musical quality issues. May need to:
-- Revert to Phase 1 approach (simpler, non-polyphonic patterns)
-- Make polyphony optional via flag
-- Refine grid size or pattern simplification before proceeding
+**Note**: Phase 2 will build on Phase 1.9's flexible polyphonic/non-polyphonic approach with smart quantization defaults.
 
 **Philosophy**: Keep it minimal - generate raw patterns, let users customize arrangement in Strudel.
 
@@ -702,13 +1619,10 @@ StrudelTemplate (Multiple Patterns + stack()) → .txt File
 ### Key Classes
 
 - **NoteConverter**: Converts MIDI note numbers to Strudel note names (c4, d#5, etc.)
-- **RhythmConverter**: 8-grid polyphonic rhythm conversion with automatic grid calculation
+- **RhythmConverter**: Dual-mode rhythm conversion with polyphonic/non-polyphonic support (Phase 1.9)
 - **StrudelConverter**: Main service coordinating conversion pipeline
 - **StrudelTemplate**: Renders output file with metadata and patterns
-- **ConversionOptions**: Configuration record (tempo override, track selection)
-
----
-
+- **ConversionOptions**: Configuration record (tempo override, track selection, quantization, polyphony mode)
 ## Testing Strategy
 
 ### Test Coverage
@@ -740,18 +1654,29 @@ Create sample MIDI files for each phase in `test-fixtures/`:
 ## Phase Implementation Order
 
 1. **Phase 1**: ✅ COMPLETE - Basic single-track conversion with manual quantization
-2. **Phase 1.5**: ✅ COMPLETE (Technically) - Polyphonic 8-grid with auto-calculation
-   - ⚠️ Musical quality issues identified
-   - 🔄 Under review - may need to revert or refine approach
-3. **Phase 2**: ⏳ ON HOLD - Multi-track output (waiting for Phase 1.5 resolution)
-4. **Validate output**: Manually test in Strudel REPL after each phase
+2. **Phase 1.5**: ❌ REJECTED (Musically) - Polyphonic 8-grid with auto-calculation
+   - Polyphonic output sounded less musical than Phase 1 for some files
+   - Per-note quarter-precision durations added unnecessary complexity
+   - Decision: Need user choice between polyphonic/non-polyphonic
+3. **Phase 1.7**: ✅ COMPLETE (Conceptually) - Smart quantization with Phase 1 simplicity
+   - Smart defaults: 4/4→16, 3/4→6, 6/8→6, 2/4→16
+   - Optional --quantize override for triplets/complex rhythms
+   - Non-polyphonic approach (50% occupancy, conflict resolution)
+4. **Phase 1.8**: ✅ COMPLETE - Polyphonic conversion with integer durations
+   - Time-based positioning using timeSeconds (more accurate)
+   - Integer durations only (1, 2, 3) - simpler than quarter-precision
+   - Preserves ALL simultaneous notes (polyphony)
+   - Minimum duration = 1 (never drops notes)
+   - Compact rest notation [~@16]
+5. **Phase 1.9**: ⏳ IN PROGRESS - Polyphonic toggle with --no-polyphony flag
+   - Combines Phase 1.7 and Phase 1.8 approaches
+   - Default: Polyphonic mode (Phase 1.8)
+   - With --no-polyphony: Non-polyphonic mode (Phase 1.7 style with Phase 1.8 improvements)
+   - Let users choose based on their MIDI file
+6. **Phase 2**: ⏳ NEXT - Multi-track output (waiting for Phase 1.9 completion)
+7. **Validate output**: Manually test in Strudel REPL after each phase
 
-**Current Status**: Phase 1.5 complete from technical perspective but produces less satisfactory musical results than Phase 1. Need to decide whether to:
-- Keep Phase 1.5 and refine (pattern simplification, different grid sizes)
-- Revert to Phase 1 approach (simpler patterns without polyphony)
-- Make polyphony optional (best of both worlds)
-
----
+**Current Status**: Phase 1.8 complete, Phase 1.9 specification complete, ready for implementation.
 
 ## Success Metrics
 
@@ -761,16 +1686,44 @@ Create sample MIDI files for each phase in `test-fixtures/`:
 - ✅ Note names are correct
 - ✅ Musical output sounds good (simple, clean patterns)
 
-### Phase 1.5 Success ✅ (Technical) / ⚠️ (Musical)
+### Phase 1.5 Success ❌ (Musical) - REJECTED
 - ✅ All simultaneous notes preserved (no polyphony loss)
 - ✅ 8-grid auto-calculated from time signature
 - ✅ Per-note durations with quarter-precision
 - ✅ interstellar.mid outputs all 5 notes
 - ✅ All tests passing
-- ⚠️ Musical quality worse than Phase 1 (patterns feel cluttered)
-- ⚠️ Polyphonic output harder to customize in Strudel
-- ⚠️ May need pattern simplification or revert to Phase 1 approach
+- ❌ Musical quality worse than Phase 1 for some files (patterns sound choppy)
+- ❌ Polyphonic output harder to customize in Strudel
+- ❌ Per-note duration overhead degraded musical output
 
+### Phase 1.7 Success ✅ (Conceptually)
+- ✅ Smart quantization defaults: 4/4→16, 3/4→6, 6/8→6, 2/4→16
+- ✅ --quantize override working
+- ✅ Non-polyphonic approach (simpler for most use cases)
+- ✅ Enhanced metadata showing quantization and grid meaning
+
+### Phase 1.8 Success ✅
+- ✅ Polyphonic preservation with integer durations
+- ✅ Time-based positioning (timeSeconds) - more accurate than tick division
+- ✅ Integer durations only (no decimals) - simpler than quarter-precision
+- ✅ Minimum duration = 1 (never drops notes)
+- ✅ Compact rest notation [~@16]
+- ✅ All tests passing (11 comprehensive tests)
+- ✅ Real MIDI files convert successfully (azul.mid, interstellar.mid)
+- ⚠️ Mixed results: Some files sound great (interstellar.mid), others less so (in_blue.mid)
+
+### Phase 1.9 Success 🔜
+- 🔜 --no-polyphony flag working in command line
+- 🔜 Default behavior is polyphonic (Phase 1.8)
+- 🔜 --no-polyphony uses non-polyphonic algorithm (Phase 1.7 style with Phase 1.8 improvements)
+- 🔜 Both modes share time-based positioning and integer durations
+- 🔜 Both modes tested with real MIDI files (azul.mid, interstellar.mid, in_blue.mid)
+- 🔜 Metadata shows current mode (Polyphonic/Non-polyphonic)
+- 🔜 All tests passing
+- 🔜 Users can choose best mode for their specific MIDI file
+- 🔜 --quantize override working
+- 🔜 Enhanced metadata showing quantization and grid meaning
+- 🔜 Musical output quality as good as or better than Phase 1
 ### Phase 2 Success 🔜
 - 🔜 All tracks converted (not just first track)
 - 🔜 Each track outputs as separate pattern (track0, track1, etc.)
@@ -778,17 +1731,23 @@ Create sample MIDI files for each phase in `test-fixtures/`:
 - 🔜 Empty tracks skipped automatically
 
 ---
-
-## Example Command Usage
-
-```bash
-# First, run the Spring Shell application
-./gradlew bootJar && java -jar build/libs/midi-tokenizer.jar
-
-# Then in the shell:
-
-# Phase 1.5: Single-track conversion (automatic 8-grid calculation)
+7: Single-track conversion with smart quantization
 shell:>convert --input simple-melody.mid --output my-melody.txt
+
+# With tempo override
+shell:>convert --input simple-melody.mid --tempo 120
+
+# Auto-generated output file (azul.mid → azul.txt) with smart default
+shell:>convert --input azul.mid
+
+# Override quantization for triplets
+shell:>convert --input jazz-triplets.mid --quantize 12
+
+# Override for very detailed rhythms
+shell:>convert --input complex.mid --quantize 32
+
+# Convert specific track with custom quantization
+shell:>convert --input multi-track.mid --track 2 --quantize 24d --output my-melody.txt
 
 # With tempo override
 shell:>convert --input simple-melody.mid --tempo 120
