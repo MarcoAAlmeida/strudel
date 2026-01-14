@@ -154,9 +154,8 @@ export function getCompressor(ac, threshold, ratio, knee, attack, release) {
     attack: attack ?? 0.005,
     release: release ?? 0.05,
   };
-  const now = ac.currentTime;
   Object.entries(options).forEach(([key, value]) => {
-    node[key].setValueAtTime(value, now);
+    node[key].value = value;
   });
   return node;
 }
@@ -242,9 +241,8 @@ export function createFilter(context, start, end, params, cps, cycle) {
     const factory = () => context.createBiquadFilter();
     filter = getNodeFromPool('filter', factory);
     filter.type = type;
-    const now = context.currentTime;
     Object.entries({ Q: q, frequency }).forEach(([key, value]) => {
-      filter[key].setValueAtTime(value, now);
+      filter[key].value = value;
     });
     frequencyParam = filter.frequency;
   }

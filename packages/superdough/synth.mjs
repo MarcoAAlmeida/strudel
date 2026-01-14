@@ -178,11 +178,10 @@ export function registerSynthSounds() {
       };
       const factory = () => new AudioWorkletNode(ac, 'supersaw-oscillator', { outputChannelCount: [2] });
       const o = getNodeFromPool('supersaw', factory);
-      const now = ac.currentTime;
       Object.entries(params).forEach(([key, value]) => {
         const param = o.parameters.get(key);
         const target = value !== undefined ? value : param.defaultValue;
-        param.setValueAtTime(target, now);
+        param.value = target;
       });
       o.port.postMessage({ type: 'initialize' });
       const gainAdjustment = 1 / Math.sqrt(voices);
