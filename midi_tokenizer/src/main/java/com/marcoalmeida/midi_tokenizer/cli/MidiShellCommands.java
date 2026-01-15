@@ -108,7 +108,7 @@ public class MidiShellCommands {
      * @param input       Input MIDI (.mid) or JSON (.json) file path
      * @param output      Optional output file path (defaults to input basename with .txt)
      * @param tempo       Optional tempo override in BPM
-     * @param track       Optional track index to convert (defaults to 0)
+     * @param track       Optional track index to convert (null = all non-empty tracks, number = specific track)
      * @param quantize    Optional quantization level (auto-detected from time signature if not provided)
      * @param noPolyphony Disable polyphonic conversion (use simpler single-note mode)
      */
@@ -117,7 +117,7 @@ public class MidiShellCommands {
             @ShellOption(help = "Path to MIDI or JSON file") String input,
             @ShellOption(help = "Output file path (optional)", defaultValue = ShellOption.NULL) String output,
             @ShellOption(help = "Tempo override in BPM", defaultValue = ShellOption.NULL) Integer tempo,
-            @ShellOption(help = "Track index to convert", defaultValue = ShellOption.NULL) Integer track,
+            @ShellOption(help = "Track index to convert (omit for all non-empty tracks)", defaultValue = ShellOption.NULL) Integer track,
             @ShellOption(help = "Quantization level (optional, auto-detected)", defaultValue = ShellOption.NULL) Integer quantize,
             @ShellOption(value = "--no-polyphony", help = "Disable polyphonic conversion (use simple single-note mode)", defaultValue = "false") boolean noPolyphony
     ) {

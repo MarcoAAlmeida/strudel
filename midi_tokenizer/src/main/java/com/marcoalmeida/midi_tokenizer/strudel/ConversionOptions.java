@@ -22,6 +22,17 @@ public record ConversionOptions(
     }
 
     /**
+     * Checks if should process all tracks.
+     * Returns true when trackIndex is null (convert all non-empty tracks).
+     * Returns false when trackIndex is specified (convert single track).
+     * 
+     * @return true to process all tracks, false to process single track
+     */
+    public boolean shouldProcessAllTracks() {
+        return trackIndex == null;
+    }
+
+    /**
      * Gets the effective track index (defaults to 0 if null).
      */
     public int getEffectiveTrackIndex() {

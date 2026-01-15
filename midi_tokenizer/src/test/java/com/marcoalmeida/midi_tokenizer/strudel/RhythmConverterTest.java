@@ -26,7 +26,7 @@ class RhythmConverterTest {
             createNoteEvent(65, 1440, 480, 1.5, 0.5)    // F4 at beat 4
         );
 
-        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true);
+        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true, 1);
         
         // Should be wrapped in <>
         assertTrue(pattern.startsWith("<"));
@@ -47,7 +47,7 @@ class RhythmConverterTest {
             createNoteEvent(67, 0, 720, 0.0, 0.75)   // G4 - dotted quarter
         );
 
-        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true);
+        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true, 1);
         
         // Should contain bracket notation for polyphony [note1,note2,note3]
         assertTrue(pattern.contains("[") && pattern.contains(","));
@@ -64,7 +64,7 @@ class RhythmConverterTest {
             createNoteEvent(60, 0, 960, 0.0, 1.0)   // C4 half note = 8 slices
         );
 
-        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true);
+        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true, 1);
         
         // Should have integer duration @8 (not @8.0 or @7.5)
         assertTrue(pattern.contains("c4@8"));
@@ -81,7 +81,7 @@ class RhythmConverterTest {
             createNoteEvent(60, 0, 50, 0.0, 0.1)   // Very short note
         );
 
-        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true);
+        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true, 1);
         
         // Should appear in pattern (not dropped)
         assertTrue(pattern.contains("c4"));
@@ -98,7 +98,7 @@ class RhythmConverterTest {
             createNoteEvent(62, 3840, 480, 4.0, 0.5)      // Measure 3 (skip measure 2)
         );
 
-        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true);
+        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true, 3);
         
         // Should contain compact rest notation
         assertTrue(pattern.contains("~@16"));
@@ -114,7 +114,7 @@ class RhythmConverterTest {
             createNoteEvent(65, 2400, 480, 2.5, 0.5)      // Measure 2
         );
 
-        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true);
+        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true, 2);
         
         // Should have two bracketed measures
         long openBrackets = pattern.chars().filter(ch -> ch == '[').count();
@@ -131,7 +131,7 @@ class RhythmConverterTest {
             createNoteEvent(62, 960, 480, 1.0, 0.5)     // D4 at beat 3 (beat 2 is rest)
         );
 
-        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true);
+        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true, 1);
         
         // Should contain a rest
         assertTrue(pattern.contains("~"));
@@ -140,7 +140,7 @@ class RhythmConverterTest {
     @Test
     void testToQuantizedCyclePattern_EmptyList() {
         String pattern = RhythmConverter.toQuantizedCyclePattern(
-            Collections.emptyList(), 480, 4, 4, 16, 120, true
+            Collections.emptyList(), 480, 4, 4, 16, 120, true, 1
         );
         assertEquals("", pattern);
     }
@@ -156,7 +156,7 @@ class RhythmConverterTest {
             createNoteEvent(65, 1440, 480, 1.0, 0.333)    // Measure 2
         );
 
-        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 3, 4, 6, 180, true);
+        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 3, 4, 6, 180, true, 2);
         
         // Should have two measures
         long openBrackets = pattern.chars().filter(ch -> ch == '[').count();
@@ -173,7 +173,7 @@ class RhythmConverterTest {
             createNoteEvent(67, 0, 720, 0.0, 0.75)   // G4 - dotted quarter = 6 slices → rounds to 6
         );
 
-        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true);
+        String pattern = RhythmConverter.toQuantizedCyclePattern(events, 480, 4, 4, 16, 120, true, 1);
         
         // Should have all three notes with different durations
         assertTrue(pattern.contains("c4@8"));

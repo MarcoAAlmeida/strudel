@@ -34,6 +34,7 @@ public class RhythmConverter {
      * @param quantization Quantization level (slices per 4/4 measure)
      * @param tempo        Tempo in BPM
      * @param polyphonic   Enable polyphonic mode (true) or non-polyphonic (false)
+     * @param totalMeasures Total number of measures to generate (for multi-track sync)
      * @return Strudel pattern string wrapped in <>
      */
     public static String toQuantizedCyclePattern(
@@ -43,16 +44,17 @@ public class RhythmConverter {
         int denominator,
         int quantization,
         int tempo,
-        boolean polyphonic
+        boolean polyphonic,
+        int totalMeasures
     ) {
         if (noteEvents.isEmpty()) {
             return "";
         }
 
         if (polyphonic) {
-            return toPolyphonicPattern(noteEvents, division, numerator, denominator, quantization, tempo);
+            return toPolyphonicPattern(noteEvents, division, numerator, denominator, quantization, tempo, totalMeasures);
         } else {
-            return toNonPolyphonicPattern(noteEvents, division, numerator, denominator, quantization, tempo);
+            return toNonPolyphonicPattern(noteEvents, division, numerator, denominator, quantization, tempo, totalMeasures);
         }
     }
 
@@ -69,7 +71,8 @@ public class RhythmConverter {
         int numerator,
         int denominator,
         int quantization,
-        int tempo
+        int tempo,
+        int totalMeasures
     ) {
         // Calculate grid parameters
         int slicesPerMeasure = (quantization * numerator) / denominator;
@@ -103,15 +106,10 @@ public class RhythmConverter {
             // Add to grid (allow multiple notes at same position - polyphony)
             grid.computeIfAbsent(gridPosition, k -> new ArrayList<>())
                 .add(new NoteWithDuration(noteName, integerDuration));
-            
-            // Track maximum position
-            if (gridPosition > maxPosition) {
-                maxPosition = gridPosition;
-            }
         }
 
-        // Calculate number of measures
-        int numMeasures = (maxPosition / slicesPerMeasure) + 1;
+        // Use totalMeasures parameter for multi-track synchronization
+        int numMeasures = totalMeasures;
 
         // Build pattern measure by measure
         StringBuilder pattern = new StringBuilder();
@@ -121,7 +119,7 @@ public class RhythmConverter {
             int measureStart = measure * slicesPerMeasure;
             int measureEnd = measureStart + slicesPerMeasure;
             
-            // Check if entire measure is empty
+// Check if entire measure is empty
             boolean isEmpty = true;
             for (int i = measureStart; i < measureEnd; i++) {
                 if (grid.containsKey(i)) {
@@ -135,7 +133,8 @@ public class RhythmConverter {
                 pattern.append("[~@").append(slicesPerMeasure).append("]");
             } else {
                 pattern.append("[");
-                for (int i = measureStart; i < measureEnd; i++) {
+                int i = measureStart;
+                while (i < measureEnd) {
                     if (grid.containsKey(i)) {
                         List<NoteWithDuration> notes = grid.get(i);
                         
@@ -161,12 +160,23 @@ public class RhythmConverter {
                                 pattern.append("@").append(note.duration);
                             }
                         }
+                        i++;
                     } else {
-                        // Empty slot
-                        pattern.append("~");
+                        // Empty slot - count consecutive rests
+                        int restCount = 1;
+                        while (i + restCount < measureEnd && !grid.containsKey(i + restCount)) {
+                            restCount++;
+                        }
+                        
+                        if (restCount == 1) {
+                            pattern.append("~");
+                        } else {
+                            pattern.append("~@").append(restCount);
+                        }
+                        i += restCount;
                     }
                     
-                    if (i < measureEnd - 1) {
+                    if (i < measureEnd) {
                         pattern.append(" ");
                     }
                 }
@@ -197,22 +207,15 @@ public class RhythmConverter {
         int numerator,
         int denominator,
         int quantization,
-        int tempo
+        int tempo,
+        int totalMeasures
     ) {
         // Calculate grid parameters (same as polyphonic)
         int slicesPerMeasure = (quantization * numerator) / denominator;
         double sliceTimeSeconds = (60.0 / tempo) * (4.0 / quantization);
         
-        // Find maximum position
-        int maxPosition = 0;
-        for (EventOutput event : noteEvents) {
-            int gridPosition = (int) Math.round(event.getTimeSeconds() / sliceTimeSeconds);
-            if (gridPosition > maxPosition) {
-                maxPosition = gridPosition;
-            }
-        }
-        
-        int numMeasures = (maxPosition / slicesPerMeasure) + 1;
+        // Use totalMeasures parameter for multi-track synchronization
+        int numMeasures = totalMeasures;
         
         // Create grid to hold note names (single note per slice)
         String[] slices = new String[slicesPerMeasure * numMeasures];
