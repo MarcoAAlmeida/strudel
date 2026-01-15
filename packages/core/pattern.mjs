@@ -26,6 +26,7 @@ import {
 } from './util.mjs';
 import drawLine from './drawLine.mjs';
 import { errorLogger, logger } from './logger.mjs';
+import { strudelScope } from './evaluate.mjs';
 
 let stringParser;
 
@@ -1683,7 +1684,9 @@ export function register(name, func, patternify = true, preserveSteps = false, j
 
   // toplevel functions get curried as well as patternified
   // because pfunc uses spread args, we need to state the arity explicitly!
-  return curry(pfunc, null, arity);
+  const curried = curry(pfunc, null, arity);
+  strudelScope[name] = curried;
+  return curried;
 }
 
 // Like register, but defaults to stepJoin
