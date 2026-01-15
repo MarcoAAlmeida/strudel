@@ -10,6 +10,7 @@ import org.springframework.shell.standard.ShellOption;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -104,19 +105,21 @@ public class MidiShellCommands {
     /**
      * Convert a MIDI file to Strudel pattern.
      *
-     * @param input  Input MIDI (.mid) or JSON (.json) file path
-     * @param output Optional output file path (defaults to input basename with .txt)
-     * @param tempo  Optional tempo override in BPM
-     * @param track  Optional track index to convert (defaults to 0)
-     * @param quantize Quantization level: 8=8th notes, 16=16th notes (default), 32=32nd notes
+     * @param input       Input MIDI (.mid) or JSON (.json) file path
+     * @param output      Optional output file path (defaults to input basename with .txt)
+     * @param tempo       Optional tempo override in BPM
+     * @param track       Optional track index to convert (null = all non-empty tracks, number = specific track)
+     * @param quantize    Optional quantization level (auto-detected from time signature if not provided)
+     * @param noPolyphony Disable polyphonic conversion (use simpler single-note mode)
      */
     @ShellMethod(key = "convert", value = "Convert MIDI file to Strudel pattern")
     public String convert(
             @ShellOption(help = "Path to MIDI or JSON file") String input,
             @ShellOption(help = "Output file path (optional)", defaultValue = ShellOption.NULL) String output,
             @ShellOption(help = "Tempo override in BPM", defaultValue = ShellOption.NULL) Integer tempo,
-            @ShellOption(help = "Track index to convert", defaultValue = ShellOption.NULL) Integer track,
-            @ShellOption(help = "Quantization level (8, 16, 32)", defaultValue = "16") Integer quantize
+            @ShellOption(help = "Track index to convert (omit for all non-empty tracks)", defaultValue = ShellOption.NULL) Integer track,
+            @ShellOption(help = "Quantization level (optional, auto-detected)", defaultValue = ShellOption.NULL) Integer quantize,
+            @ShellOption(value = "--no-polyphony", help = "Disable polyphonic conversion (use simple single-note mode)", defaultValue = "false") boolean noPolyphony
     ) {
         try {
             File inputFile = new File(input);
@@ -131,13 +134,8 @@ public class MidiShellCommands {
                 return "Error: Input file must be a MIDI file (.mid, .midi) or JSON file (.json)";
             }
 
-            // Validate quantization
-            if (quantize != 8 && quantize != 16 && quantize != 32) {
-                return "Error: Quantization must be 8, 16, or 32";
-            }
-
-            // Create conversion options
-            ConversionOptions options = new ConversionOptions(tempo, track, quantize);
+            // Create conversion options (Phase 1.9: with polyphony toggle)
+            ConversionOptions options = new ConversionOptions(tempo, track, quantize, !noPolyphony);
 
             // Convert
             String strudelPattern = strudelConverter.convert(input, options);
@@ -157,8 +155,13 @@ public class MidiShellCommands {
                     : basename + ".txt";
             }
 
-            // Write to file
-            Files.writeString(Path.of(outputPath), strudelPattern);
+            // Write to file with UTF-8 BOM so Windows editors detect encoding correctly
+            byte[] bom = new byte[] {(byte)0xEF, (byte)0xBB, (byte)0xBF};
+            byte[] content = strudelPattern.getBytes(StandardCharsets.UTF_8);
+            byte[] withBom = new byte[bom.length + content.length];
+            System.arraycopy(bom, 0, withBom, 0, bom.length);
+            System.arraycopy(content, 0, withBom, bom.length, content.length);
+            Files.write(Path.of(outputPath), withBom);
             return "Successfully wrote Strudel pattern to: " + outputPath;
 
         } catch (IllegalArgumentException e) {

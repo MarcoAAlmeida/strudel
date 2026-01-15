@@ -15,19 +15,28 @@ class StrudelTemplateTest {
             4,        // beatsPerCycle
             0,        // trackIndex
             "Piano",  // trackName
+            4,        // timeSignatureNumerator
+            4,        // timeSignatureDenominator
             16,       // quantization
-            "c4 d4 e4",
-            "piano"
+            "default", // quantizationSource
+            "16 = sixteenth notes, @4 = quarter note, @8 = half note", // gridMeaning
+            16,       // slicesPerMeasure
+            "<[c4 d4 e4] [f4 g4 a4]>",
+            "piano",
+            true      // polyphonicMode
         );
 
         assertNotNull(result);
         assertTrue(result.contains("/* \"melody\" */"));
         assertTrue(result.contains("Source: test.mid"));
         assertTrue(result.contains("Tempo: 120 BPM"));
+        assertTrue(result.contains("Time Signature: 4/4"));
+        assertTrue(result.contains("Quantization: 16 (default)"));
+        assertTrue(result.contains("Grid: 16 = sixteenth notes"));
         assertTrue(result.contains("Track: 0 (Piano)"));
         assertTrue(result.contains("setcpm(120/4)")); // bpm/beatsPerCycle
         assertTrue(result.contains("let melody = note(`<"));
-        assertTrue(result.contains(">`).sound(\"piano\")"));
+        assertTrue(result.contains("`).sound(\"piano\")"));
         assertTrue(result.contains("melody.room(0.2)"));
     }
 
@@ -40,12 +49,19 @@ class StrudelTemplateTest {
             4,
             0,
             "Track",
-            16,
-            "c4",
-            "piano"
+            4,
+            4,
+            12,
+            "override",
+            "12 = triplet eighths, @3 = quarter note, @6 = half note",
+            12,
+            "<[c4]>",
+            "piano",
+            true
         );
 
         assertTrue(result.contains("setcpm(140/4)")); // bpm/beatsPerCycle
+        assertTrue(result.contains("Quantization: 12 (override)"));
     }
 
     @Test
@@ -57,9 +73,15 @@ class StrudelTemplateTest {
             4,
             0,
             "Track",
+            4,
+            4,
             16,
-            "c4",
-            "piano"
+            "default",
+            "16 = sixteenth notes, @4 = quarter note, @8 = half note",
+            16,
+            "<[c4]>",
+            "piano",
+            true
         );
 
         assertTrue(result.contains("Converted: "));
@@ -76,13 +98,19 @@ class StrudelTemplateTest {
             4,
             0,
             "Bass Track",
+            4,
+            4,
             16,
-            "c2 e2 g2",
-            "triangle"
+            "default",
+            "16 = sixteenth notes, @4 = quarter note, @8 = half note",
+            16,
+            "<[c2 e2 g2]>",
+            "triangle",
+            true
         );
 
         assertTrue(result.contains("let bass = note(`<"));
-        assertTrue(result.contains(">`).sound(\"triangle\")"));
+        assertTrue(result.contains("`).sound(\"triangle\")"));
         assertTrue(result.contains("bass.room(0.2)"));
     }
 
@@ -95,9 +123,15 @@ class StrudelTemplateTest {
             4,
             0,
             "Track 1",
+            4,
+            4,
             16,
-            "c4 d4",
-            "piano"
+            "default",
+            "16 = sixteenth notes, @4 = quarter note, @8 = half note",
+            16,
+            "<[c4 d4]>",
+            "piano",
+            true
         );
 
         // Check structure order

@@ -1,6 +1,8 @@
 # MIDI Tokenizer
 
-A standalone Java 21 CLI application for parsing Standard MIDI Files (SMF types 0 and 1) and converting them to an LLM-friendly JSON representation, and converting MIDI to Strudel live coding patterns.
+A standalone Java 21 CLI application for parsing Standard MIDI Files (SMF types 0 and 1) and converting them to:
+- **LLM-friendly JSON representation** for analysis and processing
+- **Strudel live coding patterns** for creative musical exploration
 
 ## Philosophy: Beyond Traditional Notation
 
@@ -14,32 +16,153 @@ The quantization grid isn't a limitation - it's a choice. Pick the grid that mak
 
 ---
 
-## Features
+## Quick Start
 
-- Parse MIDI files (SMF types 0 and 1)
-- Extract note events with durations (pairing Note On/Off events)
-- Convert MIDI note numbers to scientific pitch notation (e.g., 60 → C4)
-- Build tempo map and convert ticks to seconds
-- Extract program changes, control changes, pitch bends
-- Extract meta events (track names, lyrics, markers, time signatures, key signatures)
-- Output structured JSON suitable for LLM analysis
+```bash
+# Build the application
+./gradlew bootJar
 
-## Requirements
+# Run the interactive shell
+java -jar build/libs/midi-tokenizer.jar
+
+# Convert a MIDI file to Strudel pattern
+shell:>convert --input samples/in_blue.mid
+
+# Parse a MIDI file to JSON
+shell:>parse --input samples/interstellar.mid --output interstellar.json
+```
+
+---
+
+---
+
+## Commands Reference
+
+The application provides an interactive Spring Shell CLI with two main commands:
+
+### convert - Convert MIDI to Strudel Pattern
+
+Convert MIDI files to Strudel live coding patterns. Automatically detects tempo, time signature, and optimal quantization.
+
+**Syntax:**
+```shell
+convert --input <file> [--output <file>] [--tempo <bpm>] [--track <index>] [--quantize <level>] [--no-polyphony]
+```
+
+**Parameters:**
+- `--input` (required): Path to MIDI file (.mid, .midi) or JSON file (.json)
+- `--output` (optional): Output file path. If omitted, creates a .txt file next to the input file
+- `--tempo` (optional): Override tempo in BPM (e.g., `--tempo 120`)
+- `--track` (optional): Convert only specific track by index (e.g., `--track 0`)
+- `--quantize` (optional): Set quantization level (e.g., `--quantize 8`). Auto-detected if omitted
+- `--no-polyphony` (optional): Disable polyphonic conversion, use simple single-note mode
+
+**Examples:**
+
+```shell
+# Simple conversion - auto-detects everything
+shell:>convert --input samples/in_blue.mid
+
+# Convert with specific quantization
+shell:>convert --input samples/shape.mid --quantize 8
+
+# Disable polyphony for simpler monophonic output
+shell:>convert --input samples/azul.mid --no-polyphony --quantize 8
+
+# Convert polyphonic piece (excellent for complex arrangements)
+shell:>convert --input samples/interstellar.mid --output my_pattern.txt
+
+# Convert only track 0 with custom tempo
+shell:>convert --input song.mid --track 0 --tempo 120
+```
+
+### parse - Parse MIDI to JSON
+
+Parse a MIDI file and output structured JSON representation suitable for analysis or LLM processing.
+
+**Syntax:**
+```shell
+parse --input <file> [--output <file>] [--format json] [--time <seconds|ticks>] [--include-meta <true|false>]
+```
+
+**Parameters:**
+- `--input` (required): Path to the MIDI file to parse
+- `--output` (optional): Path to write JSON output. If omitted, prints to console
+- `--format` (optional): Output format, currently only `json` (default: json)
+- `--time` (optional): Time format: `seconds` or `ticks` (default: seconds)
+- `--include-meta` (optional): Include meta events like track names, lyrics (default: true)
+
+**Examples:**
+
+```shell
+# Basic parsing to console
+shell:>parse --input samples/interstellar.mid
+
+# Save to file
+shell:>parse --input samples/in_blue.mid --output in_blue.json
+
+# Use tick-based timing for precise MIDI manipulation
+shell:>parse --input song.mid --time ticks
+
+# Exclude meta events for cleaner output
+shell:>parse --input song.mid --include-meta false
+```
+
+### Other Commands
+
+```shell
+# Get detailed help on parse command
+shell:>help-parse
+
+# Exit the shell
+shell:>exit
+```
+
+---
+
+## Sample MIDI Files
+
+The `samples/` directory contains example MIDI files to help you explore the converter:
+
+| File | Description | Recommended Parameters |
+|------|-------------|----------------------|
+| `in_blue.mid` | A beautiful, well-structured piece | None needed - auto-detection works perfectly |
+| `shape.mid` | Good rhythm example | `--quantize 8` |
+| `azul.mid` | Monophonic melody | `--no-polyphony --quantize 8` |
+| `interstellar.mid` | Excellent polyphonic example | None needed - showcases polyphony well |
+
+**Try them out:**
+```shell
+shell:>convert --input samples/in_blue.mid
+shell:>convert --input samples/shape.mid --quantize 8
+shell:>convert --input samples/azul.mid --no-polyphony --quantize 8
+shell:>convert --input samples/interstellar.mid
+```
+
+---
+
+---
+
+## Building and Testing
+
+### Requirements
 
 - Java 21 or later
 - Gradle (included via Gradle wrapper)
 
-## Building
+### Building the Application
 
 Build the executable JAR:
 
 ```bash
-./gradlew build
+./gradlew bootJar
 ```
 
 This creates `build/libs/midi-tokenizer.jar`.
 
-## Running
+**Note:** Do not use `./gradlew bootRun` - it has terminal compatibility issues with Spring Shell on all platforms because Gradle intercepts stdin/stdout, preventing the interactive shell from working properly. Always build the JAR and run it directly.
+
+### Running the Application
 
 Build and run the JAR directly for proper Spring Shell compatibility:
 
@@ -47,57 +170,82 @@ Build and run the JAR directly for proper Spring Shell compatibility:
 ./gradlew bootJar && java -jar build/libs/midi-tokenizer.jar
 ```
 
-**Note:** Do not use `./gradlew bootRun` - it has terminal compatibility issues with Spring Shell on all platforms because Gradle intercepts stdin/stdout, preventing the interactive shell from working properly.
-
-## Usage
-
-The application provides a Spring Shell interactive CLI. Available commands:
-
-### Parse Command
-
-Parse a MIDI file and output JSON representation.
-
-**Basic usage:**
-```shell
-parse --input song.mid
+Or on Windows:
+```bash
+./gradlew.bat bootJar && java -jar build/libs/midi-tokenizer.jar
 ```
 
-**Write to file:**
-```shell
-parse --input song.mid --output song.json
+### Running Tests
+
+Run all unit tests:
+
+```bash
+./gradlew test
 ```
 
-**Output time in ticks instead of seconds:**
-```shell
-parse --input song.mid --time ticks
+View test reports in your browser:
+```bash
+# After running tests, open:
+build/reports/tests/test/index.html
 ```
 
-**Exclude meta events:**
-```shell
-parse --input song.mid --include-meta false
+Tests use programmatically created MIDI sequences (no external MIDI files required) and cover:
+- MIDI parsing and event extraction
+- Note conversion and duration calculation
+- Strudel pattern generation
+- Rhythm quantization and polyphony handling
+- GM instrument mapping
+
+### Clean Build
+
+Remove all build artifacts and start fresh:
+
+```bash
+./gradlew clean build
 ```
 
-### Command Options
+---
 
-- `--input` (required): Path to the MIDI file to parse
-- `--output` (optional): Path to write JSON output (default: stdout)
-- `--format` (optional): Output format, currently only `json` (default: json)
-- `--time` (optional): Time format: `seconds` or `ticks` (default: seconds)
-- `--include-meta` (optional): Include meta events (default: true)
+## Project Structure
 
-### Help
-
-Get help on the parse command:
-```shell
-help-parse
+```
+midi_tokenizer/
+├── build.gradle.kts              # Gradle build configuration
+├── settings.gradle.kts            # Gradle settings
+├── gradle.properties              # Gradle properties
+├── README.md                      # This file
+├── samples/                       # Example MIDI files
+│   ├── in_blue.mid
+│   ├── shape.mid
+│   ├── azul.mid
+│   └── interstellar.mid
+├── docs/
+│   └── midi-primer.md             # MIDI concepts primer
+└── src/
+    ├── main/
+    │   └── java/com/marcoalmeida/midi_tokenizer/
+    │       ├── Application.java               # Spring Boot main class
+    │       ├── cli/
+    │       │   └── MidiShellCommands.java     # CLI commands
+    │       ├── midi/
+    │       │   ├── MidiParser.java            # Core MIDI parsing
+    │       │   └── NoteUtils.java             # Note conversion
+    │       ├── strudel/
+    │       │   ├── StrudelConverter.java      # Main converter
+    │       │   ├── RhythmConverter.java       # Rhythm quantization
+    │       │   ├── NoteConverter.java         # Note pattern generation
+    │       │   ├── GMInstrumentMapper.java    # MIDI instrument mapping
+    │       │   └── StrudelTemplate.java       # Pattern templates
+    │       └── model/                          # JSON output models
+    └── test/
+        └── java/com/marcoalmeida/midi_tokenizer/
+            ├── MidiParserTest.java
+            └── strudel/                        # Strudel converter tests
 ```
 
-Exit the shell:
-```shell
-exit
-```
+---
 
-## JSON Output Schema
+## JSON Output Schema (for `parse` command)
 
 The output JSON has the following structure:
 
@@ -172,28 +320,48 @@ The output JSON has the following structure:
 - **pitch_bend**: Pitch bend events with `pitchBend` (centered at 0)
 - **meta**: Meta events like track names, lyrics, markers with `text`
 
-## Running Tests
+---
 
-Run unit tests:
+## Features
 
-```bash
-./gradlew test
-```
+### MIDI Parsing
+- Parse MIDI files (SMF types 0 and 1)
+- Extract note events with durations (pairing Note On/Off events)
+- Convert MIDI note numbers to scientific pitch notation (e.g., 60 → C4)
+- Build tempo map and convert ticks to seconds
+- Extract program changes, control changes, pitch bends
+- Extract meta events (track names, lyrics, markers, time signatures, key signatures)
+- Output structured JSON suitable for LLM analysis
 
-Tests use programmatically created MIDI sequences (no external MIDI files required).
+### Strudel Conversion
+- Automatic tempo and time signature detection
+- Intelligent rhythm quantization with auto-detection
+- Polyphonic and monophonic pattern generation
+- GM instrument mapping to Strudel sound names
+- Support for complex rhythmic patterns and rests
+- Multi-track conversion with proper separation
 
-## Documentation
+---
 
-See [docs/midi-primer.md](docs/midi-primer.md) for a primer on MIDI concepts including:
+## Resources
+
+### Strudel Pattern Writing
+
+When working with the generated Strudel patterns, these resources will help you understand and enhance them:
+
+- [Basic Notes](https://strudel.cc/workshop/first-notes/) - Introduction to Strudel note patterns
+- [Mini Notation](https://strudel.cc/learn/mini-notation/) - The pattern language used in converted output
+
+### MIDI Concepts
+
+See [docs/midi-primer.md](docs/midi-primer.md) for a comprehensive primer on MIDI concepts including:
 - MIDI file formats (SMF types 0 and 1)
 - Ticks vs. microseconds
 - Note numbering and scientific pitch notation
 - Tempo and time signatures
 - Note pairing and duration calculation
 
-## License
-
-This module is part of the Strudel project and follows the repository's existing license (AGPL-3.0-or-later).
+---
 
 ## Technical Details
 
@@ -202,57 +370,8 @@ This module is part of the Strudel project and follows the repository's existing
 - **MIDI Library**: Java's built-in `javax.sound.midi` (no external native dependencies)
 - **JSON**: Jackson for serialization
 
-## Project Structure
+---
 
-```
-midi_tokenizer/
-├── build.gradle.kts          # Gradle build configuration
-├── settings.gradle.kts        # Gradle settings
-├── gradle.properties          # Gradle properties
-├── README.md                  # This file
-├── docs/
-│   └── midi-primer.md         # MIDI concepts primer
-├── src/
-│   ├── main/
-│   │   └── java/com/marcoalmeida/midi_tokenizer/
-│   │       ├── Application.java           # Spring Boot main class
-│   │       ├── cli/
-│   │       │   └── MidiShellCommands.java # CLI commands
-│   │       ├── midi/
-│   │       │   ├── MidiParser.java        # Core parsing logic
-│   │       │   └── NoteUtils.java         # Note conversion utilities
-│   │       └── model/                      # JSON output model classes
-│   └── test/
-│       └── java/com/marcoalmeida/midi_tokenizer/
-│           └── MidiParserTest.java        # Unit tests
-└── gradle/                                # Gradle wrapper files
-```
+## License
 
-## Examples
-
-### Example 1: Basic parsing
-
-```shell
-shell:>parse --input /path/to/song.mid
-{
-  "schemaVersion": "1.0",
-  "file": { ... },
-  "metadata": { ... },
-  "tracks": [ ... ]
-}
-```
-
-### Example 2: Save to file
-
-```shell
-shell:>parse --input song.mid --output song.json
-Successfully wrote output to: song.json
-```
-
-### Example 3: Ticks-based timing
-
-```shell
-shell:>parse --input song.mid --time ticks
-```
-
-This will output event times in MIDI ticks instead of seconds, useful for precise MIDI manipulation.
+This module is part of the Strudel project and follows the repository's existing license (AGPL-3.0-or-later).
