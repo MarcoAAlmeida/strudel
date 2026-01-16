@@ -1076,5 +1076,6 @@ NOTE: you can generate this with `node warm.js`. it might still not be perfectly
 - 2022-02-06T00:59:16+01:00 Patternify all the things by @yaxu in: [#5](https://codeberg.org/uzu/strudel/pulls/5) 
 - 2022-02-05T23:31:37+01:00 update readme for local dev by @Ghost in: [#4](https://codeberg.org/uzu/strudel/pulls/4) 
 - 2022-02-05T22:36:06+01:00 Fix path by @yaxu in: [#3](https://codeberg.org/uzu/strudel/pulls/3) 
-- 2022-02-05T21:52:51+01:00 repl + reify functions by @froos in: [#2](https://codeberg.org/uzu/strudel/pulls/2) 
-[9:37:36] strudel % 
+- 2022-02-05T21:52:51+01:00 repl + reify functions by @froos in: [#2](https://codeberg.org/uzu/strudel/pulls/2)
+
+... hello from the bottom of this file! you seem to be interested in the history of strudel, so it's worth noting that the first [commit](https://codeberg.org/uzu/strudel/commit/38b5a0d5cdf28685b2b5e18d460772b70246207b) to the repo was actually on Jan 22, 2022, 09:24 PM GMT+1 by @yaxu which could be seen as strudel's birthday 🎂
