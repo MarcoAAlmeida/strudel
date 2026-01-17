@@ -25,13 +25,13 @@ const availableFunctions = (() => {
       seen.add(s);
       // Swap `doc.name` in for `s` in the list of synonyms
       const synonymsWithDoc = [doc.name, ...synonyms].filter((x) => x && x !== s);
-      // functions.push({
-      //   ...doc,
-      //   name: s, // update names for the synonym
-      //   longname: s,
-      //   synonyms: synonymsWithDoc,
-      //   synonyms_text: synonymsWithDoc.join(', '),
-      // });
+      functions.push({
+        ...doc,
+        name: s, // update names for the synonym
+        longname: s,
+        synonyms: synonymsWithDoc,
+        synonyms_text: synonymsWithDoc.join(', '),
+      });
     }
   }
   return functions.sort((a, b) => /* a.meta.filename.localeCompare(b.meta.filename) +  */ a.name.localeCompare(b.name));
@@ -63,14 +63,6 @@ export function Reference() {
           return false;
         }
       }
-
-      // if (entry.name === selectedFunction) {
-      //   return true;
-      // }
-
-      // if (!selectedTag) {
-      //   return false;
-      // }
 
       if (!search) {
         return true;
@@ -228,7 +220,6 @@ export function Reference() {
             </section>
           )) || <p className="font-sans">Searcb or select a tag to get started.</p>}
           {detailVisibleFunctions.length > 0 && <div className="h-screen" />}
-          {/* {!selectedTag && <p className="font-sans">Select a tag to see the functions.</p>} */}
         </div>
       </div>
     </div>
