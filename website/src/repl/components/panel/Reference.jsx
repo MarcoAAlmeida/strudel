@@ -99,8 +99,6 @@ export function Reference() {
   }
 
   const onSearchTagFilterClick = () => {
-    const container = document.getElementById('reference-container');
-    container.scrollTo(0, 0);
     setSelectedTag(null);
     setSelectedFunction(null);
   };
@@ -133,7 +131,7 @@ export function Reference() {
               className="text-foreground border-2 border-gray-500 px-1 py-0.5 my-2 rounded-md cursor-pointer font-sans"
               onClick={onSearchTagFilterClick}
             >
-              {selectedTag ? selectedTag + ' x' : 'Filter by tag'}
+              {selectedTag}
             </span>
           </div>
         )}
