@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import jsdocJson from '../../../../../doc.json';
 import { Textbox } from '../textbox/Textbox';
@@ -46,6 +46,7 @@ const getInnerText = (html) => {
 export function Reference() {
   const [search, setSearch] = useState('');
   const [selectedTag, setSelectedTag] = useState(null);
+  const [selectedFunction, setSelectedFunction] = useState(null);
 
   const toggleTag = (tag) => {
     if (selectedTag === tag) {
@@ -55,13 +56,21 @@ export function Reference() {
     }
   };
 
-  const visibleFunctions = useMemo(() => {
+  const searchVisibleFunctions = useMemo(() => {
     return availableFunctions.filter((entry) => {
       if (selectedTag) {
         if (!(entry.tags || ['untagged']).includes(selectedTag)) {
           return false;
         }
       }
+
+      // if (entry.name === selectedFunction) {
+      //   return true;
+      // }
+
+      // if (!selectedTag) {
+      //   return false;
+      // }
 
       if (!search) {
         return true;
@@ -75,6 +84,19 @@ export function Reference() {
     });
   }, [search, selectedTag]);
 
+  const detailVisibleFunctions = useMemo(() => {
+    return searchVisibleFunctions.filter((x) => {
+      if (selectedTag === null) {
+        if (search) {
+          return true;
+        }
+        return x.name === selectedFunction;
+      } else {
+        return true;
+      }
+    });
+  }, [searchVisibleFunctions, selectedFunction, selectedTag]);
+
   const tagCounts = {};
   for (const doc of availableFunctions) {
     (doc.tags || ['untagged']).forEach((t) => {
@@ -84,42 +106,60 @@ export function Reference() {
     });
   }
 
+  const onSearchTagFilterClick = () => {
+    const container = document.getElementById('reference-container');
+    container.scrollTo(0, 0);
+    setSelectedTag(null);
+    setSelectedFunction(null);
+  };
+
+  useEffect(() => {
+    if (selectedFunction) {
+      const el = document.getElementById(`doc-${selectedFunction}`);
+      const container = document.getElementById('reference-container');
+      container.scrollTo(0, el.offsetTop);
+    }
+  }, [selectedFunction]);
+
   return (
-    // <div className="flex flex-col h-full w-full p-2">
-    //   <div className="w-full  flex flex-col gap-2 h-2/5 mb-2">
-    //     <div className="w-full flex flex-col gap-2"></div>
     <div className="flex h-full w-full p-2 overflow-hidden">
-      <div className="h-full  flex flex-col gap-2 w-1/3 max-w-72 ">
+      <div className="h-full text-foreground flex flex-col gap-3 w-1/3 ">
         <div className="w-full flex">
-          <Textbox className="w-full" placeholder="Search" value={search} onChange={setSearch} />
-          <div>
-            {Object.entries(tagCounts)
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([t, count]) => (
-                <span key={t}>
-                  <a
-                    className={[
-                      'select-none text-white border-2 border-gray-500 px-1 py-0.5 my-2 cursor-pointer text-sm/8 rounded-md ',
-                      `${selectedTag === t ? 'bg-gray-500 text-black' : ''}`,
-                    ].join(' ')}
-                    onClick={() => toggleTag(t)}
-                  >
-                    {t}&nbsp;({count})
-                  </a>{' '}
-                </span>
-              ))}
-          </div>
+          <Textbox
+            className="w-full"
+            placeholder="Search"
+            value={search}
+            onChange={(e) => {
+              setSelectedFunction(null);
+              setSearch(e);
+            }}
+          />
         </div>
-        <div className="h-full gap-1.5 bg-background bg-opacity-50 rounded-md overflow-y-auto">
-          {visibleFunctions.map((entry, i) => (
+        {selectedTag && (
+          <div className="w-72">
+            <span
+              className="text-foreground border-2 border-gray-500 px-1 py-0.5 my-2 rounded-md cursor-pointer font-sans"
+              onClick={onSearchTagFilterClick}
+            >
+              {selectedTag ? selectedTag + ' x' : 'Filter by tag'}
+            </span>
+          </div>
+        )}
+        <div className="flex flex-col h-full overflow-y-auto gap-1.5 bg-background bg-opacity-50 rounded-md">
+          {searchVisibleFunctions.map((entry, i) => (
             <>
               <a
                 key={`entry-${entry.name}`}
-                className="cursor-pointer text-foreground flex-none hover:bg-lineHighlight overflow-x-hidden px-1 text-ellipsis"
+                className={
+                  'cursor-pointer flex-none hover:bg-lineHighlight overflow-x-hidden px-1 text-ellipsis ' +
+                  (entry.name === selectedFunction ? 'bg-lineHighlight font-bold' : '')
+                }
                 onClick={() => {
-                  const el = document.getElementById(`doc-${entry.name}`);
-                  const container = document.getElementById('reference-container');
-                  container.scrollTo(0, el.offsetTop);
+                  if (entry.name === selectedFunction) {
+                    setSelectedFunction(null);
+                  } else {
+                    setSelectedFunction(entry.name);
+                  }
                 }}
               >
                 {entry.name}
@@ -134,11 +174,28 @@ export function Reference() {
       >
         <div className="prose dark:prose-invert min-w-full px-1 ">
           <h2>API Reference</h2>
-          <p>
+          <p className="font-sans text-md">
             This is the long list of functions you can use. Remember that you don't need to remember all of those and
             that you can already make music with a small set of functions!
           </p>
-          {visibleFunctions.map((entry, i) => (
+          <div>
+            {Object.entries(tagCounts)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([t, count]) => (
+                <span key={t}>
+                  <a
+                    className={[
+                      'select-none text-white border-2 border-gray-500 px-1 py-0.5 my-2 cursor-pointer text-sm/8 rounded-md no-underline font-sans',
+                      `${selectedTag === t ? 'bg-gray-500 text-black' : ''}`,
+                    ].join(' ')}
+                    onClick={() => toggleTag(t)}
+                  >
+                    {t}&nbsp;({count})
+                  </a>{' '}
+                </span>
+              ))}
+          </div>
+          {detailVisibleFunctions.map((entry, i) => (
             <section key={i} className="font-sans">
               <div className="flex flex-row items-center mt-8 justify-between">
                 <h3 className="font-mono my-0" id={`doc-${entry.name}`}>
@@ -170,7 +227,9 @@ export function Reference() {
                 </pre>
               ))}
             </section>
-          ))}
+          )) || <p className="font-sans">Searcb or select a tag to get started.</p>}
+          {detailVisibleFunctions.length > 0 && <div className="h-screen" />}
+          {/* {!selectedTag && <p className="font-sans">Select a tag to see the functions.</p>} */}
         </div>
       </div>
     </div>
