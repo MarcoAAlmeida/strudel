@@ -9,12 +9,14 @@ import './reverb.mjs';
 import './vowel.mjs';
 import { clamp, nanFallback, _mod, cycleToSeconds, pickAndRename } from './util.mjs';
 import workletsUrl from './worklets.mjs?audioworklet';
+import { getNodeFromPool, isPoolable, releaseNodeToPool } from './nodePools.mjs';
 import {
   createFilter,
   effectSend,
   gainNode,
   getCompressor,
   getDistortion,
+  getFrequencyFromValue,
   getLfo,
   getWorklet,
   releaseAudioNode,
@@ -345,7 +347,7 @@ function getPhaser(begin, end, frequency = 1, depth = 0.5, centerFrequency = 100
   let fOffset = 282; //for backward compat in #1800
   const filterChain = [];
   for (let i = 0; i < numStages; i++) {
-    const filter = ac.createBiquadFilter();
+    const filter = getNodeFromPool('filter', () => ac.createBiquadFilter());
     filter.type = 'notch';
     filter.gain.value = 1;
     filter.frequency.value = centerFrequency + fOffset;
@@ -410,9 +412,9 @@ function mapChannelNumbers(channels) {
 }
 
 class Chain {
-  constructor(head) {
-    this.audioNodes = [head];
-    this.tails = [head];
+  constructor() {
+    this.audioNodes = [];
+    this.tails = [];
   }
   connect(...nodes) {
     nodes.forEach((node) => {
@@ -431,7 +433,7 @@ class Chain {
     return this;
   }
   releaseNodes() {
-    this.audioNodes.forEach((n) => releaseAudioNode(n));
+    this.audioNodes.forEach((n) => (isPoolable(n) ? releaseNodeToPool(n) : releaseAudioNode(n)));
     this.audioNodes = [];
     this.tails = [];
   }
@@ -541,6 +543,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     value.s = s;
   }
 
+  const chain = new Chain(); // connection manager which tracks audio nodes for releasing
+
   // get source AudioNode
   let sourceNode;
   if (source) {
@@ -548,8 +552,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     nodes.main['source'] = [sourceNode];
   } else if (getSound(s)) {
     const { onTrigger } = getSound(s);
-    // We have to use onEnded because some sources (e.g. `sampler`) have
-    // an internal duration which is longer than `value.duration`
+
     const onEnded = () =>
       webAudioTimeout(
         ac,
@@ -560,6 +563,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
         0,
         endWithRelease,
       );
+
     const soundHandle = await onTrigger(t, value, onEnded, cps);
 
     if (soundHandle) {
@@ -581,7 +585,8 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     return;
   }
 
-  const chain = new Chain(sourceNode); // connection manager which tracks audio nodes for releasing
+  chain.connect(sourceNode);
+
   FX = [...FX, value]; // run through the FX chain and then run through all FX outside of it as well
   for (let [idx, fx] of Object.entries(FX)) {
     const key = idx == FX.length - 1 ? 'main' : idx;
@@ -599,7 +604,6 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
       delayfeedback = getDefaultValue('delayfeedback'),
       delaysync = getDefaultValue('delaysync'),
       delaytime,
-      stretch = getDefaultValue('stretch'),
       i = getDefaultValue('i'),
     } = fx;
     gain = applyGainCurve(nanFallback(gain, 1));
@@ -610,8 +614,21 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
     gain *= velocity; // velocity currently only multiplies with gain. it might do other things in the future
     delaytime = delaytime ?? cycleToSeconds(delaysync, cps);
 
-    if (stretch !== undefined) {
-      const phaseVocoder = getWorklet(ac, 'phase-vocoder-processor', { pitchFactor: stretch });
+    // Kabelsalat
+    if (fx.workletSrc !== undefined) {
+      const workletNode = getWorklet(ac, 'generic-processor', {});
+      chain.connect(workletNode);
+      const workletSrc = fx.workletSrc
+        .replace(/\bpat\[(\d+)\]/g, (_, i) => fx.workletInputs[i])
+        .replaceAll('sFreq', getFrequencyFromValue(value))
+        .replaceAll('sGate', `cc('strudel-gate-${chainID}')`);
+      /* global compileKabel */
+      const { src, ugens, registers } = compileKabel(workletSrc);
+      workletNode.port.postMessage({ src, schema: { ugens, registers }, start: t, gateEnd: end, end: endWithRelease });
+    }
+
+    if (fx.stretch !== undefined) {
+      const phaseVocoder = getWorklet(ac, 'phase-vocoder-processor', { pitchFactor: fx.stretch });
       chain.connect(phaseVocoder);
       fxNodes['stretch'] = [phaseVocoder];
     }

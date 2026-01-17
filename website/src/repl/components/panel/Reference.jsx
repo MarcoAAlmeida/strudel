@@ -85,9 +85,12 @@ export function Reference() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full p-2">
-      <div className="w-full  flex flex-col gap-2 h-2/5 mb-2">
-        <div className="w-full flex flex-col gap-2">
+    // <div className="flex flex-col h-full w-full p-2">
+    //   <div className="w-full  flex flex-col gap-2 h-2/5 mb-2">
+    //     <div className="w-full flex flex-col gap-2"></div>
+    <div className="flex h-full w-full p-2 overflow-hidden">
+      <div className="h-full  flex flex-col gap-2 w-1/3 max-w-72 ">
+        <div className="w-full flex">
           <Textbox className="w-full" placeholder="Search" value={search} onChange={setSearch} />
           <div>
             {Object.entries(tagCounts)
