@@ -137,7 +137,9 @@ export function repl({
 
   // TODO - not documented as jsdoc examples as the test framework doesn't simulate enough context for `each` and `all`..
 
-  /** Applies a function to all the running patterns. Note that the patterns are groups together into a single `stack` before the function is applied. This is probably what you want, but see `each` for
+  let allTransforms = [];
+  /**
+   * Applies a function to all the running patterns. Note that the patterns are groups together into a single `stack` before the function is applied. This is probably what you want, but see `each` for
    * a version that applies the function to each pattern separately.
    * ```
    * $: sound("bd - cp sd")
@@ -152,7 +154,6 @@ export function repl({
    *
    * @tags combiners
    */
-  let allTransforms = [];
   const all = function (transform) {
     allTransforms.push(transform);
     return silence;

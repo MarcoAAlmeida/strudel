@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Fragment } from 'react';
 
 import jsdocJson from '../../../../../doc.json';
 import { Textbox } from '../textbox/Textbox';
@@ -147,9 +147,8 @@ export function Reference() {
         )}
         <div className="flex flex-col h-full overflow-y-auto gap-1.5 bg-background bg-opacity-50 rounded-md">
           {searchVisibleFunctions.map((entry, i) => (
-            <>
+            <Fragment key={`entry-${entry.name}`}>
               <a
-                key={`entry-${entry.name}`}
                 className={
                   'cursor-pointer flex-none hover:bg-lineHighlight overflow-x-hidden px-1 text-ellipsis ' +
                   (entry.name === selectedFunction ? 'bg-lineHighlight font-bold' : '')
@@ -164,7 +163,7 @@ export function Reference() {
               >
                 {entry.name}
               </a>{' '}
-            </>
+            </Fragment>
           ))}
         </div>
       </div>
