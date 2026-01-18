@@ -618,7 +618,7 @@ export const superdough = async (value, t, hapDuration, cps = 0.5, cycle = 0.5) 
 
     // Kabelsalat
     if (fx.workletSrc !== undefined) {
-      const workletNode = getWorklet(ac, 'generic-processor', {});
+      const workletNode = getWorklet(ac, 'generic-processor', {}, { outputChannelCount: [2] });
       chain.connect(workletNode);
       const workletSrc = fx.workletSrc
         .replace(/\bpat\[(\d+)\]/g, (_, i) => fx.workletInputs[i])

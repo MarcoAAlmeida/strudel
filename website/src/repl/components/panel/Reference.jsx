@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, Fragment } from 'react';
+import { memo, useEffect, useMemo, useState, Fragment } from 'react';
 
 import jsdocJson from '../../../../../doc.json';
 import { Textbox } from '../textbox/Textbox';
@@ -43,7 +43,7 @@ const getInnerText = (html) => {
   return div.textContent || div.innerText || '';
 };
 
-export function Reference() {
+export const Reference = memo(function Reference() {
   const [search, setSearch] = useState('');
   const [selectedTag, setSelectedTag] = useState(null);
   const [selectedFunction, setSelectedFunction] = useState(null);
@@ -222,4 +222,4 @@ export function Reference() {
       </div>
     </div>
   );
-}
+});
