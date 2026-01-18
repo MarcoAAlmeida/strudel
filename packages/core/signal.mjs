@@ -286,7 +286,7 @@ export const getRandsAtTime = (t, n = 1, seed = 0) => {
  * precise RNG, try `useRNG('precise')`.
  *
  * @name useRNG
- * @tags generators, internals
+ * @tags generators, math
  * @param {string} mod - Mode. One of 'legacy', 'precise'
  * @example
  * useRNG('legacy')
@@ -376,6 +376,7 @@ export const binaryNL = (n, nBits = 16) => {
  * Creates a list of random numbers of the given length
  *
  * @name randL
+ * @tags generators
  * @param {number} n Number of random numbers to sample
  * @example
  * s("saw").seg(16).n(irand(12)).scale("F1:minor")
@@ -434,6 +435,7 @@ export const scramble = register('scramble', (n, pat) => {
 /**
  * Modify a pattern by applying a function to the `randomSeed` control if present
  *
+ * @tags math
  * @param {Function} func Function from seed (or undefined) to seed (or undefined)
  * @param {Pattern} pat Pattern to update
  * @returns Pattern
@@ -453,6 +455,7 @@ export const withSeed = (func, pat) => {
  * that use randomness, like `shuffle` and `sometimes`.
  *
  * @name seed
+ * @tags math
  * @param {number} n A new seed. Can be any number.
  * @example
  * $: s("hh*4").degrade();
@@ -1031,6 +1034,8 @@ export const keyDown = register('keyDown', function (pat) {
  * event durations, from the pattern that it is combined with.
  * For example `cyclesPer.struct("1 1 [1 1] 1")` would give the same as `"0.25 0.25 [0.125 0.125] 0.25"`.
  * See also its reciprocal, `per`, also known as `perCycle`.
+ *
+ * @tags temporal
  * @example
  * // Shorter events are lower in pitch
  * sound("saw saw [saw saw] saw")
@@ -1049,6 +1054,7 @@ export const cyclesPer = new Pattern(function (state) {
  * event durations, from the pattern that it is combined with.
  * For example `per.struct("1 1 [1 1] 1")` would give the same as `"4 4 [8 8] 4"`.
  * See also its reciprocal, `cyclesPer`.
+ * @tags temporal
  * @synonyms perCycle
  * @example
  * // Shorter events are more distorted
@@ -1066,6 +1072,7 @@ export const perCycle = per;
  * particular, where the event duration halves, the
  * returned value increases by one. `perx.struct("1 1 [1 [1 1]] 1")` would therefore be
  * the same as `"3 3 [4 [5 5]] 3"`.
+ * @tags temporal
  */
 export const perx = new Pattern(function (state) {
   const n = Fraction(1).div(state.span.duration);

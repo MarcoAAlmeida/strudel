@@ -1653,6 +1653,7 @@ export const func = curry((a, b) => reify(b).func(a));
 /**
  * Registers a new pattern method. The method is added to the Pattern class + the standalone function is returned from register.
  *
+ * @tags functional
  * @param {string | string[]} name name of the function, or an array of names to be used as synonyms
  * @param {function} func function with 1 or more params, where last is the current pattern
  * @param {bool} patternify defaults to true; if set to false, you will have more control over the arguments to `func` as they will be
@@ -3843,6 +3844,7 @@ export const chebyshev = _distortWithAlg('chebyshev');
  * Turns a list of patterns into a single pattern which outputs list-values
  *
  * @name parray
+ * @tags combiners
  * @returns Pattern
  */
 export const parray = (pats) => {
@@ -3865,6 +3867,7 @@ const _ensureListPattern = (list) => {
  * Can also be used to create a new synth via `s('user').partials(...)`
  *
  * @name partials
+ * @tags fx, superdough
  * @param {number[] | Pattern} magnitudes List of [0, 1] magnitudes for partials. 0th entry is the fundamental harmonic (i.e. DC offset is skipped)
  * @example
  * s("user").seg(16).n(irand(8)).scale("A:major")
@@ -3886,6 +3889,7 @@ export const partials = (list) => {
  * Rotates the harmonics of one of the core synths ('sine', 'tri', 'saw', 'user', ..) by a list of phases
  *
  * @name phases
+ * @tags fx, superdough
  * @param {number[] | Pattern} phases List of [0, 1) phases for partials. 0th entry is the fundamental phase (i.e. DC offset is skipped)
  * @example
  * // Phase cancellation
