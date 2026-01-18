@@ -172,6 +172,7 @@ export const getADSRValues = (params, curve = 'linear', defaultValues) => {
   if (a == null && d == null && s == null && r == null) {
     return defaultValues ?? [envmin, envmin, envmax, releaseMin];
   }
+
   const sustain = s != null ? s : (a != null && d == null) || (a == null && d == null) ? envmax : envmin;
   return [Math.max(a ?? 0, envmin), Math.max(d ?? 0, envmin), Math.min(sustain, envmax), Math.max(r ?? 0, releaseMin)];
 };
