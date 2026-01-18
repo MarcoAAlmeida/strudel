@@ -1550,12 +1550,20 @@ class GenericProcessor extends AudioWorkletProcessor {
       this.gateNode?.setValue(0);
       this.gateEnded = true;
     }
-    const outL = outputs[0][0];
-    const outR = outputs[0][1] ?? outputs[0][0];
+    const output = outputs[0];
+    const outL = output[0];
+    const outR = output[1];
     for (let n = 0; n < blockSize; n++) {
       this.genSample(this.playPos, this.nodes, input ? input[n] : 0, this.registers, this.outputs, this.sources);
-      outL[n] = this.outputs[0];
-      outR[n] = this.outputs[1];
+      const left = this.outputs[0];
+      const right = this.outputs[1];
+      // Spread to stereo if possible; else mixdown to mono
+      if (outR) {
+        outL[n] = left;
+        outR[n] = right;
+      } else {
+        outL[n] = 0.5 * (left + right);
+      }
       this.playPos += 1 / sampleRate;
     }
     return true;
