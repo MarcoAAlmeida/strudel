@@ -1572,7 +1572,10 @@ export function fastcat(...pats) {
   return result;
 }
 
-/** See `fastcat` */
+/** See `fastcat`
+ * @name sequence
+ * @tags combiners
+ */
 export function sequence(...pats) {
   return fastcat(...pats);
 }
@@ -2377,6 +2380,7 @@ export const rev = register(
  * Reverse a whole pattern. See also `rev` for reversing each cycle.
  *
  * @name revv
+ * @tags temporal
  * @memberof Pattern
  * @returns Pattern
  * @example
@@ -3903,6 +3907,7 @@ export const phases = (list) => {
  * calls and/or in a single .FX(fx1, fx2, ..) call. The fx1, .. are _patterns_ which
  * establish the controls of the given effect. See examples.
  * @name FX
+ * @tags fx, superdough
  * @memberof Pattern
  * @returns Pattern
  * @example
@@ -3953,6 +3958,7 @@ const _asArrayPattern = (pats) => {
  *     by wrapping them inside a function in K (see example).
  *
  * @name K
+ * @tags generators, fx, superdough
  * @param {KabelsalatExpression | Function} expr Kabelsalat graph definition
  * @memberof Pattern
  * @returns Pattern

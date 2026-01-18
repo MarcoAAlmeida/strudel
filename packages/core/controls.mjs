@@ -702,6 +702,7 @@ export const {
  * any of the 8 individual FMs (e.g. `fmrel8`)
  *
  * @name fmrelease
+ * @tags fx, superdough, supradough
  * @synonyms fmrel
  * @param {number | Pattern} time release time
  *
@@ -1553,6 +1554,7 @@ export const { fanchor } = registerControl('fanchor');
  * Rate of the LFO for the lowpass filter
  *
  * @name lprate
+ * @tags fx, superdough
  * @param {number | Pattern} rate rate in hertz
  * @example
  * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lprate("<4 8 2 1>")
@@ -1563,6 +1565,7 @@ export const { lprate } = registerControl('lprate');
  * Cycle-synced rate of the LFO for the lowpass filter
  *
  * @name lpsync
+ * @tags fx, superdough
  * @param {number | Pattern} rate rate in cycles
  * @example
  * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lpsync("<4 8 2 1>")
@@ -1573,6 +1576,7 @@ export const { lpsync } = registerControl('lpsync');
  * Depth of the LFO for the lowpass filter
  *
  * @name lpdepth
+ * @tags fx, superdough
  * @param {number | Pattern} depth depth of modulation
  * @example
  * note("<c c c# c c c4>*16").s("sawtooth").lpf(600).lpdepth("<1 .5 1.8 0>")
@@ -1583,6 +1587,7 @@ export const { lpdepth } = registerControl('lpdepth');
  * Depth of the LFO for the lowpass filter, in HZ
  *
  * @name lpdepthfrequency
+ * @tags fx, superdough
  * @synonyms lpdepthfreq
  * @param {number | Pattern} depth depth of modulation
  * @example
@@ -1595,6 +1600,7 @@ export const { lpdepthfrequency, lpdepthfreq } = registerControl('lpdepthfrequen
  * Shape of the LFO for the lowpass filter
  *
  * @name lpshape
+ * @tags fx, superdough
  * @param {number | Pattern} shape Shape of the lfo (0, 1, 2, ..)
  */
 export const { lpshape } = registerControl('lpshape');
@@ -1603,6 +1609,7 @@ export const { lpshape } = registerControl('lpshape');
  * DC offset of the LFO for the lowpass filter
  *
  * @name lpdc
+ * @tags fx, superdough
  * @param {number | Pattern} dcoffset dc offset. set to 0 for unipolar
  */
 export const { lpdc } = registerControl('lpdc');
@@ -1611,6 +1618,7 @@ export const { lpdc } = registerControl('lpdc');
  * Skew of the LFO for the lowpass filter
  *
  * @name lpskew
+ * @tags fx, superdough
  * @param {number | Pattern} skew How much to bend the LFO shape
  */
 export const { lpskew } = registerControl('lpskew');
@@ -1619,6 +1627,7 @@ export const { lpskew } = registerControl('lpskew');
  * Rate of the LFO for the bandpass filter
  *
  * @name bprate
+ * @tags fx, superdough
  * @param {number | Pattern} rate rate in hertz
  */
 export const { bprate } = registerControl('bprate');
@@ -1627,6 +1636,7 @@ export const { bprate } = registerControl('bprate');
  * Cycle-synced rate of the LFO for the bandpass filter
  *
  * @name bpsync
+ * @tags fx, superdough
  * @param {number | Pattern} rate rate in cycles
  */
 export const { bpsync } = registerControl('bpsync');
@@ -1635,6 +1645,7 @@ export const { bpsync } = registerControl('bpsync');
  * Depth of the LFO for the bandpass filter
  *
  * @name bpdepth
+ * @tags fx, superdough
  * @param {number | Pattern} depth depth of modulation
  */
 export const { bpdepth } = registerControl('bpdepth');
@@ -1643,6 +1654,7 @@ export const { bpdepth } = registerControl('bpdepth');
  * Depth of the LFO for the bandpass filter, in HZ
  *
  * @name bpdepthfrequency
+ * @tags fx, superdough
  * @synonyms bpdepthfreq
  * @param {number | Pattern} depth depth of modulation
  * @example
@@ -1655,6 +1667,7 @@ export const { bpdepthfrequency, bpdepthfreq } = registerControl('bpdepthfrequen
  * Shape of the LFO for the bandpass filter
  *
  * @name bpshape
+ * @tags fx, superdough
  * @param {number | Pattern} shape Shape of the lfo (0, 1, 2, ..)
  */
 export const { bpshape } = registerControl('bpshape');
@@ -1663,6 +1676,7 @@ export const { bpshape } = registerControl('bpshape');
  * DC offset of the LFO for the bandpass filter
  *
  * @name bpdc
+ * @tags fx, superdough
  * @param {number | Pattern} dcoffset dc offset. set to 0 for unipolar
  */
 export const { bpdc } = registerControl('bpdc');
@@ -1671,6 +1685,7 @@ export const { bpdc } = registerControl('bpdc');
  * Skew of the LFO for the bandpass filter
  *
  * @name bpskew
+ * @tags fx, superdough
  * @param {number | Pattern} skew How much to bend the LFO shape
  */
 export const { bpskew } = registerControl('bpskew');
@@ -1679,6 +1694,7 @@ export const { bpskew } = registerControl('bpskew');
  * Rate of the LFO for the highpass filter
  *
  * @name hprate
+ * @tags fx, superdough
  * @param {number | Pattern} rate rate in hertz
  */
 export const { hprate } = registerControl('hprate');
@@ -1687,6 +1703,7 @@ export const { hprate } = registerControl('hprate');
  * Cycle-synced rate of the LFO for the highpass filter
  *
  * @name hpsync
+ * @tags fx, superdough
  * @param {number | Pattern} rate rate in cycles
  */
 export const { hpsync } = registerControl('hpsync');
@@ -1695,6 +1712,7 @@ export const { hpsync } = registerControl('hpsync');
  * Depth of the LFO for the highpass filter
  *
  * @name hpdepth
+ * @tags fx, superdough
  * @param {number | Pattern} depth depth of modulation
  */
 export const { hpdepth } = registerControl('hpdepth');
@@ -1703,6 +1721,7 @@ export const { hpdepth } = registerControl('hpdepth');
  * Depth of the LFO for the hipass filter, in hz
  *
  * @name hpdepthfrequency
+ * @tags fx, superdough
  * @synonyms hpdepthfreq
  * @param {number | Pattern} depth depth of modulation
  * @example
@@ -1715,6 +1734,7 @@ export const { hpdepthfrequency, hpdepthfreq } = registerControl('hpdepthfrequen
  * Shape of the LFO for the highpass filter
  *
  * @name hpshape
+ * @tags fx, superdough
  * @param {number | Pattern} shape Shape of the lfo (0, 1, 2, ..)
  */
 export const { hpshape } = registerControl('hpshape');
@@ -1723,6 +1743,7 @@ export const { hpshape } = registerControl('hpshape');
  * DC offset of the LFO for the highpass filter
  *
  * @name hpdc
+ * @tags fx, superdough
  * @param {number | Pattern} dcoffset dc offset. set to 0 for unipolar
  */
 export const { hpdc } = registerControl('hpdc');
@@ -1731,6 +1752,7 @@ export const { hpdc } = registerControl('hpdc');
  * Skew of the LFO for the highpass filter
  *
  * @name hpskew
+ * @tags fx, superdough
  * @param {number | Pattern} skew How much to bend the LFO shape
  */
 export const { hpskew } = registerControl('hpskew');
@@ -2182,6 +2204,7 @@ export const { orbit } = registerControl('orbit', 'o');
  *   otherPat.bmod(..) (to modulate another pattern with the bus)
  *
  * @name bus
+ * @tags fx, superdough
  * @param {number | Pattern} number
  */
 export const { bus } = registerControl('bus');
@@ -2190,6 +2213,7 @@ export const { bus } = registerControl('bus');
  * Postgain multiplier prior to sending the signal to the audio bus.
  *
  * @name busgain
+ * @tags fx, superdough
  * @synonyms bgain
  * @param {number | Pattern} number
  */
@@ -2252,6 +2276,7 @@ export const { voice } = registerControl('voice');
 /**
  * The chord to voice
  * @name chord
+ * @tags music_theory
  * @param {string | Pattern} symbols chord symbols to voice e.g., C, Eb, Fm7, G7. The symbols can be defined via addVoicings
  * @example
  * chord("<Am C D F Am E Am E>").voicing()
@@ -2261,6 +2286,7 @@ export const { chord } = registerControl('chord');
  * Which dictionary to use for the voicings. This falls back to the default dictionary if not provided
  *
  * @name dictionary
+ * @tags music_theory
  * @param {string} dictionaryName which dictionary (having been defined with `addVoicings`) to use
  * @example
  * addVoicings('house', {
@@ -2275,6 +2301,7 @@ export const { dictionary, dict } = registerControl('dictionary', 'dict');
 /** The top note to align the voicing to. Defaults to c5
  *
  * @name anchor
+ * @tags music_theory
  * @param {string | Pattern} anchorNote the note to align the voicings to
  * @example
  * anchor("<c4 g4 c5 g5>").chord("C").voicing()
@@ -2284,6 +2311,7 @@ export const { anchor } = registerControl('anchor');
  * Sets how the voicing is offset from the anchored position
  *
  * @name offset
+ * @tags music_theory
  * @param {number | Pattern} shift the amount to shift the voicing up or down
  * @example
  * chord("<Am C D F Am E Am E>").offset("<0 1 2 3 4 5>") // alter the voicing each time
@@ -2293,6 +2321,7 @@ export const { offset } = registerControl('offset');
  *  How many octaves are voicing steps spread apart, defaults to 1
  *
  *  @name octaves
+ *  @tags music_theory
  *  @param {number | Pattern} count the number of octaves
  *  @example
  *  chord("<Am C D F Am E Am E>").octaves("<2 4>").voicing()
@@ -2302,6 +2331,7 @@ export const { octaves } = registerControl('octaves');
  * Remove anchor note from the voicing. Useful for melody harmonization
  *
  * @name mode
+ * @tags music_theory
  * @param {string | Pattern} modeName one of {below | above | duck | root}
  * @example
  * mode("<below above duck root>").chord("C").voicing()
@@ -3097,6 +3127,7 @@ Pattern.prototype.modulate = function (type, config, idPat) {
  * a `sometimes`. See example below.
  *
  * @name lfo
+ * @tags fx, superdough
  * @param {Object} config LFO configuration.
  * @param {string | Pattern} [config.control] Node to modulate. Aliases: c
  * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc
@@ -3150,6 +3181,7 @@ export const lfo = (config) => pure({}).lfo(config);
  * a `sometimes`. See example below.
  *
  * @name env
+ * @tags fx, superdough
  * @param {Object} config Envelope configuration.
  * @param {string | Pattern} [config.control] Node to modulate. Aliases: c
  * @param {string | Pattern} [config.subControl] Sub-control name to append to the control key. Aliases: sc
@@ -3210,6 +3242,7 @@ export const env = (config) => pure({}).env(config);
  * a `sometimes`. See example below.
  *
  * @name bmod
+ * @tags fx, superdough
  * @param {Object} config Bus modulation configuration.
  * @param {string | Pattern} [config.bus] Bus to get modulation signal from
  * @param {string | Pattern} [config.control] Node to modulate. Aliases: c
@@ -3236,6 +3269,7 @@ export const bmod = (config) => pure({}).bmod(config);
  * and sustains
  *
  * @name transient
+ * @tags fx, superdough
  * @param {number | Pattern} attack Emphasis on transients; between -1 (deaccentuate) and 1 (accentuate)
  * @param {number | Pattern} sustain Emphasis on the sustains; between -1 (deaccentuate) and 1 (accentuate)
  * @example

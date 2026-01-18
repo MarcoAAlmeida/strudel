@@ -577,6 +577,7 @@ export async function midin(input) {
  * note durations
  *
  * @name midikeys
+ * @tags external_io
  * @param {string | number} input MIDI device name or index defaulting to 0
  * @returns {function((number | Pattern)=): Pattern} A function that produces a pattern.
  *   When queried, the pattern will produces the most recently played midi notes and velocities,

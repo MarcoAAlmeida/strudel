@@ -286,6 +286,7 @@ export const getRandsAtTime = (t, n = 1, seed = 0) => {
  * precise RNG, try `useRNG('precise')`.
  *
  * @name useRNG
+ * @tags generators, internals
  * @param {string} mod - Mode. One of 'legacy', 'precise'
  * @example
  * useRNG('legacy')
@@ -341,6 +342,7 @@ export const binaryN = (n, nBits = 16) => {
  * Creates a binary list pattern from a number.
  *
  * @name binaryL
+ * @tags generators
  * @param {number} n - input number to convert to binary
  * s("saw").seg(8)
  *   .partials(binaryL(irand(4096).add(1)))
@@ -354,6 +356,7 @@ export const binaryL = (n) => {
  * Creates a binary list pattern from a number, padded to n bits long.
  *
  * @name binaryNL
+ * @tags generators
  * @param {number} n - input number to convert to binary
  * @param {number} nBits - pattern length, defaults to 16
  */
