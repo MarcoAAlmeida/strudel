@@ -15,7 +15,7 @@ function cx(...classes) {
 }
 
 const inputClass =
-  'bg-background text-sm border rounded-0 text-foreground border-foreground placeholder-foreground focus:outline-none focus:ring-0 focus:border-foreground';
+  'bg-background text-sm border rounded-0 text-foreground border-muted placeholder-foreground focus:outline-none focus:ring-0 focus:border-foreground';
 
 export function Textbox({ onChange, className, ...inputProps }) {
   return (
@@ -28,7 +28,7 @@ function Checkbox({ label, value, onChange, disabled = false }) {
     <label>
       <input
         className={cx(
-          'bg-background text-sm border  border-foreground focus:outline-none focus:ring-0 focus:border-foreground',
+          'bg-background text-sm border border-muted focus:outline-none focus:ring-0 focus:border-foreground',
         )}
         disabled={disabled}
         type="checkbox"
