@@ -1,6 +1,5 @@
 import { defaultSettings, settingsMap, useSettings } from '../../../settings.mjs';
 import { themes } from '@strudel/codemirror';
-import { Textbox } from '../textbox/Textbox.jsx';
 import { confirmAndReloadPage, isUdels } from '../../util.mjs';
 import { ButtonGroup } from './Forms.jsx';
 import { AudioDeviceSelector } from './AudioDeviceSelector.jsx';
@@ -10,22 +9,60 @@ import { DEFAULT_MAX_POLYPHONY, setMaxPolyphony, setMultiChannelOrbits } from '@
 import { SpecialActionButton } from '../button/action-button.jsx';
 import { ImportPrebakeScriptButton } from './ImportPrebakeScriptButton.jsx';
 
+function cx(...classes) {
+  // : Array<string | undefined>
+  return classes.filter(Boolean).join(' ');
+}
+
+const inputClass =
+  'bg-background text-sm border rounded-0 text-foreground border-foreground placeholder-foreground focus:outline-none focus:ring-0 focus:border-foreground';
+
+export function Textbox({ onChange, className, ...inputProps }) {
+  return (
+    <input className={cx('p-2', inputClass, className)} onChange={(e) => onChange(e.target.value)} {...inputProps} />
+  );
+}
+
 function Checkbox({ label, value, onChange, disabled = false }) {
   return (
     <label>
-      <input disabled={disabled} type="checkbox" checked={value} onChange={onChange} />
+      <input
+        className={cx(
+          'bg-background text-sm border  border-foreground focus:outline-none focus:ring-0 focus:border-foreground',
+        )}
+        disabled={disabled}
+        type="checkbox"
+        checked={value}
+        onChange={onChange}
+      />
       {' ' + label}
     </label>
   );
 }
 
-function SelectInput({ value, options, onChange }) {
+//      value: ?ID, options: Map<ID, any>, onChange: ID => null, onClick: event => void, isDisabled: boolean
+export function SelectInputDuplicate({ value, options, onChange, onClick, isDisabled }) {
   return (
     <select
-      className="p-2 bg-background rounded-md text-foreground  border-foreground"
-      value={value}
+      disabled={isDisabled}
+      onClick={onClick}
+      className={cx('p-2', inputClass)}
+      value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
     >
+      {options.size == 0 && <option value={value}>{`${value ?? 'select an option'}`}</option>}
+      {Array.from(options.keys()).map((id) => (
+        <option key={id} className="bg-background" value={id}>
+          {options.get(id)}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function SelectInput({ value, options, onChange }) {
+  return (
+    <select className={cx('p-2', inputClass)} value={value} onChange={(e) => onChange(e.target.value)}>
       {Object.entries(options).map(([k, label]) => (
         <option key={k} className="bg-background" value={k}>
           {label}
@@ -37,9 +74,9 @@ function SelectInput({ value, options, onChange }) {
 
 function NumberSlider({ value, onChange, step = 1, ...rest }) {
   return (
-    <div className="flex space-x-2 gap-1">
+    <div className="flex space-x-2 gap-1 overflow-hidden">
       <input
-        className="p-2 grow"
+        className="p-2 grow accent-foreground"
         type="range"
         value={value}
         step={step}
@@ -50,7 +87,7 @@ function NumberSlider({ value, onChange, step = 1, ...rest }) {
         type="number"
         value={value}
         step={step}
-        className="w-16 bg-background rounded-md"
+        className={cx('w-16', inputClass)}
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </div>
@@ -60,7 +97,7 @@ function NumberSlider({ value, onChange, step = 1, ...rest }) {
 function FormItem({ label, children, sublabel }) {
   return (
     <div className="grid gap-2">
-      <label>{label}</label>
+      <label className="text-sm">{label}</label>
       {children}
     </div>
   );
@@ -178,7 +215,7 @@ export function SettingsTab({ started }) {
       <FormItem label="Theme">
         <SelectInput options={themeOptions} value={theme} onChange={(theme) => settingsMap.setKey('theme', theme)} />
       </FormItem>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormItem label="Font Family">
           <SelectInput
             options={fontFamilyOptions}

@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useState, Fragment } from 'react';
 
 import jsdocJson from '../../../../../doc.json';
-import { Textbox } from '../textbox/Textbox';
+import { Textbox } from '@src/repl/components/panel/SettingsTab';
 
 const isValid = ({ name, description }) => name && !name.startsWith('_') && !!description;
 

@@ -18,7 +18,7 @@ import { Pagination } from '../pagination/Pagination.jsx';
 import { useState } from 'react';
 import { useDebounce } from '../usedebounce.jsx';
 import cx from '@src/cx.mjs';
-import { Textbox } from '../textbox/Textbox.jsx';
+import { Textbox } from '@src/repl/components/panel/SettingsTab.jsx';
 
 export function PatternLabel({ pattern } /* : { pattern: Tables<'code'> } */) {
   const meta = useMemo(() => getMetadata(pattern.code), [pattern]);

@@ -13,7 +13,7 @@ export function ButtonGroup({ value, onChange, items }) {
             // i === 0 && 'rounded-l-md',
             // i === arr.length - 1 && 'rounded-r-md',
             // value === key ? 'bg-background' : 'bg-lineHighlight',
-            value === key ? 'border-foreground' : 'border-transparent',
+            value === key ? 'border-foreground' : 'border-background',
           )}
         >
           {label.toLowerCase()}
