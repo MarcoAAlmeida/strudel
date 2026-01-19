@@ -25,6 +25,7 @@ export const settings = {
   gutterForeground: lightGrey,
   gutterBorder: 'transparent',
   lineHighlight: pinkAccent,
+  light: true,
 };
 
 export default createTheme({
