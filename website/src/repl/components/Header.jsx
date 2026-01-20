@@ -113,7 +113,7 @@ export function Header({ context, embedded = false }) {
           {!isEmbedded && (
             <button
               title="share"
-              className={cx('cursor-pointer hover:opacity-50 flex items-center space-x-1 px-2')}
+              className={cx('cursor-pointer hover:opacity-50 flex items-center space-x-1 pl-2 pr-1')}
               onClick={() => setIsPanelOpened(!isPanelOpen)}
             >
               <span>menu</span>

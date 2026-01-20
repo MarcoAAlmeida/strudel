@@ -195,10 +195,10 @@ function CloseButton({ onClick }) {
   return (
     <button
       onClick={onClick}
-      className={cx('text-foreground max-h-8 min-h-8 max-w-8 min-w-8 items-center justify-center p-0 mr-2')}
+      className={cx('text-foreground max-h-8 min-h-8 max-w-8 min-w-8 items-center justify-center p-0 mr-0.5')}
       aria-label="Close Menu"
     >
-      <XMarkIcon className="w-7 h-7" />
+      <XMarkIcon className="w-6 h-6" />
     </button>
   );
 }
