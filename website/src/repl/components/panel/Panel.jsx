@@ -8,7 +8,7 @@ import { SoundsTab } from './SoundsTab';
 import { useLogger } from '../useLogger';
 import { WelcomeTab } from './WelcomeTab';
 import { PatternsTab } from './PatternsTab';
-import { ChevronLeftIcon, XMarkIcon } from '@heroicons/react/16/solid';
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/16/solid';
 import ExportTab from './ExportTab';
 
 const TAURI = typeof window !== 'undefined' && window.__TAURI__;
@@ -17,7 +17,11 @@ function PanelCloseButton() {
   const { isPanelOpen } = useSettings();
   return (
     isPanelOpen && (
-      <button onClick={() => setIsPanelOpened(false)} className={cx('text-foreground px-2')} aria-label="Close Menu">
+      <button
+        onClick={() => setIsPanelOpened(false)}
+        className={cx('px-4 py-2 text-foreground hover:opacity-50')}
+        aria-label="Close Menu"
+      >
         <XMarkIcon className="w-6 h-6" />
       </button>
     )
@@ -142,11 +146,31 @@ function PanelTab({ label, isSelected, onClick }) {
 function Tabs({ className }) {
   const { isPanelOpen, activeFooter: tab } = useSettings();
   return (
-    <div className={cx('flex select-none max-w-full overflow-auto', className)}>
+    <div className={cx('flex select-none max-w-full overflow-auto items-center', className)}>
       {Object.keys(tabNames).map((key) => {
         const val = tabNames[key];
         return <PanelTab key={key} isSelected={tab === val && isPanelOpen} label={key} onClick={() => setTab(val)} />;
       })}
     </div>
+  );
+}
+
+export function PanelToggle({ isEmbedded, isZen }) {
+  const { panelPosition, isPanelOpen } = useSettings();
+  return (
+    !isEmbedded &&
+    !isZen &&
+    panelPosition === 'right' && (
+      <button
+        title="share"
+        className={cx(
+          'top-0 px-4 py-2 bg-background right-0 absolute z-[1000] cursor-pointer hover:opacity-50 flex justify-center items-center space-x-1 text-foreground ',
+          isPanelOpen && 'hidden',
+        )}
+        onClick={() => setIsPanelOpened(!isPanelOpen)}
+      >
+        <Bars3Icon className="w-6 h-6" />
+      </button>
+    )
   );
 }

@@ -1,19 +1,16 @@
 import PlayCircleIcon from '@heroicons/react/20/solid/PlayCircleIcon';
 import StopCircleIcon from '@heroicons/react/20/solid/StopCircleIcon';
 import cx from '@src/cx.mjs';
-import { useSettings, setIsZen, setIsPanelOpened } from '../../settings.mjs';
+import { useSettings, setIsZen } from '../../settings.mjs';
 import { StrudelIcon } from '@src/repl/components/icons/StrudelIcon';
 import '../Repl.css';
-import { Bars3Icon } from '@heroicons/react/16/solid';
 
 const { BASE_URL } = import.meta.env;
 const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
 
-export function Header({ context, embedded = false }) {
-  const { started, pending, isDirty, activeCode, handleTogglePlay, handleEvaluate, handleShuffle, handleShare } =
-    context;
-  const isEmbedded = typeof window !== 'undefined' && (embedded || window.location !== window.parent.location);
-  const { isZen, isButtonRowHidden, isCSSAnimationDisabled, fontFamily, isPanelOpen, panelPosition } = useSettings();
+export function Header({ context, isEmbedded = false }) {
+  const { started, pending, isDirty, activeCode, handleTogglePlay, handleEvaluate, handleShare } = context;
+  const { isZen, isButtonRowHidden, isCSSAnimationDisabled, fontFamily } = useSettings();
 
   return (
     <header
@@ -112,21 +109,6 @@ export function Header({ context, embedded = false }) {
               </a>
             )}
           </div>
-        )}
-      </div>
-      <div>
-        {!isEmbedded && !isZen && panelPosition === 'right' && (
-          <button
-            title="share"
-            className={cx(
-              'cursor-pointer hover:opacity-50 flex items-center space-x-1 pr-3 text-foreground',
-              // isPanelOpen && 'opacity-0',
-            )}
-            onClick={() => setIsPanelOpened(!isPanelOpen)}
-          >
-            {/* <span>menu</span> */}
-            <Bars3Icon className="w-5 h-5" />
-          </button>
         )}
       </div>
     </header>
