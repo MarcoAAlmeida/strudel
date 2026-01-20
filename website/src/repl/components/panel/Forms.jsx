@@ -2,7 +2,7 @@ import cx from '@src/cx.mjs';
 
 export function ButtonGroup({ value, onChange, items }) {
   return (
-    <div className="flex max-w-lg space-x-0">
+    <div className="flex max-w-lg space-x-0 text-sm">
       {Object.entries(items).map(([key, label], i, arr) => (
         <button
           key={key}
