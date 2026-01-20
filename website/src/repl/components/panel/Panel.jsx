@@ -42,36 +42,24 @@ export function HorizontalPanel({ context }) {
 export function VerticalPanel({ context }) {
   const settings = useSettings();
   const { activeFooter: tab, isPanelOpen } = settings;
-
+  if (!isPanelOpen) {
+    return;
+  }
   return (
     <PanelNav
       settings={settings}
       className={cx(isPanelOpen ? `min-w-[min(600px,80vw)] max-w-[min(600px,80vw)]` : 'min-w-12 max-w-12')}
     >
-      {isPanelOpen ? (
-        <div className={cx('flex flex-col h-full')}>
-          <div className="flex justify-between w-full ">
-            <Tabs setTab={setTab} tab={tab} />
-            <PanelActionButton settings={settings} />
-          </div>
-
-          <div className="overflow-auto h-full">
-            <PanelContent context={context} tab={tab} />
-          </div>
+      <div className={cx('flex flex-col h-full')}>
+        <div className="flex justify-between w-full ">
+          <Tabs setTab={setTab} tab={tab} />
+          <PanelActionButton settings={settings} />
         </div>
-      ) : (
-        <button
-          onClick={(e) => {
-            setIsPanelOpened(true);
-          }}
-          aria-label="open menu panel"
-          className={cx(
-            'flex flex-col hover:bg-lineBackground items-center cursor-pointer justify-center w-full  h-full',
-          )}
-        >
-          <ChevronLeftIcon className="text-foreground opacity-50 w-6 h-6" />
-        </button>
-      )}
+
+        <div className="overflow-auto h-full">
+          <PanelContent context={context} tab={tab} />
+        </div>
+      </div>
     </PanelNav>
   );
 }
@@ -207,12 +195,10 @@ function CloseButton({ onClick }) {
   return (
     <button
       onClick={onClick}
-      className={cx(
-        'text-foreground max-h-8 min-h-8 max-w-8 min-w-8 items-center justify-center p-1.5 group-hover:flex',
-      )}
+      className={cx('text-foreground max-h-8 min-h-8 max-w-8 min-w-8 items-center justify-center p-0 mr-2')}
       aria-label="Close Menu"
     >
-      <XMarkIcon />
+      <XMarkIcon className="w-7 h-7" />
     </button>
   );
 }
