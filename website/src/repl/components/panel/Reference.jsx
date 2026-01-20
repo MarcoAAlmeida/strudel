@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useState, Fragment } from 'react';
 
 import jsdocJson from '../../../../../doc.json';
-import { Textbox } from '../textbox/Textbox';
+import { Textbox } from '@src/repl/components/panel/SettingsTab';
 
 const isValid = ({ name, description }) => name && !name.startsWith('_') && !!description;
 
@@ -128,14 +128,14 @@ export const Reference = memo(function Reference() {
         {selectedTag && (
           <div className="w-72">
             <span
-              className="text-foreground border-2 border-gray-500 px-1 py-0.5 my-2 rounded-md cursor-pointer font-sans"
+              className="text-foreground border border-muted px-1 py-0.5 my-2 cursor-pointer font-sans"
               onClick={onSearchTagFilterClick}
             >
               {selectedTag}
             </span>
           </div>
         )}
-        <div className="flex flex-col h-full overflow-y-auto gap-1.5 bg-background bg-opacity-50 rounded-md">
+        <div className="flex flex-col h-full overflow-y-auto gap-1.5 bg-background bg-opacity-50">
           {searchVisibleFunctions.map((entry, i) => (
             <Fragment key={`entry-${entry.name}`}>
               <a
@@ -174,8 +174,8 @@ export const Reference = memo(function Reference() {
                 <span key={t}>
                   <a
                     className={[
-                      'select-none text-white border-2 border-gray-500 px-1 py-0.5 my-2 cursor-pointer text-sm/8 rounded-md no-underline font-sans',
-                      `${selectedTag === t ? 'bg-gray-500 text-black' : ''}`,
+                      'select-none text-white border border-muted px-1 py-0.5 my-2 cursor-pointer text-sm/8 no-underline font-sans',
+                      `${selectedTag === t ? 'bg-muted text-foreground' : ''}`,
                     ].join(' ')}
                     onClick={() => toggleTag(t)}
                   >
@@ -191,7 +191,7 @@ export const Reference = memo(function Reference() {
                   {entry.name}
                 </h3>
                 {entry.tags && (
-                  <span className="ml-2 text-xs text-gray-400 border-2 border-gray-500 rounded-md px-1 py-0.5">
+                  <span className="ml-2 text-xs text-foreground border border-muted px-1 py-0.5">
                     {entry.tags.join(', ')}
                   </span>
                 )}
