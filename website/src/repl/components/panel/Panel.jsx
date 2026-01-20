@@ -1,5 +1,5 @@
 import cx from '@src/cx.mjs';
-import { setPanelPinned, setActiveFooter as setTab, setIsPanelOpened, useSettings } from '../../../settings.mjs';
+import { setActiveFooter as setTab, setIsPanelOpened, useSettings } from '../../../settings.mjs';
 import { ConsoleTab } from './ConsoleTab';
 import { FilesTab } from './FilesTab';
 import { Reference } from './Reference';
