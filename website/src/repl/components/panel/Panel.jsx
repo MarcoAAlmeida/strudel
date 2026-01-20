@@ -48,7 +48,7 @@ export function VerticalPanel({ context }) {
   return (
     <PanelNav
       settings={settings}
-      className={cx(isPanelOpen ? `min-w-[min(600px,80vw)] max-w-[min(600px,80vw)]` : 'min-w-12 max-w-12')}
+      className={cx(isPanelOpen ? `min-w-[min(600px,100vw)] max-w-[min(600px,80vw)]` : 'min-w-12 max-w-12')}
     >
       <div className={cx('flex flex-col h-full')}>
         <div className="flex justify-between w-full ">

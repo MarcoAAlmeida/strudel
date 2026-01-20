@@ -19,14 +19,14 @@ export function Header({ context, embedded = false }) {
     <header
       id="header"
       className={cx(
-        'flex-none text-black  z-[100] text-lg select-none h-10',
+        'flex-none text-black  z-[100] text-sm select-none min-h-10',
         !isZen && !isEmbedded && 'bg-lineHighlight',
-        isZen ? 'h-12 w-8 fixed top-0 left-0' : 'sticky top-0 w-full py-1 justify-between',
-        isEmbedded ? 'flex' : 'md:flex',
+        isZen ? 'h-12 w-8 fixed top-0 left-0' : 'sticky top-0 w-full justify-between',
+        isEmbedded ? 'flex' : 'sm:flex',
       )}
       style={{ fontFamily }}
     >
-      <div className="px-4 flex space-x-2 md:pt-0 select-none">
+      <div className="px-4 pt-1 flex space-x-2 md:pt-0 select-none">
         <h1
           onClick={() => {
             if (isEmbedded) window.open(window.location.href.replace('embed', ''));
@@ -67,7 +67,7 @@ export function Header({ context, embedded = false }) {
         </h1>
       </div>
       {!isZen && !isButtonRowHidden && (
-        <div className="flex max-w-full overflow-auto text-foreground px-2">
+        <div className="flex max-w-full overflow-auto text-foreground px-2 h-10 justify-end">
           <button
             onClick={handleTogglePlay}
             title={started ? 'stop' : 'play'}
