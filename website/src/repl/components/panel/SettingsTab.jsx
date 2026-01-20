@@ -144,7 +144,6 @@ export function SettingsTab({ started }) {
     panelPosition,
     audioDeviceName,
     audioEngineTarget,
-    togglePanelTrigger,
     maxPolyphony,
     multiChannelOrbits,
     isTabIndentationEnabled,
@@ -255,13 +254,6 @@ export function SettingsTab({ started }) {
           onChange={(value) => settingsMap.setKey('panelPosition', value)}
           items={{ bottom: 'Bottom', right: 'Right' }}
         ></ButtonGroup>
-      </FormItem>
-      <FormItem label="Open Panel on:                       ">
-        <ButtonGroup
-          value={togglePanelTrigger}
-          onChange={(value) => settingsMap.setKey('togglePanelTrigger', value)}
-          items={{ click: 'Click', hover: 'Hover' }}
-        />
       </FormItem>
       <FormItem label="More Settings">
         <Checkbox

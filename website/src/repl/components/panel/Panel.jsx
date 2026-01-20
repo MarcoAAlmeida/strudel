@@ -14,27 +14,25 @@ import ExportTab from './ExportTab';
 const TAURI = typeof window !== 'undefined' && window.__TAURI__;
 
 export function HorizontalPanel({ context }) {
-  const settings = useSettings();
-  const { isPanelOpen, activeFooter: tab } = settings;
-
+  const { isPanelOpen, activeFooter: tab } = useSettings();
   return (
     <PanelNav
-      settings={settings}
-      className={cx(isPanelOpen ? `min-h-[360px] max-h-[360px]` : 'min-h-12 max-h-12', 'overflow-hidden flex flex-col')}
+      className={cx(
+        isPanelOpen ? `min-h-[360px] max-h-[360px]` : 'min-h-10 max-h-10',
+        'overflow-hidden flex flex-col relative ',
+      )}
     >
+      <div className="flex justify-between min-h-10 max-h-10 grid-cols-2 items-center">
+        <Tabs setTab={setTab} tab={tab} />
+      </div>
+      <div className="absolute right-0 top-1">
+        <PanelActionButton />
+      </div>
       {isPanelOpen && (
         <div className="flex h-full overflow-auto pr-10 ">
           <PanelContent context={context} tab={tab} />
         </div>
       )}
-
-      <div className="absolute right-4 pt-4">
-        <PanelActionButton settings={settings} />
-      </div>
-
-      <div className="flex  justify-between min-h-12 max-h-12 grid-cols-2 items-center">
-        <Tabs setTab={setTab} tab={tab} />
-      </div>
     </PanelNav>
   );
 }
@@ -53,7 +51,7 @@ export function VerticalPanel({ context }) {
       <div className={cx('flex flex-col h-full')}>
         <div className="flex justify-between w-full ">
           <Tabs setTab={setTab} tab={tab} />
-          <PanelActionButton settings={settings} />
+          {/* <PanelActionButton settings={settings} /> */}
         </div>
 
         <div className="overflow-auto h-full">
@@ -77,23 +75,13 @@ if (TAURI) {
   tabNames.files = 'files';
 }
 
-function PanelNav({ children, className, settings, ...props }) {
-  const isHoverBehavior = settings.togglePanelTrigger === 'hover';
+function PanelNav({ children, className, ...props }) {
+  const settings = useSettings();
   return (
     <nav
       onClick={() => {
         if (!settings.isPanelOpen) {
           setIsPanelOpened(true);
-        }
-      }}
-      onMouseEnter={() => {
-        if (isHoverBehavior && !settings.isPanelOpen) {
-          setIsPanelOpened(true);
-        }
-      }}
-      onMouseLeave={() => {
-        if (isHoverBehavior && !settings.isPanelPinned) {
-          setIsPanelOpened(false);
         }
       }}
       aria-label="Menu Panel"
@@ -142,26 +130,23 @@ function PanelTab({ label, isSelected, onClick }) {
     </>
   );
 }
-function Tabs({ setTab, tab, className }) {
+function Tabs({ className }) {
+  const { isPanelOpen, activeFooter: tab } = useSettings();
   return (
     <div className={cx('flex select-none max-w-full overflow-auto pb-2', className)}>
       {Object.keys(tabNames).map((key) => {
         const val = tabNames[key];
-        return <PanelTab key={key} isSelected={tab === val} label={key} onClick={() => setTab(val)} />;
+        return <PanelTab key={key} isSelected={tab === val && isPanelOpen} label={key} onClick={() => setTab(val)} />;
       })}
     </div>
   );
 }
 
-function PanelActionButton({ settings }) {
-  const { togglePanelTrigger, isPanelPinned, isPanelOpen } = settings;
-  const isHoverBehavior = togglePanelTrigger === 'hover';
+function PanelActionButton() {
+  const settings = useSettings();
+  const { isPanelOpen } = settings;
   if (!isPanelOpen) {
     return;
-  }
-
-  if (isHoverBehavior) {
-    return <PinButton pinned={isPanelPinned} />;
   }
   return <CloseButton onClick={() => setIsPanelOpened(false)} />;
 }
