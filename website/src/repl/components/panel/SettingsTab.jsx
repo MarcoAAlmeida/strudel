@@ -25,7 +25,7 @@ export function Textbox({ onChange, className, ...inputProps }) {
 
 function Checkbox({ label, value, onChange, disabled = false }) {
   return (
-    <label>
+    <label className="text-sm">
       <input
         className={cx(
           'bg-background text-sm border border-muted focus:outline-none focus:ring-0 focus:border-foreground',
@@ -96,7 +96,7 @@ function NumberSlider({ value, onChange, step = 1, ...rest }) {
 
 function FormItem({ label, children, sublabel }) {
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2 text-sm">
       <label className="text-sm">{label}</label>
       {children}
     </div>
