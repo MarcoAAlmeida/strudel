@@ -164,7 +164,7 @@ export function PanelToggle({ isEmbedded, isZen }) {
       <button
         title="share"
         className={cx(
-          'top-0 px-4 py-2 bg-background right-0 absolute z-[1000] cursor-pointer hover:opacity-50 flex justify-center items-center space-x-1 text-foreground ',
+          'absolute top-0 right-3  rounded-0  px-2 py-2 bg-background z-[1000] cursor-pointer hover:opacity-80 flex justify-center items-center space-x-1 text-foreground ',
           isPanelOpen && 'hidden',
         )}
         onClick={() => setIsPanelOpened(!isPanelOpen)}
