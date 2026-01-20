@@ -172,7 +172,7 @@ export function PatternsTab({ context }) {
           />
         </div>
 
-        <div className="overflow-auto h-full bg-background p-2 rounded-md">
+        <div className="overflow-auto h-full bg-background p-2">
           {/* {patternFilter === patternFilterName.user && ( */}
           <PatternButtons
             onClick={(id) => {

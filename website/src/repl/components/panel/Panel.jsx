@@ -13,6 +13,17 @@ import ExportTab from './ExportTab';
 
 const TAURI = typeof window !== 'undefined' && window.__TAURI__;
 
+function PanelCloseButton() {
+  const { isPanelOpen } = useSettings();
+  return (
+    isPanelOpen && (
+      <button onClick={() => setIsPanelOpened(false)} className={cx('text-foreground px-2')} aria-label="Close Menu">
+        <XMarkIcon className="w-6 h-6" />
+      </button>
+    )
+  );
+}
+
 export function HorizontalPanel({ context }) {
   const { isPanelOpen, activeFooter: tab } = useSettings();
   return (
@@ -24,12 +35,10 @@ export function HorizontalPanel({ context }) {
     >
       <div className="flex justify-between min-h-10 max-h-10 grid-cols-2 items-center">
         <Tabs setTab={setTab} tab={tab} />
-      </div>
-      <div className="absolute right-0 top-1">
-        <PanelActionButton />
+        <PanelCloseButton />
       </div>
       {isPanelOpen && (
-        <div className="flex h-full overflow-auto pr-10 ">
+        <div className="flex h-full overflow-auto w-full">
           <PanelContent context={context} tab={tab} />
         </div>
       )}
@@ -51,7 +60,7 @@ export function VerticalPanel({ context }) {
       <div className={cx('flex flex-col h-full')}>
         <div className="flex justify-between w-full ">
           <Tabs setTab={setTab} tab={tab} />
-          {/* <PanelActionButton settings={settings} /> */}
+          <PanelCloseButton />
         </div>
 
         <div className="overflow-auto h-full">
@@ -133,57 +142,11 @@ function PanelTab({ label, isSelected, onClick }) {
 function Tabs({ className }) {
   const { isPanelOpen, activeFooter: tab } = useSettings();
   return (
-    <div className={cx('flex select-none max-w-full overflow-auto pb-2', className)}>
+    <div className={cx('flex select-none max-w-full overflow-auto', className)}>
       {Object.keys(tabNames).map((key) => {
         const val = tabNames[key];
         return <PanelTab key={key} isSelected={tab === val && isPanelOpen} label={key} onClick={() => setTab(val)} />;
       })}
     </div>
-  );
-}
-
-function PanelActionButton() {
-  const settings = useSettings();
-  const { isPanelOpen } = settings;
-  if (!isPanelOpen) {
-    return;
-  }
-  return <CloseButton onClick={() => setIsPanelOpened(false)} />;
-}
-
-function PinButton({ pinned }) {
-  return (
-    <button
-      onClick={() => setPanelPinned(!pinned)}
-      className={cx(
-        'text-foreground max-h-8 min-h-8 max-w-8 min-w-8 items-center justify-center p-1.5 group-hover:flex',
-        pinned ? 'flex' : 'hidden',
-      )}
-      aria-label="Pin Menu Panel"
-    >
-      <svg
-        stroke="currentColor"
-        fill={'currentColor'}
-        strokeWidth="0"
-        className="w-full h-full"
-        opacity={pinned ? 1 : '.3'}
-        viewBox="0 0 16 16"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d="M9.828.722a.5.5 0 0 1 .354.146l4.95 4.95a.5.5 0 0 1 0 .707c-.48.48-1.072.588-1.503.588-.177 0-.335-.018-.46-.039l-3.134 3.134a6 6 0 0 1 .16 1.013c.046.702-.032 1.687-.72 2.375a.5.5 0 0 1-.707 0l-2.829-2.828-3.182 3.182c-.195.195-1.219.902-1.414.707s.512-1.22.707-1.414l3.182-3.182-2.828-2.829a.5.5 0 0 1 0-.707c.688-.688 1.673-.767 2.375-.72a6 6 0 0 1 1.013.16l3.134-3.133a3 3 0 0 1-.04-.461c0-.43.108-1.022.589-1.503a.5.5 0 0 1 .353-.146"></path>
-      </svg>
-    </button>
-  );
-}
-
-function CloseButton({ onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={cx('text-foreground max-h-8 min-h-8 max-w-8 min-w-8 items-center justify-center p-0 mr-0.5')}
-      aria-label="Close Menu"
-    >
-      <XMarkIcon className="w-6 h-6" />
-    </button>
   );
 }
