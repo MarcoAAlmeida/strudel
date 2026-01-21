@@ -112,11 +112,12 @@ export const Reference = memo(function Reference() {
   }, [selectedFunction]);
 
   return (
-    <div className="flex h-full w-full p-2 overflow-hidden">
-      <div className="h-full text-foreground flex flex-col gap-3 w-1/3 ">
+    <div className="flex h-full w-full overflow-hidden">
+      <div className="h-full text-foreground flex flex-col w-1/3  border-r border-muted">
+        {/* bg-background */}
         <div className="w-full flex">
           <Textbox
-            className="w-full"
+            className="w-full border-0 border-b border-muted"
             placeholder="Search"
             value={search}
             onChange={(e) => {
@@ -128,14 +129,14 @@ export const Reference = memo(function Reference() {
         {selectedTag && (
           <div className="w-72">
             <span
-              className="text-foreground border border-muted px-1 py-0.5 my-2 cursor-pointer font-sans"
+              className="text-foreground border border-muted border-t-0 border-l-0 px-1 py-0.5 my-2 cursor-pointer font-sans"
               onClick={onSearchTagFilterClick}
             >
               {selectedTag}
             </span>
           </div>
         )}
-        <div className="flex flex-col h-full overflow-y-auto gap-1.5 bg-background bg-opacity-50">
+        <div className="flex flex-col h-full py-2 overflow-y-auto gap-1.5 bg-opacity-50">
           {searchVisibleFunctions.map((entry, i) => (
             <Fragment key={`entry-${entry.name}`}>
               <a
@@ -161,7 +162,7 @@ export const Reference = memo(function Reference() {
         className="break-normal flex-col overflow-y-auto overflow-x-hidden p-2 flex relative"
         id="reference-container"
       >
-        <div className="prose dark:prose-invert min-w-full px-1 ">
+        <div className="prose dark:prose-invert min-w-full px-1 text-sm">
           <h2>API Reference</h2>
           <p className="font-sans text-md">
             This is the long list of functions you can use. Remember that you don't need to remember all of those and

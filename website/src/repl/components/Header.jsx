@@ -16,7 +16,7 @@ export function Header({ context, isEmbedded = false }) {
     <header
       id="header"
       className={cx(
-        'flex-none text-black z-[100] text-sm select-none min-h-10',
+        'border-b border-muted flex-none text-black z-[100] text-sm select-none min-h-10',
         !isZen && !isEmbedded && 'bg-lineHighlight',
         isZen ? 'h-12 w-8 fixed top-0 left-0' : 'sticky top-0 w-full justify-between',
         'flex items-center',

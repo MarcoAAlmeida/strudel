@@ -7,8 +7,10 @@ export function ConsoleTab() {
   const log = useStore($strudel_log_history);
   const { fontFamily } = useSettings();
   return (
-    <div id="console-tab" className="break-all w-full text-sm p-2  h-full" style={{ fontFamily }}>
-      <div className="bg-background h-full w-full overflow-auto space-y-1 p-2 rounded-md">
+    <div id="console-tab" className="break-all w-full h-full" style={{ fontFamily }}>
+      <div className="h-full w-full overflow-auto space-y-1 p-2 rounded-md">
+        {' '}
+        {/* bg-background */}
         {log.map((l, i) => {
           const message = linkify(l.message);
           const color = l.data?.hap?.value?.color;

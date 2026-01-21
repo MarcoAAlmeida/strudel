@@ -43,7 +43,7 @@ function PatternButton({ showOutline, onClick, pattern, showHiglight }) {
       className={cx(
         'mr-4 hover:opacity-50 cursor-pointer block',
         showOutline && 'outline outline-1',
-        showHiglight && 'bg-selection',
+        showHiglight && 'ring-selection',
       )}
       onClick={onClick}
     >
@@ -57,7 +57,7 @@ function PatternButtons({ patterns, activePattern, onClick, started }) {
   const viewingPatternData = parseJSON(viewingPatternStore);
   const viewingPatternID = viewingPatternData.id;
   return (
-    <div className="">
+    <div className="p-2">
       {Object.values(patterns)
         .reverse()
         .map((pattern) => {
@@ -124,71 +124,68 @@ export function PatternsTab({ context }) {
   }, [search, viewingPatternStore]);
 
   return (
-    <div className="px-4 w-full text-foreground  space-y-2  flex flex-col overflow-hidden max-h-full h-full">
-      <div className="w-full flex">
-        <Textbox className="w-full" placeholder="Search" value={search} onChange={setSearch} />
+    <div className="w-full h-full text-foreground flex flex-col overflow-hidden">
+      <Textbox className="w-full border-0" placeholder="Search" value={search} onChange={setSearch} />
+      <div className="px-2 shrink-0 py-2 space-x-4 flex max-w-full overflow-x-auto border-y border-muted">
+        <ActionButton
+          label="new"
+          onClick={() => {
+            const { data } = userPattern.createAndAddToDB();
+            updateCodeWindow(context, data);
+          }}
+        />
+        <ActionButton
+          label="duplicate"
+          onClick={() => {
+            const { data } = userPattern.duplicate(viewingPatternData);
+            updateCodeWindow(context, data);
+          }}
+        />
+        <ActionButton
+          label="delete"
+          onClick={() => {
+            const { data } = userPattern.delete(viewingPatternID);
+            updateCodeWindow(context, { ...data, collection: userPattern.collection });
+          }}
+        />
+        <label className="hover:opacity-50 cursor-pointer">
+          <input
+            style={{ display: 'none' }}
+            type="file"
+            multiple
+            accept="text/plain,text/x-markdown,application/json"
+            onChange={(e) => importPatterns(e.target.files)}
+          />
+          import
+        </label>
+        <ActionButton label="export" onClick={exportPatterns} />
+
+        <ActionButton
+          label="delete-all"
+          onClick={() => {
+            const { data } = userPattern.clearAll();
+            updateCodeWindow(context, data);
+          }}
+        />
       </div>
-      <div className="flex flex-col gap-2 flex-grow overflow-hidden h-full pb-2 ">
-        <div className="pr-4 space-x-4  flex max-w-full overflow-x-auto">
-          <ActionButton
-            label="new"
-            onClick={() => {
-              const { data } = userPattern.createAndAddToDB();
-              updateCodeWindow(context, data);
-            }}
-          />
-          <ActionButton
-            label="duplicate"
-            onClick={() => {
-              const { data } = userPattern.duplicate(viewingPatternData);
-              updateCodeWindow(context, data);
-            }}
-          />
-          <ActionButton
-            label="delete"
-            onClick={() => {
-              const { data } = userPattern.delete(viewingPatternID);
-              updateCodeWindow(context, { ...data, collection: userPattern.collection });
-            }}
-          />
-          <label className="hover:opacity-50 cursor-pointer">
-            <input
-              style={{ display: 'none' }}
-              type="file"
-              multiple
-              accept="text/plain,text/x-markdown,application/json"
-              onChange={(e) => importPatterns(e.target.files)}
-            />
-            import
-          </label>
-          <ActionButton label="export" onClick={exportPatterns} />
 
-          <ActionButton
-            label="delete-all"
-            onClick={() => {
-              const { data } = userPattern.clearAll();
-              updateCodeWindow(context, data);
-            }}
-          />
-        </div>
+      <div className="overflow-auto">
+        {/* bg-background */}
+        {/* {patternFilter === patternFilterName.user && ( */}
+        <PatternButtons
+          onClick={(id) => {
+            updateCodeWindow(context, { ...userPatterns[id], collection: userPattern.collection }, patternAutoStart);
 
-        <div className="overflow-auto h-full bg-background p-2">
-          {/* {patternFilter === patternFilterName.user && ( */}
-          <PatternButtons
-            onClick={(id) => {
-              updateCodeWindow(context, { ...userPatterns[id], collection: userPattern.collection }, patternAutoStart);
-
-              if (context.started && activePattern === id) {
-                context.handleEvaluate();
-              }
-            }}
-            patterns={visiblePatterns}
-            started={context.started}
-            activePattern={activePattern}
-            viewingPatternID={viewingPatternID}
-          />
-          {/* )} */}
-        </div>
+            if (context.started && activePattern === id) {
+              context.handleEvaluate();
+            }
+          }}
+          patterns={visiblePatterns}
+          started={context.started}
+          activePattern={activePattern}
+          viewingPatternID={viewingPatternID}
+        />
+        {/* )} */}
       </div>
     </div>
   );

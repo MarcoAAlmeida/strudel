@@ -45,7 +45,7 @@ export default function ExportTab(Props) {
 
   return (
     <>
-      <div className="text-foreground w-full p-4 space-y-4">
+      <div className="text-foreground w-full space-y-4 p-4">
         <FormItem label="File name" disabled={exporting}>
           <Textbox
             onBlur={(e) => {

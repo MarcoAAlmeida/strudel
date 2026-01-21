@@ -19,7 +19,7 @@ function PanelCloseButton() {
     isPanelOpen && (
       <button
         onClick={() => setIsPanelOpened(false)}
-        className={cx('px-4 py-2 text-foreground hover:opacity-50')}
+        className={cx('px-4 py-1 text-foreground hover:opacity-50')}
         aria-label="Close Menu"
       >
         <XMarkIcon className="w-6 h-6" />
@@ -34,15 +34,15 @@ export function HorizontalPanel({ context }) {
     <PanelNav
       className={cx(
         isPanelOpen ? `min-h-[360px] max-h-[360px]` : 'min-h-10 max-h-10',
-        'overflow-hidden flex flex-col relative ',
+        'overflow-hidden flex flex-col relative',
       )}
     >
-      <div className="flex justify-between min-h-10 max-h-10 grid-cols-2 items-center">
+      <div className="flex justify-between min-h-10 max-h-10 grid-cols-2 items-center border-b border-muted">
         <Tabs setTab={setTab} tab={tab} />
         <PanelCloseButton />
       </div>
       {isPanelOpen && (
-        <div className="flex h-full overflow-auto w-full">
+        <div className="w-full h-full overflow-hidden">
           <PanelContent context={context} tab={tab} />
         </div>
       )}
@@ -59,10 +59,13 @@ export function VerticalPanel({ context }) {
   return (
     <PanelNav
       settings={settings}
-      className={cx(isPanelOpen ? `min-w-[min(600px,100vw)] max-w-[min(600px,80vw)]` : 'min-w-12 max-w-12')}
+      className={cx(
+        'border-l border-muted',
+        isPanelOpen ? `min-w-[min(600px,100vw)] max-w-[min(600px,80vw)]` : 'min-w-12 max-w-12',
+      )}
     >
       <div className={cx('flex flex-col h-full')}>
-        <div className="flex justify-between w-full ">
+        <div className="flex justify-between w-full border-b border-muted">
           <Tabs setTab={setTab} tab={tab} />
           <PanelCloseButton />
         </div>
@@ -134,7 +137,7 @@ function PanelTab({ label, isSelected, onClick }) {
       <button
         onClick={onClick}
         className={cx(
-          'h-8 px-2 text-sm text-foreground cursor-pointer hover:opacity-50 flex items-center space-x-1 border-b',
+          'h-8 px-2 text-sm text-foreground cursor-pointer hover:opacity-50 flex items-center space-x-1 border-b-2',
           isSelected ? 'border-foreground' : 'border-transparent',
         )}
       >
@@ -146,7 +149,7 @@ function PanelTab({ label, isSelected, onClick }) {
 function Tabs({ className }) {
   const { isPanelOpen, activeFooter: tab } = useSettings();
   return (
-    <div className={cx('flex select-none max-w-full overflow-auto items-center', className)}>
+    <div className={cx('w-full flex select-none max-w-full overflow-auto items-center', className)}>
       {Object.keys(tabNames).map((key) => {
         const val = tabNames[key];
         return <PanelTab key={key} isSelected={tab === val && isPanelOpen} label={key} onClick={() => setTab(val)} />;
@@ -164,7 +167,7 @@ export function PanelToggle({ isEmbedded, isZen }) {
       <button
         title="share"
         className={cx(
-          'absolute top-0 right-3  rounded-0  px-2 py-2 bg-background z-[1000] cursor-pointer hover:opacity-80 flex justify-center items-center space-x-1 text-foreground ',
+          'absolute top-0.5 right-3  rounded-0  px-2 py-2 bg-background z-[1000] cursor-pointer hover:opacity-80 flex justify-center items-center space-x-1 text-foreground ',
           isPanelOpen && 'hidden',
         )}
         onClick={() => setIsPanelOpened(!isPanelOpen)}
