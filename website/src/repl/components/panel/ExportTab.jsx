@@ -56,7 +56,7 @@ export default function ExportTab(Props) {
             }}
             disabled={exporting}
             placeholder="Leave empty to use current date"
-            className={cx('placeholder:opacity-50', exporting && 'opacity-50 border-opacity-50')}
+            className={cx('placeholder-muted', exporting && 'opacity-50 border-opacity-50')}
             value={downloadName ?? ''}
           />
         </FormItem>
