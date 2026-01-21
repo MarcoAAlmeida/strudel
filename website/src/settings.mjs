@@ -32,7 +32,7 @@ export const defaultSettings = {
   isPatternHighlightingEnabled: true,
   isTabIndentationEnabled: false,
   isMultiCursorEnabled: false,
-  theme: 'CutiePi',
+  theme: 'strudelTheme',
   fontFamily: 'monospace',
   fontSize: 18,
   latestCode: '',
@@ -43,13 +43,14 @@ export const defaultSettings = {
   panelPosition: 'right',
   isPanelPinned: false,
   isPanelOpen: true,
-  togglePanelTrigger: 'click', //click | hover
   userPatterns: '{}',
+  prebakeScript: '',
   audioEngineTarget: audioEngineTargets.webaudio,
   isButtonRowHidden: false,
   isCSSAnimationDisabled: false,
   maxPolyphony: 128,
   multiChannelOrbits: false,
+  includePrebakeScriptInShare: true,
 };
 
 let search = null;
@@ -96,12 +97,20 @@ export function useSettings() {
     isPanelOpen: parseBoolean(state.isPanelOpen),
     userPatterns: userPatterns,
     multiChannelOrbits: parseBoolean(state.multiChannelOrbits),
+    includePrebakeScriptInShare: parseBoolean(state.includePrebakeScriptInShare),
+    patternAutoStart: isUdels()
+      ? false
+      : state.patternAutoStart === undefined
+        ? true
+        : parseBoolean(state.patternAutoStart),
   };
 }
 
 export const setActiveFooter = (tab) => settingsMap.setKey('activeFooter', tab);
 export const setPanelPinned = (bool) => settingsMap.setKey('isPanelPinned', bool);
 export const setIsPanelOpened = (bool) => settingsMap.setKey('isPanelOpen', bool);
+
+export const storePrebakeScript = (script) => settingsMap.setKey('prebakeScript', script);
 
 export const setIsZen = (active) => settingsMap.setKey('isZen', !!active);
 

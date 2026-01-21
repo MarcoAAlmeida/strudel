@@ -1,7 +1,9 @@
 //import { ZZFX } from 'zzfx';
 import { midiToFreq, noteToMidi } from './util.mjs';
-import { registerSound, getAudioContext } from './superdough.mjs';
+import { registerSound } from './superdough.mjs';
+import { getAudioContext } from './audioContext.mjs';
 import { buildSamples } from './zzfx_fork.mjs';
+import { onceEnded, releaseAudioNode } from './helpers.mjs';
 
 export const getZZFX = (value, t) => {
   let {
@@ -82,12 +84,13 @@ export function registerZZFXSounds() {
       wave,
       (t, value, onended) => {
         const { node: o } = getZZFX({ s: wave, ...value }, t);
-        o.onended = () => {
-          o.disconnect();
+        onceEnded(o, () => {
+          releaseAudioNode(o);
           onended();
-        };
+        });
         return {
           node: o,
+          nodes: { source: [o] },
           stop: () => {},
         };
       },

@@ -89,7 +89,7 @@ superdough({ s: 'bd', delay: 0.5 }, 0, 1);
   - `decay`: seconds of decay phase
   - `sustain`: gain of sustain phase
   - `release`: seconds of release phase
-- `deadline`: seconds until the sound should play (0 = immediate)
+- `deadline`: seconds from audio context initialization before playing the sound (getAudioContextCurrentTime() = immediate)
 - `duration`: seconds the sound should last. optional for one shot samples, required for synth sounds
 
 ### registerSynthSounds()
@@ -153,6 +153,7 @@ samples('github:tidalcycles/dirt-samples')
 
 The format is `github:<user>/<repo>/<branch>`.
 
+If `<repo>` and `<branch>` are not specified, they will default to `samples` and `main` respectively.
 It expects a `strudel.json` file to be present at the root of the given repository, which declares the sample paths in the repo.
 
 The format is also expected to be the same as explained above.
