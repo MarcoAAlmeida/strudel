@@ -1,34 +1,22 @@
-# my strudel
-
-slightly tweaked version of awesome strudel
+# strudel
 
 Live coding patterns on the web
-https://strudel.cc/
+
 
 - Try it here: <https://strudel.cc>
 - Docs: <https://strudel.cc/learn>
+- Source: https://codeberg.org/uzu/strudel/
+  * Along with many other live coding projects, we have moved from Microsoft's Github platform to Codeberg for ethical reasons. **Please don't fork the project back to github**.
 - Technical Blog Post: <https://loophole-letters.vercel.app/strudel>
 - 1 Year of Strudel Blog Post: <https://loophole-letters.vercel.app/strudel1year>
 - 2 Years of Strudel Blog Post: <https://strudel.cc/blog/#year-2>
 
-## to pull updates from Codeberg
-
-```bash
-git fetch upstream
-
-### Merge upstream changes into your main branch
-git checkout main
-git merge upstream/main
-
-### Push the updates to your GitHub fork
-git push origin main
-```
 
 ## Running Locally
 
 After cloning the project, you can run the REPL locally:
 
-1. Install [Node.js](https://nodejs.org/)
+1. Install [Node.js](https://nodejs.org/) 18 or newer
 2. Install [pnpm](https://pnpm.io/installation)
 3. Install dependencies by running the following command:
    ```bash

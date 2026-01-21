@@ -6,14 +6,16 @@ This program is free software: you can redistribute it and/or modify it under th
 
 import { code2hash, getPerformanceTimeSeconds, logger, silence } from '@strudel/core';
 import { getDrawContext } from '@strudel/draw';
-import { transpiler } from '@strudel/transpiler';
+import { evaluate, transpiler } from '@strudel/transpiler';
 import {
   getAudioContextCurrentTime,
+  renderPatternAudio,
   webaudioOutput,
   resetGlobalEffects,
   resetLoadedSounds,
   initAudioOnFirstClick,
   resetDefaults,
+  initAudio,
 } from '@strudel/webaudio';
 import { setVersionDefaultsFrom } from './util.mjs';
 import { StrudelMirror, defaultSettings } from '@strudel/codemirror';
@@ -36,6 +38,7 @@ import { getRandomTune, initCode, loadModules, shareCode } from './util.mjs';
 import './Repl.css';
 import { setInterval, clearInterval } from 'worker-timers';
 import { getMetadata } from '../metadata_parser';
+import { debugAudiograph } from './audiograph';
 
 const { latestCode, maxPolyphony, audioDeviceName, multiChannelOrbits } = settingsMap.get();
 let modulesLoading, presets, drawContext, clearCanvas, audioReady;
@@ -63,11 +66,10 @@ async function getModule(name) {
 const initialCode = `// LOADING`;
 
 export function useReplContext() {
-  const { isSyncEnabled, audioEngineTarget } = useSettings();
+  const { isSyncEnabled, audioEngineTarget, prebakeScript, includePrebakeScriptInShare } = useSettings();
   const shouldUseWebaudio = audioEngineTarget !== audioEngineTargets.osc;
   const defaultOutput = shouldUseWebaudio ? webaudioOutput : superdirtOutput;
   const getTime = shouldUseWebaudio ? getAudioContextCurrentTime : getPerformanceTimeSeconds;
-
   const init = useCallback(() => {
     const drawTime = [-2, 2];
     const drawContext = getDrawContext();
@@ -84,7 +86,12 @@ export function useReplContext() {
       pattern: silence,
       drawTime,
       drawContext,
-      prebake: async () => Promise.all([modulesLoading, presets]),
+      prebake: async () =>
+        Promise.all([modulesLoading, presets]).then(() => {
+          if (prebakeScript?.length) {
+            return evaluate(prebakeScript ?? '');
+          }
+        }),
       onUpdateState: (state) => {
         setReplState({ ...state });
       },
@@ -125,6 +132,7 @@ export function useReplContext() {
       bgFill: false,
     });
     window.strudelMirror = editor;
+    window.debugAudiograph = debugAudiograph;
 
     // init settings
     initCode().then(async (decoded) => {
@@ -203,6 +211,30 @@ export function useReplContext() {
   const handleEvaluate = () => {
     editorRef.current.evaluate();
   };
+
+  const handleExport = async (begin, end, sampleRate, maxPolyphony, multiChannelOrbits, downloadName = undefined) => {
+    await editorRef.current.evaluate(false);
+    editorRef.current.repl.scheduler.stop();
+    await renderPatternAudio(
+      editorRef.current.repl.state.pattern,
+      editorRef.current.repl.scheduler.cps,
+      begin,
+      end,
+      sampleRate,
+      maxPolyphony,
+      multiChannelOrbits,
+      downloadName,
+    ).finally(async () => {
+      const { latestCode, maxPolyphony, audioDeviceName, multiChannelOrbits } = settingsMap.get();
+      await initAudio({
+        latestCode,
+        maxPolyphony,
+        audioDeviceName,
+        multiChannelOrbits,
+      });
+      editorRef.current.repl.scheduler.stop();
+    });
+  };
   const handleShuffle = async () => {
     const patternData = await getRandomTune();
     const code = patternData.code;
@@ -214,7 +246,13 @@ export function useReplContext() {
     editorRef.current.repl.evaluate(code);
   };
 
-  const handleShare = async () => shareCode(replState.code);
+  const handleShare = async () => {
+    let code = replState.code;
+    if (includePrebakeScriptInShare) {
+      code = prebakeScript + '\n' + code;
+    }
+    shareCode(code);
+  };
   const context = {
     started,
     pending,
@@ -225,6 +263,7 @@ export function useReplContext() {
     handleShuffle,
     handleShare,
     handleEvaluate,
+    handleExport,
     init,
     error,
     editorRef,

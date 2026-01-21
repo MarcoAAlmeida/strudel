@@ -1,11 +1,12 @@
 // this is dough, the superdough without dependencies
-// @ts-check
+// @ts-nocheck
 // @ts-ignore ignore next line because sampleRate is unknown
 const SAMPLE_RATE = typeof sampleRate !== 'undefined' ? sampleRate : 48000;
 const PI_DIV_SR = Math.PI / SAMPLE_RATE;
 const ISR = 1 / SAMPLE_RATE;
 
 let gainCurveFunc = (val) => Math.pow(val, 2);
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 
 function applyGainCurve(val) {
   return gainCurveFunc(val);
@@ -18,6 +19,7 @@ function applyGainCurve(val) {
  * @param {number} a - Signal A (can be a single value or an array value in buffer processing).
  * @param {number} b - Signal B (can be a single value or an array value in buffer processing).
  * @param {number} m - Crossfade parameter (0.0 = all A, 1.0 = all B, 0.5 = equal mix).
+ * @tags internals
  * @returns {number} Crossfaded output value.
  */
 function crossfade(a, b, m) {
@@ -151,7 +153,8 @@ export class TwoPoleFilter {
     resonance = Math.max(resonance, 0);
 
     cutoff = Math.min(cutoff, 20000);
-    const c = 2 * Math.sin(cutoff * PI_DIV_SR);
+    let c = 2 * Math.sin(cutoff * PI_DIV_SR);
+    c = clamp(c, 0, 1.14); // this line prevents instability TODO: test
 
     const r = Math.pow(0.5, (resonance + 0.125) / 0.125);
     const mrc = 1 - r * c;

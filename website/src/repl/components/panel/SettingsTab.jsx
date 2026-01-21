@@ -1,29 +1,68 @@
 import { defaultSettings, settingsMap, useSettings } from '../../../settings.mjs';
 import { themes } from '@strudel/codemirror';
-import { Textbox } from '../textbox/Textbox.jsx';
-import { isUdels } from '../../util.mjs';
+import { confirmAndReloadPage, isUdels } from '../../util.mjs';
 import { ButtonGroup } from './Forms.jsx';
 import { AudioDeviceSelector } from './AudioDeviceSelector.jsx';
 import { AudioEngineTargetSelector } from './AudioEngineTargetSelector.jsx';
 import { confirmDialog } from '../../util.mjs';
 import { DEFAULT_MAX_POLYPHONY, setMaxPolyphony, setMultiChannelOrbits } from '@strudel/webaudio';
+import { SpecialActionButton } from '../button/action-button.jsx';
+import { ImportPrebakeScriptButton } from './ImportPrebakeScriptButton.jsx';
+
+function cx(...classes) {
+  // : Array<string | undefined>
+  return classes.filter(Boolean).join(' ');
+}
+
+const inputClass =
+  'bg-background text-sm border rounded-0 text-foreground border-muted placeholder-foreground focus:outline-none focus:ring-0 focus:border-foreground';
+
+export function Textbox({ onChange, className, ...inputProps }) {
+  return (
+    <input className={cx('p-2', inputClass, className)} onChange={(e) => onChange(e.target.value)} {...inputProps} />
+  );
+}
 
 function Checkbox({ label, value, onChange, disabled = false }) {
   return (
-    <label>
-      <input disabled={disabled} type="checkbox" checked={value} onChange={onChange} />
+    <label className="text-sm">
+      <input
+        className={cx(
+          'bg-background text-sm border border-muted focus:outline-none focus:ring-0 focus:border-foreground',
+        )}
+        disabled={disabled}
+        type="checkbox"
+        checked={value}
+        onChange={onChange}
+      />
       {' ' + label}
     </label>
   );
 }
 
-function SelectInput({ value, options, onChange }) {
+//      value: ?ID, options: Map<ID, any>, onChange: ID => null, onClick: event => void, isDisabled: boolean
+export function SelectInputDuplicate({ value, options, onChange, onClick, isDisabled }) {
   return (
     <select
-      className="p-2 bg-background rounded-md text-foreground  border-foreground"
-      value={value}
+      disabled={isDisabled}
+      onClick={onClick}
+      className={cx('p-2', inputClass)}
+      value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
     >
+      {options.size == 0 && <option value={value}>{`${value ?? 'select an option'}`}</option>}
+      {Array.from(options.keys()).map((id) => (
+        <option key={id} className="bg-background" value={id}>
+          {options.get(id)}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function SelectInput({ value, options, onChange }) {
+  return (
+    <select className={cx('p-2', inputClass)} value={value} onChange={(e) => onChange(e.target.value)}>
       {Object.entries(options).map(([k, label]) => (
         <option key={k} className="bg-background" value={k}>
           {label}
@@ -35,9 +74,9 @@ function SelectInput({ value, options, onChange }) {
 
 function NumberSlider({ value, onChange, step = 1, ...rest }) {
   return (
-    <div className="flex space-x-2 gap-1">
+    <div className="flex space-x-2 gap-1 overflow-hidden">
       <input
-        className="p-2 grow"
+        className="p-2 grow accent-foreground"
         type="range"
         value={value}
         step={step}
@@ -48,7 +87,7 @@ function NumberSlider({ value, onChange, step = 1, ...rest }) {
         type="number"
         value={value}
         step={step}
-        className="w-16 bg-background rounded-md"
+        className={cx('w-16', inputClass)}
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </div>
@@ -57,8 +96,8 @@ function NumberSlider({ value, onChange, step = 1, ...rest }) {
 
 function FormItem({ label, children, sublabel }) {
   return (
-    <div className="grid gap-2">
-      <label>{label}</label>
+    <div className="grid gap-2 text-sm">
+      <label className="text-sm">{label}</label>
       {children}
     </div>
   );
@@ -84,8 +123,6 @@ const fontFamilyOptions = {
   galactico: 'galactico',
 };
 
-const RELOAD_MSG = 'Changing this setting requires the window to reload itself. OK?';
-
 export function SettingsTab({ started }) {
   const {
     theme,
@@ -107,11 +144,12 @@ export function SettingsTab({ started }) {
     panelPosition,
     audioDeviceName,
     audioEngineTarget,
-    togglePanelTrigger,
     maxPolyphony,
     multiChannelOrbits,
     isTabIndentationEnabled,
     isMultiCursorEnabled,
+    patternAutoStart,
+    includePrebakeScriptInShare,
   } = useSettings();
   const shouldAlwaysSync = isUdels();
   const canChangeAudioDevice = AudioContext.prototype.setSinkId != null;
@@ -123,11 +161,8 @@ export function SettingsTab({ started }) {
             isDisabled={started}
             audioDeviceName={audioDeviceName}
             onChange={(audioDeviceName) => {
-              confirmDialog(RELOAD_MSG).then((r) => {
-                if (r == true) {
-                  settingsMap.setKey('audioDeviceName', audioDeviceName);
-                  return window.location.reload();
-                }
+              confirmAndReloadPage(() => {
+                settingsMap.setKey('audioDeviceName', audioDeviceName);
               });
             }}
           />
@@ -137,11 +172,8 @@ export function SettingsTab({ started }) {
         <AudioEngineTargetSelector
           target={audioEngineTarget}
           onChange={(target) => {
-            confirmDialog(RELOAD_MSG).then((r) => {
-              if (r == true) {
-                settingsMap.setKey('audioEngineTarget', target);
-                return window.location.reload();
-              }
+            confirmAndReloadPage(() => {
+              settingsMap.setKey('audioEngineTarget', target);
             });
           }}
         />
@@ -171,12 +203,9 @@ export function SettingsTab({ started }) {
           label="Multi Channel Orbits"
           onChange={(cbEvent) => {
             const val = cbEvent.target.checked;
-            confirmDialog(RELOAD_MSG).then((r) => {
-              if (r == true) {
-                settingsMap.setKey('multiChannelOrbits', val);
-                setMultiChannelOrbits(val);
-                return window.location.reload();
-              }
+            confirmAndReloadPage(() => {
+              settingsMap.setKey('multiChannelOrbits', val);
+              setMultiChannelOrbits(val);
             });
           }}
           value={multiChannelOrbits}
@@ -185,7 +214,7 @@ export function SettingsTab({ started }) {
       <FormItem label="Theme">
         <SelectInput options={themeOptions} value={theme} onChange={(theme) => settingsMap.setKey('theme', theme)} />
       </FormItem>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormItem label="Font Family">
           <SelectInput
             options={fontFamilyOptions}
@@ -203,6 +232,15 @@ export function SettingsTab({ started }) {
           />
         </FormItem>
       </div>
+      <FormItem label="Prebake">
+        <ImportPrebakeScriptButton />
+        <Checkbox
+          label="Include prebake script in share"
+          onChange={(cbEvent) => settingsMap.setKey('includePrebakeScriptInShare', cbEvent.target.checked)}
+          value={includePrebakeScriptInShare}
+        />
+      </FormItem>
+
       <FormItem label="Keybindings">
         <ButtonGroup
           value={keybindings}
@@ -216,13 +254,6 @@ export function SettingsTab({ started }) {
           onChange={(value) => settingsMap.setKey('panelPosition', value)}
           items={{ bottom: 'Bottom', right: 'Right' }}
         ></ButtonGroup>
-      </FormItem>
-      <FormItem label="Open Panel on:                       ">
-        <ButtonGroup
-          value={togglePanelTrigger}
-          onChange={(value) => settingsMap.setKey('togglePanelTrigger', value)}
-          items={{ click: 'Click', hover: 'Hover' }}
-        />
       </FormItem>
       <FormItem label="More Settings">
         <Checkbox
@@ -284,11 +315,8 @@ export function SettingsTab({ started }) {
           label="Sync across Browser Tabs / Windows"
           onChange={(cbEvent) => {
             const newVal = cbEvent.target.checked;
-            confirmDialog(RELOAD_MSG).then((r) => {
-              if (r) {
-                settingsMap.setKey('isSyncEnabled', newVal);
-                window.location.reload();
-              }
+            confirmAndReloadPage(() => {
+              settingsMap.setKey('isSyncEnabled', newVal);
             });
           }}
           disabled={shouldAlwaysSync}
@@ -304,11 +332,15 @@ export function SettingsTab({ started }) {
           onChange={(cbEvent) => settingsMap.setKey('isCSSAnimationDisabled', cbEvent.target.checked)}
           value={isCSSAnimationDisabled}
         />
+        <Checkbox
+          label="Auto-start pattern on pattern change"
+          onChange={(cbEvent) => settingsMap.setKey('patternAutoStart', cbEvent.target.checked)}
+          value={patternAutoStart}
+        />
       </FormItem>
       <FormItem label="Zen Mode">Try clicking the logo in the top left!</FormItem>
       <FormItem label="Reset Settings">
-        <button
-          className="bg-background p-2 max-w-[300px] rounded-md hover:opacity-50"
+        <SpecialActionButton
           onClick={() => {
             confirmDialog('Sure?').then((r) => {
               if (r) {
@@ -319,7 +351,7 @@ export function SettingsTab({ started }) {
           }}
         >
           restore default settings
-        </button>
+        </SpecialActionButton>
       </FormItem>
     </div>
   );

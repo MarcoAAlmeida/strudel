@@ -1,3 +1,10 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+    "cSpell.words": [
+        "subspan",
+        "vals"
+    ],
+    "yaml.schemas": {
+      "https://json.schemastore.org/github-workflow.json": "file:///home/felix/projects/strudel/.github/workflows/deploy.yml"
+    },
+    "testing.automaticallyOpenPeekView": "never"
 }

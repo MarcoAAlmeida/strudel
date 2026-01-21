@@ -30,7 +30,8 @@ const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL
       <h1 class="font-bold flex space-x-2 items-baseline text-xl">
         <span class="block rotate-90 text-blue-500">꩜</span>
         <div class="flex space-x-2 items-baseline">
-          <a href="/strudel">Marco´s strudel</a>
+          <span class="">strudel</span>
+          <span class="text-sm font-medium">DOCS</span>
         </div>
       </h1>
     </div>
@@ -39,8 +40,8 @@ const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL
   <div class="search-item h-10">
     <Search client:idle />
   </div>
-  <a href={`${baseNoTrailing}/repl`} class="hidden md:flex cursor-pointer items-center space-x-1"
-    ><CommandLineIcon className="w-5 h-5" />
+  <a href={`${baseNoTrailing}/`} class="hidden md:flex cursor-pointer items-center space-x-1"
+    ><CommandLineIcon className="w-5 h-5" /><span>go to REPL</span>
   </a>
   <div class="md:hidden">
     <MobileNav sidebar={sidebar} client:idle />
