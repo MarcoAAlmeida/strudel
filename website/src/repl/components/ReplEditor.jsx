@@ -2,7 +2,7 @@ import Loader from '@src/repl/components/Loader';
 import { HorizontalPanel, VerticalPanel, PanelToggle } from '@src/repl/components/panel/Panel';
 import { Code } from '@src/repl/components/Code';
 import UserFacingErrorMessage from '@src/repl/components/UserFacingErrorMessage';
-import { Header } from './Header';
+import { Footer, Header } from './Header';
 import { useSettings } from '@src/settings.mjs';
 
 // type Props = {
@@ -23,9 +23,11 @@ export default function ReplEditor(Props) {
         <div className="flex flex-col grow overflow-hidden">
           <Header context={context} isEmbedded={isEmbedded} />
           <Code containerRef={containerRef} editorRef={editorRef} init={init} />
+          {/* <Footer context={context} isEmbedded={isEmbedded} /> */}
         </div>
         {!isZen && panelPosition === 'right' && <VerticalPanel context={context} />}
       </div>
+      <Footer context={context} isEmbedded={isEmbedded} />
       <UserFacingErrorMessage error={error} />
       {!isZen && panelPosition === 'bottom' && <HorizontalPanel context={context} />}
     </div>

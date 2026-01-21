@@ -5,6 +5,7 @@ import { useSettings, setIsZen } from '../../settings.mjs';
 import { StrudelIcon } from '@src/repl/components/icons/StrudelIcon';
 import '../Repl.css';
 import { PanelToggle } from '@src/repl/components/panel/Panel';
+import { PlayIcon, StopIcon } from '@heroicons/react/16/solid';
 
 const { BASE_URL } = import.meta.env;
 const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
@@ -17,15 +18,16 @@ export function Header({ context, isEmbedded = false }) {
     <header
       id="header"
       className={cx(
-        'border-b border-muted flex-none text-black z-[100] text-sm select-none min-h-10',
+        'border-b border-muted flex-none text-black z-[100] text-sm select-none min-h-10 max-h-10',
         !isZen && !isEmbedded && 'bg-lineHighlight',
-        isZen ? 'h-12 w-8 fixed top-0 left-0' : 'sticky top-0 w-full justify-between',
+        // isZen ? 'h-12 w-8 fixed top-0 left-0' : 'h-10 sticky top-0 w-full justify-between',
+        isZen ? 'h-12 w-8 fixed top-0 left-0' : '',
         'flex items-center',
       )}
       style={{ fontFamily }}
     >
-      <div className={cx(isEmbedded ? 'flex' : 'sm:flex', 'w-full sm:justify-between')}>
-        <div className="px-3 pt-1 flex space-x-2 sm:pt-0 select-none">
+      <div className={cx('flex w-full flex-wrap justify-between')}>
+        <div className="px-3 py-1 flex space-x-2 select-none">
           <h1
             onClick={() => {
               if (isEmbedded) window.open(window.location.href.replace('embed', ''));
@@ -56,63 +58,79 @@ export function Header({ context, isEmbedded = false }) {
               <div className="space-x-2">
                 <span className="">strudel</span>
                 <span className="text-sm font-medium">REPL</span>
-                {!isEmbedded && isButtonRowHidden && (
+                {/* !isEmbedded && isButtonRowHidden && (
                   <a href={`${baseNoTrailing}/learn`} className="text-sm opacity-25 font-medium">
                     DOCS
                   </a>
-                )}
+                ) */}
               </div>
             )}
           </h1>
         </div>
         {!isZen && !isButtonRowHidden && (
-          <div className="flex max-w-full overflow-auto text-foreground px-3 h-10">
-            <button
-              onClick={handleTogglePlay}
-              title={started ? 'stop' : 'play'}
-              className={cx('px-2 hover:opacity-50', !started && !isCSSAnimationDisabled && 'animate-pulse')}
-            >
-              {!pending ? (
-                <span className={cx('flex items-center space-x-2')}>
-                  {started ? <StopCircleIcon className="w-5 h-5" /> : <PlayCircleIcon className="w-5 h-5" />}
-                  {!isEmbedded && <span>{started ? 'stop' : 'play'}</span>}
-                </span>
-              ) : (
-                <>loading...</>
-              )}
-            </button>
-            <button
-              onClick={handleEvaluate}
-              title="update"
-              className={cx(
-                'flex items-center space-x-1 px-2',
-                !isDirty || !activeCode ? 'opacity-50' : 'hover:opacity-50',
-              )}
-            >
-              {!isEmbedded && <span>update</span>}
-            </button>
-            {!isEmbedded && (
-              <button
-                title="share"
-                className={cx('cursor-pointer hover:opacity-50 flex items-center space-x-1 px-2')}
-                onClick={handleShare}
-              >
-                <span>share</span>
-              </button>
-            )}
-            {!isEmbedded && (
-              <a
-                title="learn"
-                href={`${baseNoTrailing}/workshop/getting-started/`}
-                className={cx('hover:opacity-50 flex items-center space-x-1', !isEmbedded ? 'p-2' : 'px-2')}
-              >
-                <span>learn</span>
-              </a>
-            )}
+          <div className="flex grow justify-end">
+            {/* <MainMenu isEmbedded={isEmbedded} context={context} /> */}
             <PanelToggle isEmbedded={isEmbedded} isZen={isZen} />
           </div>
         )}
       </div>
     </header>
+  );
+}
+
+export function Footer({ context, isEmbedded = false }) {
+  return (
+    <div className="border-t border-muted bg-lineHighlight">
+      <MainMenu context={context} isEmbedded={isEmbedded} />
+    </div>
+  );
+}
+
+function MainMenu({ context, isEmbedded = false }) {
+  const { started, pending, isDirty, activeCode, handleTogglePlay, handleEvaluate, handleShare } = context;
+  const { isCSSAnimationDisabled } = useSettings();
+  return (
+    <div className="flex text-sm max-w-full shrink-0 overflow-hidden text-foreground px-2 h-10">
+      <button
+        onClick={handleTogglePlay}
+        title={started ? 'stop' : 'play'}
+        className={cx('px-2 hover:opacity-50', !started && !isCSSAnimationDisabled && 'animate-pulse')}
+      >
+        {/* {!pending ? ( */}
+        <span className={cx('flex items-center space-x-2')}>
+          {/* {started ? <StopCircleIcon className="w-5 h-5" /> : <PlayCircleIcon className="w-5 h-5" />} */}
+          {started ? <StopIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
+          {!isEmbedded && <span>{started ? 'stop' : 'play'}</span>}
+        </span>
+        {/* ) : (
+          <>loading...</>
+        )} */}
+      </button>
+      <button
+        onClick={handleEvaluate}
+        title="update"
+        className={cx('flex items-center space-x-1 px-2', !isDirty || !activeCode ? 'opacity-50' : 'hover:opacity-50')}
+      >
+        {!isEmbedded && <span>update</span>}
+      </button>
+      {!isEmbedded && (
+        <button
+          title="share"
+          className={cx('cursor-pointer hover:opacity-50 flex items-center space-x-1 px-2')}
+          onClick={handleShare}
+        >
+          <span>share</span>
+        </button>
+      )}
+      {!isEmbedded && (
+        <a
+          title="learn"
+          href={`${baseNoTrailing}/workshop/getting-started/`}
+          className={cx('hover:opacity-50 flex items-center space-x-1', !isEmbedded ? 'p-2' : 'px-2')}
+        >
+          <span>learn</span>
+        </a>
+      )}
+    </div>
   );
 }

@@ -19,7 +19,7 @@ function PanelCloseButton() {
     isPanelOpen && (
       <button
         onClick={() => setIsPanelOpened(false)}
-        className={cx('px-2 py-0 text-foreground hover:opacity-50')}
+        className={cx('border-l border-muted px-2 py-0 text-foreground hover:opacity-50')}
         aria-label="Close Menu"
       >
         <XMarkIcon className="w-6 h-6" />
@@ -60,17 +60,17 @@ export function VerticalPanel({ context }) {
     <PanelNav
       settings={settings}
       className={cx(
-        'border-l border-muted shrink-0',
+        //'border-l border-muted shrink-0',
+        'border-0 border-muted shrink-0',
         isPanelOpen ? `min-w-[min(600px,100vw)] max-w-[min(600px,80vw)]` : 'min-w-12 max-w-12',
       )}
     >
       <div className={cx('flex flex-col h-full')}>
-        <div className="flex justify-between w-full border-b border-muted">
+        <div className="flex justify-between w-full border-b border-muted min-h-10 max-h-10">
           <Tabs setTab={setTab} tab={tab} />
           <PanelCloseButton />
         </div>
-
-        <div className="overflow-auto h-full">
+        <div className="overflow-auto h-full border-l border-muted">
           <PanelContent context={context} tab={tab} />
         </div>
       </div>
@@ -149,7 +149,12 @@ function PanelTab({ label, isSelected, onClick }) {
 function Tabs({ className }) {
   const { isPanelOpen, activeFooter: tab } = useSettings();
   return (
-    <div className={cx('w-full flex select-none max-w-full h-10 overflow-auto items-center', className)}>
+    <div
+      className={cx(
+        'px-2 border-l border-muted w-full flex select-none max-w-full h-10 max-h-10 min-h-10 overflow-auto items-center',
+        className,
+      )}
+    >
       {Object.keys(tabNames).map((key) => {
         const val = tabNames[key];
         return <PanelTab key={key} isSelected={tab === val && isPanelOpen} label={key} onClick={() => setTab(val)} />;
@@ -166,13 +171,11 @@ export function PanelToggle({ isEmbedded, isZen }) {
     panelPosition === 'right' && (
       <button
         title="share"
-        className={cx(
-          'ml-4 rounded-0 cursor-pointer hover:opacity-80 flex justify-center items-center space-x-1 text-foreground ',
-          isPanelOpen && 'hidden',
-        )}
+        className={cx('border-l border-muted px-2 py-0 text-foreground hover:opacity-50', isPanelOpen && 'hidden')}
         onClick={() => setIsPanelOpened(!isPanelOpen)}
       >
-        <Bars3Icon className="w-5 h-5" />
+        {/* <span>menu</span> */}
+        <Bars3Icon className="w-6 h-6" />
       </button>
     )
   );
