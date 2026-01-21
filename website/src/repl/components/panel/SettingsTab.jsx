@@ -15,17 +15,17 @@ function cx(...classes) {
 }
 
 const inputClass =
-  'bg-background text-sm border rounded-0 text-foreground border-muted placeholder-foreground focus:outline-none focus:ring-0 focus:border-foreground';
+  'bg-background text-xs h-8 max-h-8 border border-box rounded-0 text-foreground border-muted placeholder-muted focus:outline-none focus:ring-0 focus:border-foreground';
 
 export function Textbox({ onChange, className, ...inputProps }) {
   return (
-    <input className={cx('p-2', inputClass, className)} onChange={(e) => onChange(e.target.value)} {...inputProps} />
+    <input className={cx('px-2', inputClass, className)} onChange={(e) => onChange(e.target.value)} {...inputProps} />
   );
 }
 
 function Checkbox({ label, value, onChange, disabled = false }) {
   return (
-    <label className="text-sm">
+    <label className="text-xs">
       <input
         className={cx(
           'bg-background text-sm border border-muted focus:outline-none focus:ring-0 focus:border-foreground',
@@ -96,7 +96,7 @@ function NumberSlider({ value, onChange, step = 1, ...rest }) {
 
 function FormItem({ label, children, sublabel }) {
   return (
-    <div className="grid gap-2 text-sm">
+    <div className="grid gap-2 text-xs">
       <label className="text-sm">{label}</label>
       {children}
     </div>

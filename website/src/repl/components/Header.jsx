@@ -69,7 +69,7 @@ export function Header({ context, isEmbedded = false }) {
             <button
               onClick={handleTogglePlay}
               title={started ? 'stop' : 'play'}
-              className={cx('hover:opacity-50', !started && !isCSSAnimationDisabled && 'animate-pulse')}
+              className={cx('px-2 hover:opacity-50', !started && !isCSSAnimationDisabled && 'animate-pulse')}
             >
               {!pending ? (
                 <span className={cx('flex items-center space-x-2')}>

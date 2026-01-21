@@ -8,7 +8,7 @@ import {
   useViewingPatternData,
   userPattern,
 } from '../../../user_pattern_utils.mjs';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { getMetadata } from '../../../metadata_parser.js';
 import { useExamplePatterns } from '../../useExamplePatterns.jsx';
 import { parseJSON, isUdels } from '../../util.mjs';
@@ -123,10 +123,11 @@ export function PatternsTab({ context }) {
     );
   }, [search, viewingPatternStore]);
 
+  const importRef = useRef();
   return (
     <div className="w-full h-full text-foreground flex flex-col overflow-hidden">
-      <Textbox className="w-full border-0" placeholder="Search" value={search} onChange={setSearch} />
-      <div className="px-2 shrink-0 py-2 space-x-4 flex max-w-full overflow-x-auto border-y border-muted">
+      <Textbox className="w-full border-0" placeholder="Search..." value={search} onChange={setSearch} />
+      <div className="px-2 shrink-0 h-8 space-x-4 flex max-w-full overflow-x-auto border-y border-muted">
         <ActionButton
           label="new"
           onClick={() => {
@@ -148,16 +149,15 @@ export function PatternsTab({ context }) {
             updateCodeWindow(context, { ...data, collection: userPattern.collection });
           }}
         />
-        <label className="hover:opacity-50 cursor-pointer">
-          <input
-            style={{ display: 'none' }}
-            type="file"
-            multiple
-            accept="text/plain,text/x-markdown,application/json"
-            onChange={(e) => importPatterns(e.target.files)}
-          />
-          import
-        </label>
+        <input
+          ref={importRef}
+          style={{ display: 'none' }}
+          type="file"
+          multiple
+          accept="text/plain,text/x-markdown,application/json"
+          onChange={(e) => importPatterns(e.target.files)}
+        />
+        <ActionButton label="import" onClick={() => importRef.current.click()} />
         <ActionButton label="export" onClick={exportPatterns} />
 
         <ActionButton

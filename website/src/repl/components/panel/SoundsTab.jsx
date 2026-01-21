@@ -78,10 +78,11 @@ export function SoundsTab() {
   });
   return (
     <div id="sounds-tab" className="flex flex-col w-full h-full text-foreground">
-      <Textbox placeholder="Search" className="border-0" value={search} onChange={(v) => setSearch(v)} />
+      <Textbox placeholder="Search..." className="border-0" value={search} onChange={(v) => setSearch(v)} />
 
       <div className="flex shrink-0 flex-wrap border-y border-muted">
         <ButtonGroup
+          wrap
           value={soundsFilter}
           onChange={(value) => settingsMap.setKey('soundsFilter', value)}
           items={{

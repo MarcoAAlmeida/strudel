@@ -137,7 +137,7 @@ function PanelTab({ label, isSelected, onClick }) {
       <button
         onClick={onClick}
         className={cx(
-          'h-8 px-2 text-sm text-foreground cursor-pointer hover:opacity-50 flex items-center space-x-1 border-b-2',
+          'h-8 px-2 text-xs text-foreground cursor-pointer hover:opacity-50 flex items-center space-x-1 border-b-2',
           isSelected ? 'border-foreground' : 'border-transparent',
         )}
       >

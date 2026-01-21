@@ -38,6 +38,7 @@ export const defaultSettings = {
   latestCode: '',
   isZen: false,
   soundsFilter: soundFilterType.ALL,
+  referenceTag: 'all',
   patternFilter: 'community',
   // panelPosition: window.innerWidth > 1000 ? 'right' : 'bottom', //FIX: does not work on astro
   panelPosition: 'right',
