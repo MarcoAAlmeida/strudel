@@ -1,8 +1,8 @@
 # MIDI Tokenizer
 
-A standalone Java 21 CLI application for parsing Standard MIDI Files (SMF types 0 and 1) and converting them to:
-- **LLM-friendly JSON representation** for analysis and processing
-- **Strudel live coding patterns** for creative musical exploration
+  A standalone Java 21 CLI application for parsing Standard MIDI Files (SMF types 0 and 1) and converting them to:
+  - **LLM-friendly JSON representation** for analysis and processing
+  - **Strudel live coding patterns** for creative musical exploration
 
 ## Philosophy: Beyond Traditional Notation
 
