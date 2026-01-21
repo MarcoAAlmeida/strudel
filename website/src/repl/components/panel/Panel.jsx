@@ -33,16 +33,16 @@ export function HorizontalPanel({ context }) {
   return (
     <PanelNav
       className={cx(
-        isPanelOpen ? `min-h-[360px] max-h-[360px]` : 'min-h-10 max-h-10',
+        isPanelOpen ? `min-h-[360px] max-h-[360px]` : 'min-h-8 max-h-8',
         'overflow-hidden flex flex-col relative',
       )}
     >
-      <div className="flex justify-between min-h-10 max-h-10 grid-cols-2 items-center border-b border-muted">
+      <div className="flex justify-between min-h-8 max-h-8 grid-cols-2 items-center border-t border-muted">
         <Tabs setTab={setTab} tab={tab} />
         <PanelCloseButton />
       </div>
       {isPanelOpen && (
-        <div className="w-full h-full overflow-hidden">
+        <div className="w-full h-full overflow-auto border-t border-muted">
           <PanelContent context={context} tab={tab} />
         </div>
       )}
