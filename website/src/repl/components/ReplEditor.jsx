@@ -19,12 +19,12 @@ export default function ReplEditor(Props) {
   return (
     <div className="h-full flex flex-col relative" {...editorProps}>
       <Loader active={pending} />
-      <Header context={context} isEmbedded={isEmbedded} />
-
-      <div className="grow flex relative overflow-hidden">
-        <Code containerRef={containerRef} editorRef={editorRef} init={init} />
+      <div className="grow flex justify-stretch w-full relative overflow-hidden">
+        <div className="flex flex-col grow overflow-hidden">
+          <Header context={context} isEmbedded={isEmbedded} />
+          <Code containerRef={containerRef} editorRef={editorRef} init={init} />
+        </div>
         {!isZen && panelPosition === 'right' && <VerticalPanel context={context} />}
-        <PanelToggle isEmbedded={isEmbedded} isZen={isZen} />
       </div>
       <UserFacingErrorMessage error={error} />
       {!isZen && panelPosition === 'bottom' && <HorizontalPanel context={context} />}

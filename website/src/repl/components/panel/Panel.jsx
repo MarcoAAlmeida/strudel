@@ -19,7 +19,7 @@ function PanelCloseButton() {
     isPanelOpen && (
       <button
         onClick={() => setIsPanelOpened(false)}
-        className={cx('px-4 py-1 text-foreground hover:opacity-50')}
+        className={cx('px-2 py-0 text-foreground hover:opacity-50')}
         aria-label="Close Menu"
       >
         <XMarkIcon className="w-6 h-6" />
@@ -60,7 +60,7 @@ export function VerticalPanel({ context }) {
     <PanelNav
       settings={settings}
       className={cx(
-        'border-l border-muted',
+        'border-l border-muted shrink-0',
         isPanelOpen ? `min-w-[min(600px,100vw)] max-w-[min(600px,80vw)]` : 'min-w-12 max-w-12',
       )}
     >
@@ -137,7 +137,7 @@ function PanelTab({ label, isSelected, onClick }) {
       <button
         onClick={onClick}
         className={cx(
-          'h-8 px-2 text-xs text-foreground cursor-pointer hover:opacity-50 flex items-center space-x-1 border-b-2',
+          'h-10 px-2 text-sm border-t-2 border-t-transparent text-foreground cursor-pointer hover:opacity-50 flex items-center space-x-1 border-b-2',
           isSelected ? 'border-foreground' : 'border-transparent',
         )}
       >
@@ -149,7 +149,7 @@ function PanelTab({ label, isSelected, onClick }) {
 function Tabs({ className }) {
   const { isPanelOpen, activeFooter: tab } = useSettings();
   return (
-    <div className={cx('w-full flex select-none max-w-full overflow-auto items-center', className)}>
+    <div className={cx('w-full flex select-none max-w-full h-10 overflow-auto items-center', className)}>
       {Object.keys(tabNames).map((key) => {
         const val = tabNames[key];
         return <PanelTab key={key} isSelected={tab === val && isPanelOpen} label={key} onClick={() => setTab(val)} />;
@@ -167,12 +167,12 @@ export function PanelToggle({ isEmbedded, isZen }) {
       <button
         title="share"
         className={cx(
-          'absolute top-0.5 right-3  rounded-0  px-2 py-2 bg-background z-[1000] cursor-pointer hover:opacity-80 flex justify-center items-center space-x-1 text-foreground ',
+          'ml-4 rounded-0 cursor-pointer hover:opacity-80 flex justify-center items-center space-x-1 text-foreground ',
           isPanelOpen && 'hidden',
         )}
         onClick={() => setIsPanelOpened(!isPanelOpen)}
       >
-        <Bars3Icon className="w-6 h-6" />
+        <Bars3Icon className="w-5 h-5" />
       </button>
     )
   );

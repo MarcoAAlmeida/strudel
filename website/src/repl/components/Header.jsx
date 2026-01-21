@@ -4,6 +4,7 @@ import cx from '@src/cx.mjs';
 import { useSettings, setIsZen } from '../../settings.mjs';
 import { StrudelIcon } from '@src/repl/components/icons/StrudelIcon';
 import '../Repl.css';
+import { PanelToggle } from '@src/repl/components/panel/Panel';
 
 const { BASE_URL } = import.meta.env;
 const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
@@ -108,6 +109,7 @@ export function Header({ context, isEmbedded = false }) {
                 <span>learn</span>
               </a>
             )}
+            <PanelToggle isEmbedded={isEmbedded} isZen={isZen} />
           </div>
         )}
       </div>
