@@ -13,7 +13,7 @@ export default function ReplEditor(Props) {
   const { context, ...editorProps } = Props;
   const { containerRef, editorRef, error, init, pending } = context;
   const settings = useSettings();
-  const { panelPosition, isZen } = settings;
+  const { panelPosition, isZen, isButtonRowHidden } = settings;
   const isEmbedded = typeof window !== 'undefined' && window.location !== window.parent.location;
 
   return (
@@ -27,7 +27,7 @@ export default function ReplEditor(Props) {
         </div>
         {!isZen && panelPosition === 'right' && <VerticalPanel context={context} />}
       </div>
-      <Footer context={context} isEmbedded={isEmbedded} />
+      {!isButtonRowHidden && <Footer context={context} isEmbedded={isEmbedded} />}
       <UserFacingErrorMessage error={error} />
       {!isZen && panelPosition === 'bottom' && <HorizontalPanel context={context} />}
     </div>

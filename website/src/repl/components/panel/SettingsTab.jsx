@@ -323,7 +323,7 @@ export function SettingsTab({ started }) {
           value={isSyncEnabled}
         />
         <Checkbox
-          label="Hide top buttons"
+          label="Hide footer"
           onChange={(cbEvent) => settingsMap.setKey('isButtonRowHidden', cbEvent.target.checked)}
           value={isButtonRowHidden}
         />
