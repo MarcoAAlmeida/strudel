@@ -13,7 +13,72 @@ A standalone Java 21 CLI application for parsing Standard MIDI Files (SMF types 
 - **LLM-friendly JSON representation** for analysis and processing
 - **Strudel live coding patterns** for creative musical exploration
 
-<MiniRepl client:idle tune={`note("a3 c#4 e4 a4")`} />
+# MIDI quantization
+
+[strudel/midi_tokenizer/](https://github.com/MarcoAAlmeida/strudel/tree/main/midi_tokenizer)
+
+
+## Polyphonic Tokenization
+
+Excerpt of [Rapsodhy in Blue, by George Gershwin](https://youtu.be/cH2PH0auTUU?list=RDcH2PH0auTUU&t=15), tokenized and converted to Strudel code using the MIDI Tokenizer.
+
+<MiniRepl client:idle tune={`
+/* "in_blue" abbtreviated */
+/**
+Source: in_blue.mid
+Tempo: 120 BPM
+Time Signature: 4/4
+Quantization: 16 (default)
+Grid: 16 = sixteenth notes, @4 = quarter note, @8 = half note
+Mode: Polyphonic
+Tracks: 2 non-empty (1, 2 from 4 total)
+Converted: 2026-01-21
+**/
+
+setcpm(120/4)
+
+// Track 1: PIANO
+let track1 = note(`<
+[~@16]
+[f3@3 ~ g3@2 ~ f3@2 ~ g3@2 f3@2 ~ g3 f3 g3 ~ f3 g3 [f3,g3]]
+[f3 g3 [f3,g3] f3 g3 [f3,g3] [f3,g3] f3 [g3,f3] g3 [f3,g3] f3 [g3,f3] g3 f3 g3]
+[f3 f3@2 ~@2 g3@2 ~ a3 a#3 c4 d4 d#4 f4 g4 a4 a#4 ~]
+[b4@2 c5 ~ c#5 d5 [d#5,e5] f5 [f#5,a#1] [g5,a#2,g#5] a5 ~ [a#5,d4@8,f3@8,a#3@9] ~@4]
+[~@6 d#3@7 [g#5,c#4@6,a3@6] [a#5,g#5@2] ~@2 f#5 ~ g#5 ~ f#5]
+[g#5 [a#1,a#2] f#5 ~@2 [f5@2,c4@4,g#3@8,d3@9] ~@2 d#5@2 ~ [d5@2,b3@3] ~@2 c#5@6 ~ [g3@5,a#3@7,d#3@8]]
+[~@2 d#5@2 ~@2 [f#3@2,e5@4] ~@2 f5@5 a#1 a#2 ~@2 [a#3,d3] ~@2]
+[~ [f#2,d5@2] e3 ~ [a#4,a#3@7] [c5,a#4] a4 g#4@6 ~@7 [d#3@10,f2@11]]
+[[f#4@5,a3@8,c4@9] ~@4 f4@3 ~@2 f4@33 ~@2 [a#3,d3,a#2] ~@2 [g3@3,d3@3,b3@3] g2@3]
+[~@3 d#3@2 [g#3@2,c4@2,g#2@3] ~ [a#3,d4] [a#2,f3] ~@2 [g2@2,g3@3,d3@3,b3@3] ~@5]
+[[d#3@2,g#3@2,c4@3,g#2@3] ~@3 [a#3@5,d4@5,a#2@24] f3@24 ~@5 f4 ~@2 g4 [g#4,g4@2]]
+[~@2 f4 ~ [g4,g#4] g4@2 f4 ~ g4 [g#4,g4@2] ~ f4 ~@2 a#4@29 ~]
+[~@3 [c4@3,g3@3,e4@3,c3@3] ~@3 g#3@2 [c#4@2,f4@2,c#3@3] ~ [d#4,d#3,a#3,g4] ~@2 [c4@3,g3@3,e4@4] c3@3 ~]
+[~@3 [c#4@2,g#3@2,f4@3,c#3@4] ~@3 [d#4@3,g4@4,a#3@25,d#3@25] ~@5 a#4 ~@2]
+[[c5,c#5] c5 c#5 ~ a#4 ~ [c5,c#5] [c#5,c5] ~ a#4 ~ [c5,c#5] c5 ~ a#4 ~]
+[d#5@31 ~@3 a4@4 [f4@3,c4@3,f3@3] ~@3 [c#4@2,f#4@2,a#4@3,f#3@3] ~@2 [g#4,g#3,d#4,c5] ~@2 [f4@4,a4@5]]
+[[c4@4,f3@4] ~@5 [c#4@2,f#3@2,f#4@2,a#4@3] ~@4 [g#4@4,c5@4,d#4@48,g#3@49] ~@4]
+[~ d#5@2 ~ f5 ~ f#5 [f5,f#5] [f5,f#5] f5 ~ d#5 ~@5]
+[d#6@14 ~@13 c6@4 ~]
+[~@2 f5@3 ~@2 f#5@3 ~ g5@4 ~@3 a#5@2 ~@4]
+[[g4@25,a#3@44,d#3@58,d#5@66,a#4@66] ~@2 d#4 ~@2 d#4 ~ d#4 ~ d#4 ~@2 c#4 c#4 ~]
+[c#4 ~ c#4 ~ d#4 ~ d#4 d#4 ~ d#4 ~ f#4 f#4 ~ f#4 ~]
+[f#4 ~ g4@33 ~ d#4 ~ c4 ~ c#4@2 ~@2 c4@2 ~ a#3 ~ f#3@2]
+[~ g3@3 ~@2 a#3@3 ~@2 g3@5 ~@3 d#3@29 ~@4]
+[~@8 [a#3@2,g3@2] ~ [b3,g#3] [c4,a3] [c#4@7,a#3@12] ~@3]
+[~@6 d#4@2 ~@2 d#4 f4 [d#4,f4] [d#4,f4@2] d#4 [d#4,d#3] f4]
+[[d#4,f4] [d#4,f4] d#4 [d#4,f4@2] ~ [d#4,f4] d#4 ~ d#4 f4 [g4,g#4] a#4 c5 [c#5,d#5] [f5,g#1] [g#2,g5]]
+[g#5 [c4,g#3,d#3] ~@5 [g#3,d#3] c4 ~@2 [d#3@4,g3@3] [f#5,c#4@2] g#5 [f#5,g#5,f#5] ~]
+[e5 ~ f#5 [e5,g3@2,b3@2,c#3@2] f#5 ~ e5 [d#5,c3@2,a#3@3,f#3@5] ~ [c#5,c#3@2] ~ [c5,d3] ~@2 [a3@2,b4@3,d#3@11,f#3@14] ~]
+[~@3 [c#4,c#5@2] ~ [b3@2,d5@2] ~@2 [a3,d#5@5] ~@2 [d#3@3,c3@3,g#3@3] ~@2 c5 ~]
+[[d#3@3,g#4@4] [g#3@2,b2@3] ~@2 f#4@7 ~@2 c#4@17 [a#2@16,d#2@16,g3@17] ~@3 e4@5 ~@3]
+[d#4@4 ~@4 d#4@3 ~@9 [g#1@8,g#2@11]]
+[~@16]
+[~@16]
+>`).sound("piano").room(0.2)
+
+stack(track1)
+
+`} />
 
 
 # Check out other awesome work
