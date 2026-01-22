@@ -48,11 +48,9 @@ export function MainPanel({ context, isEmbedded = false, className }) {
     <nav
       id="header"
       className={cx(
-        //'border-t sm:border-b sm:border-t-0 border-muted',
         'border-b border-muted',
         'flex-none text-black z-[100] text-sm select-none min-h-10 max-h-10',
         !isZen && !isEmbedded && 'bg-lineHighlight',
-        // isZen ? 'h-12 w-8 fixed top-0 left-0' : 'h-10 sticky top-0 w-full justify-between',
         isZen ? 'h-12 w-8 fixed top-0 left-0' : '',
         'flex items-center',
         className,
@@ -60,8 +58,6 @@ export function MainPanel({ context, isEmbedded = false, className }) {
       style={{ fontFamily }}
     >
       <div className={cx('flex w-full justify-between')}>
-        {' '}
-        {/*flex-wrap*/}
         <div className="px-3 py-1 flex space-x-2 select-none">
           <h1
             onClick={() => {
@@ -77,11 +73,6 @@ export function MainPanel({ context, isEmbedded = false, className }) {
               <div className="space-x-2 flex items-baseline">
                 <span className="hidden sm:block">strudel</span>
                 <span className="text-sm font-medium hidden sm:block">REPL</span>
-                {/* !isEmbedded && isButtonRowHidden && (
-                  <a href={`${baseNoTrailing}/learn`} className="text-sm opacity-25 font-medium">
-                    DOCS
-                  </a>
-                ) */}
               </div>
             )}
           </h1>
@@ -89,7 +80,6 @@ export function MainPanel({ context, isEmbedded = false, className }) {
         {!isZen && (
           <div className="flex grow justify-end">
             {!isButtonRowHidden && <MainMenu isEmbedded={isEmbedded} context={context} />}
-            {/* className="hidden sm:flex" */}
             <PanelToggle isEmbedded={isEmbedded} isZen={isZen} />
           </div>
         )}
@@ -101,7 +91,6 @@ export function MainPanel({ context, isEmbedded = false, className }) {
 export function Footer({ context, isEmbedded = false }) {
   return (
     <div className="border-t border-muted bg-lineHighlight block lg:hidden">
-      {/* block lg:hidden */}
       <MainMenu context={context} isEmbedded={isEmbedded} />
     </div>
   );
@@ -117,15 +106,10 @@ function MainMenu({ context, isEmbedded = false, className }) {
         title={started ? 'stop' : 'play'}
         className={cx('px-2 hover:opacity-50', !started && !isCSSAnimationDisabled && 'animate-pulse')}
       >
-        {/* {!pending ? ( */}
         <span className={cx('flex items-center space-x-2')}>
-          {/* {started ? <StopCircleIcon className="w-5 h-5" /> : <PlayCircleIcon className="w-5 h-5" />} */}
           {started ? <StopIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
-          {!isEmbedded && <span>{started ? 'stop' : 'play'}</span>}
+          {!isEmbedded && <span>{pending ? '...' : started ? 'stop' : 'play'}</span>}
         </span>
-        {/* ) : (
-          <>loading...</>
-        )} */}
       </button>
       <button
         onClick={handleEvaluate}
@@ -204,20 +188,13 @@ export function RightPanel({ context }) {
       settings={settings}
       className={cx(
         'border-l border-muted shrink-0 h-full overflow-hidden',
-        isPanelOpen
-          ? //? `min-w-full max-w-full lg:min-w-[min(600px,100vw)] lg:max-w-[min(600px,80vw)]`
-            `min-w-[min(600px,100vw)] max-w-[min(600px,80vw)]`
-          : 'min-w-12 max-w-12',
+        isPanelOpen ? `min-w-[min(600px,100vw)] max-w-[min(600px,80vw)]` : 'min-w-12 max-w-12',
       )}
     >
       <div className={cx('flex flex-col h-full')}>
         <div className="flex justify-between w-full overflow-hidden border-b border-muted min-h-10 max-h-10">
-          {/* <div className="block sm:hidden text-foreground px-3 py-2 border-l border-muted">
-            <LogoButton context={context} />
-          </div> */}
           <PanelCloseButton />
           <Tabs setTab={setTab} tab={tab} className="border-l border-muted" />
-          {/* <PanelCloseButton /> */}
         </div>
         <div className="overflow-auto h-full">
           <PanelContent context={context} tab={tab} />
@@ -319,14 +296,10 @@ export function PanelToggle({ isEmbedded, isZen }) {
     !isZen &&
     panelPosition === 'right' && (
       <button
-        title="share"
-        className={cx(
-          'border-l border-muted px-2 py-0 text-foreground hover:opacity-50' /* , isPanelOpen && 'hidden' */,
-        )}
+        title="menu"
+        className={cx('border-l border-muted px-2 py-0 text-foreground hover:opacity-50')}
         onClick={() => setIsPanelOpened(!isPanelOpen)}
       >
-        {/* <span>menu</span> */}
-        {/* isPanelOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" /> */}
         <Bars3Icon className="w-6 h-6" />
       </button>
     )
