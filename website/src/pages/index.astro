@@ -1,15 +1,146 @@
 ---
 import HeadCommon from '../components/HeadCommon.astro';
-import { Repl } from '../repl/Repl';
+import { getCollection } from 'astro:content';
+
+const { BASE_URL } = import.meta.env;
+const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+
+// Get recent articles (limit to 3)
+const recentArticles = (await getCollection('articles'))
+  .filter((article) => !article.data.draft)
+  .sort((a, b) => a.slug.localeCompare(b.slug))
+  .slice(0, 3);
 ---
 
 <html lang="en" class="m-0 dark">
   <head>
     <HeadCommon />
-    <title>Strudel REPL</title>
+    <title>Strudel - Live Coding Patterns</title>
+    <meta
+      name="description"
+      content="Strudel is a live coding pattern language for music in the browser. Create algorithmic music with simple, expressive code."
+    />
   </head>
-  <body class="h-app-height bg-background m-0">
-    <Repl client:only="react" />
-    <a rel="me" href="https://social.toplap.org/@strudel" target="_blank" class="hidden">mastodon</a>
+  <body class="min-h-screen bg-background m-0">
+    <main class="w-full max-w-6xl mx-auto px-6 py-12">
+      <!-- Hero Section -->
+      <div class="text-center mb-16 mt-8">
+        <div class="flex items-center justify-center mb-6">
+          <span class="block rotate-90 text-blue-500" style="font-size: 4rem; line-height: 1;">꩜</span>
+        </div>
+        <h1 class="text-6xl font-bold mb-4 text-foreground">Marco´s Strudel Journey</h1>
+        <p class="text-lg text-gray-400 max-w-2xl mx-auto mb-12">
+          My fork of <a href="https://codeberg.org/uzu/strudel" target="_blank">amazing strudel.cc</a>: an adventure in musical theory and coding.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-wrap gap-4 justify-center mb-8">
+          <a
+            href={`${baseNoTrailing}/repl`}
+            class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-lg transition-colors"
+          >
+            Launch REPL
+          </a>
+          <a
+            href={`${baseNoTrailing}/swatch`}
+            class="px-8 py-4 bg-lineHighlight hover:bg-gray-700 text-white font-bold rounded-lg text-lg transition-colors"
+          >
+            Browse my patterns
+          </a>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="flex flex-wrap gap-6 justify-center text-sm">
+          <a href="https://strudel.cc/" target="_blank" class="text-blue-400 hover:underline">
+            Official Strudel REPL
+          </a>
+          <a href="https://strudel.cc/workshop/getting-started/" target="_blank" class="text-blue-400 hover:underline">
+            Official Strudel Docs
+          </a>
+        </div>
+      </div>
+
+      <!-- Resources Section -->
+      <!--
+      <div class="mb-16">
+        <h2 class="text-3xl font-bold mb-6 text-center text-foreground">Resources</h2>
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="bg-lineHighlight p-6 rounded-lg">
+            <h3 class="text-xl font-bold mb-3 text-foreground">Learn</h3>
+            <p class="text-gray-300 mb-4">
+              Start your live coding journey with tutorials and workshops.
+            </p>
+            <a href={`${baseNoTrailing}/workshop/`} class="text-blue-400 hover:underline">
+              Get started →
+            </a>
+          </div>
+          <div class="bg-lineHighlight p-6 rounded-lg">
+            <h3 class="text-xl font-bold mb-3 text-foreground">Community</h3>
+            <p class="text-gray-300 mb-4">
+              Join the Strudel community on Discord and the TOPLAP forum.
+            </p>
+            <a href="https://discord.com/invite/3qVXTJ3Y" target="_blank" class="text-blue-400 hover:underline">
+              Join Discord →
+            </a>
+          </div>
+          <div class="bg-lineHighlight p-6 rounded-lg">
+            <h3 class="text-xl font-bold mb-3 text-foreground">Reference</h3>
+            <p class="text-gray-300 mb-4">
+              Explore the complete pattern library and API documentation.
+            </p>
+            <a href={`${baseNoTrailing}/learn/`} class="text-blue-400 hover:underline">
+              Browse docs →
+            </a>
+          </div>
+        </div>
+      </div>
+      -->
+
+      <!-- Recent Articles -->
+      {recentArticles.length > 0 && (
+        <div>
+          <h2 class="text-3xl font-bold mb-6 text-center text-foreground">Recent Articles</h2>
+          <div class="grid md:grid-cols-3 gap-6">
+            {recentArticles.map((article) => (
+              <a
+                href={`${baseNoTrailing}/articles/${article.slug}`}
+                class="bg-lineHighlight p-6 rounded-lg hover:bg-gray-700 transition-colors block"
+              >
+                <h3 class="text-xl font-bold mb-2 text-foreground">
+                  {article.data.title}
+                </h3>
+                {article.data.description && (
+                  <p class="text-gray-300 mb-3 text-sm">
+                    {article.data.description}
+                  </p>
+                )}
+                <div class="text-xs text-gray-400">
+                  {article.data.date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </div>
+              </a>
+            ))}
+          </div>
+          <div class="text-center mt-6">
+            <a href={`${baseNoTrailing}/articles/`} class="text-blue-400 hover:underline">
+              View all articles →
+            </a>
+          </div>
+        </div>
+      )}
+
+      <!-- Footer -->
+      <footer class="mt-16 text-center text-gray-500 text-sm">
+        <p>
+          Strudel is a free and open-source project.
+          <a href="https://codeberg.org/uzu/strudel" target="_blank" class="text-blue-400 hover:underline ml-1">
+            View on Codeberg
+          </a>
+        </p>
+      </footer>
+    </main>
   </body>
 </html>
