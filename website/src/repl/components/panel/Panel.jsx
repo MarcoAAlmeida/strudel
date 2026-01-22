@@ -1,17 +1,160 @@
+import { Bars3Icon, PlayIcon, StopIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import cx from '@src/cx.mjs';
-import { setActiveFooter as setTab, setIsPanelOpened, useSettings } from '../../../settings.mjs';
+import { StrudelIcon } from '@src/repl/components/icons/StrudelIcon';
+import { useSettings, setIsZen, setIsPanelOpened, setActiveFooter as setTab } from '../../../settings.mjs';
+import '../../Repl.css';
+import { useLogger } from '../useLogger';
 import { ConsoleTab } from './ConsoleTab';
+import ExportTab from './ExportTab';
 import { FilesTab } from './FilesTab';
+import { PatternsTab } from './PatternsTab';
 import { Reference } from './Reference';
 import { SettingsTab } from './SettingsTab';
 import { SoundsTab } from './SoundsTab';
-import { useLogger } from '../useLogger';
 import { WelcomeTab } from './WelcomeTab';
-import { PatternsTab } from './PatternsTab';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/16/solid';
-import ExportTab from './ExportTab';
 
 const TAURI = typeof window !== 'undefined' && window.__TAURI__;
+
+const { BASE_URL } = import.meta.env;
+const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+
+export function LogoButton({ context, isEmbedded }) {
+  const { started } = context;
+  const { isZen, isCSSAnimationDisabled, fontFamily } = useSettings();
+  return (
+    <div
+      className={cx(
+        'mt-[1px]',
+        started && !isCSSAnimationDisabled && 'animate-spin',
+        'cursor-pointer text-blue-500',
+        isZen && 'fixed top-2 right-4',
+      )}
+      onClick={() => {
+        if (!isEmbedded) {
+          setIsZen(!isZen);
+        }
+      }}
+    >
+      <span className="block text-foreground rotate-90">
+        <StrudelIcon className="w-5 h-5 fill-foreground" />
+      </span>
+    </div>
+  );
+}
+
+export function MainPanel({ context, isEmbedded = false, className }) {
+  const { isZen, isButtonRowHidden, fontFamily } = useSettings();
+  return (
+    <nav
+      id="header"
+      className={cx(
+        //'border-t sm:border-b sm:border-t-0 border-muted',
+        'border-b border-muted',
+        'flex-none text-black z-[100] text-sm select-none min-h-10 max-h-10',
+        !isZen && !isEmbedded && 'bg-lineHighlight',
+        // isZen ? 'h-12 w-8 fixed top-0 left-0' : 'h-10 sticky top-0 w-full justify-between',
+        isZen ? 'h-12 w-8 fixed top-0 left-0' : '',
+        'flex items-center',
+        className,
+      )}
+      style={{ fontFamily }}
+    >
+      <div className={cx('flex w-full justify-between')}>
+        {' '}
+        {/*flex-wrap*/}
+        <div className="px-3 py-1 flex space-x-2 select-none">
+          <h1
+            onClick={() => {
+              if (isEmbedded) window.open(window.location.href.replace('embed', ''));
+            }}
+            className={cx(
+              isEmbedded ? 'text-l cursor-pointer' : 'text-xl',
+              'text-foreground font-bold flex space-x-2 items-center',
+            )}
+          >
+            <LogoButton context={context} isEmbedded={isEmbedded} />
+            {!isZen && (
+              <div className="space-x-2 flex items-baseline">
+                <span className="hidden sm:block">strudel</span>
+                <span className="text-sm font-medium hidden sm:block">REPL</span>
+                {/* !isEmbedded && isButtonRowHidden && (
+                  <a href={`${baseNoTrailing}/learn`} className="text-sm opacity-25 font-medium">
+                    DOCS
+                  </a>
+                ) */}
+              </div>
+            )}
+          </h1>
+        </div>
+        {!isZen && (
+          <div className="flex grow justify-end">
+            {!isButtonRowHidden && <MainMenu isEmbedded={isEmbedded} context={context} />}
+            {/* className="hidden sm:flex" */}
+            <PanelToggle isEmbedded={isEmbedded} isZen={isZen} />
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}
+
+export function Footer({ context, isEmbedded = false }) {
+  return (
+    <div className="border-t border-muted bg-lineHighlight block lg:hidden">
+      {/* block lg:hidden */}
+      <MainMenu context={context} isEmbedded={isEmbedded} />
+    </div>
+  );
+}
+
+function MainMenu({ context, isEmbedded = false, className }) {
+  const { started, pending, isDirty, activeCode, handleTogglePlay, handleEvaluate, handleShare } = context;
+  const { isCSSAnimationDisabled } = useSettings();
+  return (
+    <div className={cx('flex text-sm max-w-full shrink-0 overflow-hidden text-foreground px-2 h-10', className)}>
+      <button
+        onClick={handleTogglePlay}
+        title={started ? 'stop' : 'play'}
+        className={cx('px-2 hover:opacity-50', !started && !isCSSAnimationDisabled && 'animate-pulse')}
+      >
+        {/* {!pending ? ( */}
+        <span className={cx('flex items-center space-x-2')}>
+          {/* {started ? <StopCircleIcon className="w-5 h-5" /> : <PlayCircleIcon className="w-5 h-5" />} */}
+          {started ? <StopIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
+          {!isEmbedded && <span>{started ? 'stop' : 'play'}</span>}
+        </span>
+        {/* ) : (
+          <>loading...</>
+        )} */}
+      </button>
+      <button
+        onClick={handleEvaluate}
+        title="update"
+        className={cx('flex items-center space-x-1 px-2', !isDirty || !activeCode ? 'opacity-50' : 'hover:opacity-50')}
+      >
+        {!isEmbedded && <span>update</span>}
+      </button>
+      {!isEmbedded && (
+        <button
+          title="share"
+          className={cx('cursor-pointer hover:opacity-50 flex items-center space-x-1 px-2')}
+          onClick={handleShare}
+        >
+          <span>share</span>
+        </button>
+      )}
+      {!isEmbedded && (
+        <a
+          title="learn"
+          href={`${baseNoTrailing}/workshop/getting-started/`}
+          className={cx('hover:opacity-50 flex items-center space-x-1', !isEmbedded ? 'p-2' : 'px-2')}
+        >
+          <span>learn</span>
+        </a>
+      )}
+    </div>
+  );
+}
 
 function PanelCloseButton() {
   const { isPanelOpen } = useSettings();
@@ -33,13 +176,13 @@ export function HorizontalPanel({ context }) {
   return (
     <PanelNav
       className={cx(
-        isPanelOpen ? `min-h-[360px] max-h-[360px]` : 'min-h-8 max-h-8',
+        isPanelOpen ? `min-h-[360px] max-h-[360px]` : 'min-h-10 max-h-10',
         'overflow-hidden flex flex-col relative',
       )}
     >
-      <div className="flex justify-between min-h-8 max-h-8 grid-cols-2 items-center border-t border-muted">
-        <Tabs setTab={setTab} tab={tab} />
+      <div className="flex justify-between min-h-10 max-h-10 grid-cols-2 items-center border-t border-muted">
         <PanelCloseButton />
+        <Tabs setTab={setTab} tab={tab} />
       </div>
       {isPanelOpen && (
         <div className="w-full h-full overflow-auto border-t border-muted">
@@ -61,14 +204,21 @@ export function VerticalPanel({ context }) {
       settings={settings}
       className={cx(
         //'border-l border-muted shrink-0',
-        'border-0 border-muted shrink-0',
-        isPanelOpen ? `min-w-[min(600px,100vw)] max-w-[min(600px,80vw)]` : 'min-w-12 max-w-12',
+        'border-0 border-muted shrink-0 h-full overflow-hidden',
+        isPanelOpen
+          ? //? `min-w-full max-w-full lg:min-w-[min(600px,100vw)] lg:max-w-[min(600px,80vw)]`
+            `min-w-[min(600px,100vw)] max-w-[min(600px,80vw)]`
+          : 'min-w-12 max-w-12',
       )}
     >
       <div className={cx('flex flex-col h-full')}>
-        <div className="flex justify-between w-full border-b border-muted min-h-10 max-h-10">
-          <Tabs setTab={setTab} tab={tab} />
+        <div className="flex justify-between w-full overflow-hidden border-b border-muted min-h-10 max-h-10">
+          {/* <div className="block sm:hidden text-foreground px-3 py-2 border-l border-muted">
+            <LogoButton context={context} />
+          </div> */}
           <PanelCloseButton />
+          <Tabs setTab={setTab} tab={tab} />
+          {/* <PanelCloseButton /> */}
         </div>
         <div className="overflow-auto h-full border-l border-muted">
           <PanelContent context={context} tab={tab} />
@@ -101,7 +251,7 @@ function PanelNav({ children, className, ...props }) {
         }
       }}
       aria-label="Menu Panel"
-      className={cx('bg-lineHighlight group overflow-x-auto', className)}
+      className={cx('h-full bg-lineHighlight group overflow-x-auto', className)}
       {...props}
     >
       {children}
@@ -171,10 +321,13 @@ export function PanelToggle({ isEmbedded, isZen }) {
     panelPosition === 'right' && (
       <button
         title="share"
-        className={cx('border-l border-muted px-2 py-0 text-foreground hover:opacity-50', isPanelOpen && 'hidden')}
+        className={cx(
+          'border-l border-muted px-2 py-0 text-foreground hover:opacity-50' /* , isPanelOpen && 'hidden' */,
+        )}
         onClick={() => setIsPanelOpened(!isPanelOpen)}
       >
         {/* <span>menu</span> */}
+        {/* isPanelOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" /> */}
         <Bars3Icon className="w-6 h-6" />
       </button>
     )
