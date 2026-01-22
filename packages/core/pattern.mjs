@@ -1257,20 +1257,19 @@ const ALIGNMENT_KEYS = ALIGNMENTS.map((how) => how.toLowerCase());
 })();
 
 /**
- * Sets the default [alignment](https://strudel.cc/technical-manual/alignment/) to be used by Strudel.
- * The default default alignment is `in`, meaning that patterns to the left will (typically) dictate
- * the event timings when combined with patterns to the right. By changing alignment to `out`, the opposite
- * will happen. With `mix`, they will combine their event timings.
+ * Sets the default method of combining events from two patterns (aka [alignment](https://strudel.cc/technical-manual/alignment/)) in Strudel.
+ * The default method is 'in', meaning that patterns to the left will (typically) dictate the event timings when combined with patterns to the right.
+ * By changing alignment to 'out', the opposite will happen. With 'mix', they will combine their event timings.
  *
- * Note that we say the _default_ alignment, because alignments can also be set explicitly with calls like
- * `add.mix`, `set.squeeze`, etc.
+ * Note that we say the _default_ method, because alignments can also be set explicitly with calls like
+ * 'add.mix', 'set.squeeze', etc.
  *
- * @param {string} name Default alignment to use. Options: 'in', 'out', 'mix', 'squeeze', 'squeezeout', 'reset', 'restart', 'poly'
+ * @param {string} method Default join method to use. Options: 'in', 'out', 'mix', 'squeeze', 'squeezeout', 'reset', 'restart', 'poly'
  * @example
- * setDefaultAlignment('mix') // also try 'in', 'out', 'squeeze', etc.
+ * setDefaultJoin('mix') // also try 'in', 'out', 'squeeze', etc.
  * s("saw").vel("1 0.5").note("F A C E").delay("0 0.2 0.3")
  */
-export const setDefaultAlignment = (alignment) => {
+export const setDefaultJoin = (alignment) => {
   alignment = alignment?.toLowerCase();
   if (DEFAULT_ALIGNMENT !== alignment && ALIGNMENT_KEYS.includes(alignment)) {
     DEFAULT_ALIGNMENT = alignment;

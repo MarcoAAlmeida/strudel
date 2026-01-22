@@ -10874,7 +10874,7 @@ exports[`runs examples > example "seqPLoop" example index 0 1`] = `
 ]
 `;
 
-exports[`runs examples > example "setDefaultAlignment" example index 0 1`] = `
+exports[`runs examples > example "setDefaultJoin" example index 0 1`] = `
 [
   "[ 0/1 → 1/4 | s:saw velocity:1 note:F delay:0 ]",
   "[ 1/4 → 1/3 | s:saw velocity:1 note:A delay:0 ]",
