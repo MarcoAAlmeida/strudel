@@ -48,9 +48,8 @@ export function MainPanel({ context, isEmbedded = false, className }) {
     <nav
       id="header"
       className={cx(
-        'border-b border-muted',
         'flex-none text-black z-[100] text-sm select-none min-h-10 max-h-10',
-        !isZen && !isEmbedded && 'bg-lineHighlight',
+        !isZen && !isEmbedded && 'border-b border-muted bg-lineHighlight',
         isZen ? 'h-12 w-8 fixed top-0 left-0' : '',
         'flex items-center',
         className,
