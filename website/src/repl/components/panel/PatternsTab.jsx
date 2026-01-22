@@ -53,8 +53,7 @@ function PatternButton({ showOutline, onClick, pattern, showHiglight }) {
 }
 
 function PatternButtons({ patterns, activePattern, onClick, started }) {
-  const viewingPatternStore = useViewingPatternData();
-  const viewingPatternData = parseJSON(viewingPatternStore);
+  const viewingPatternData = useViewingPatternData();
   const viewingPatternID = viewingPatternData.id;
   return (
     <div className="p-2">
@@ -83,8 +82,8 @@ const updateCodeWindow = (context, patternData, reset = false) => {
 export function PatternsTab({ context }) {
   const [search, setSearch] = useState('');
   const activePattern = useActivePattern();
-  const viewingPatternStore = useViewingPatternData();
-  const viewingPatternData = parseJSON(viewingPatternStore);
+  const viewingPatternData = useViewingPatternData();
+
   const { userPatterns, patternAutoStart } = useSettings();
   const viewingPatternID = viewingPatternData?.id;
 
@@ -121,7 +120,7 @@ export function PatternsTab({ context }) {
         );
       }),
     );
-  }, [search, viewingPatternStore]);
+  }, [search, userPatterns]);
 
   const importRef = useRef();
   return (
