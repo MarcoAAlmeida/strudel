@@ -228,7 +228,7 @@ export const Reference = memo(function Reference() {
                 </pre>
               ))}
             </section>
-          )) || <p className="font-sans">Searcb or select a tag to get started.</p>}
+          )) || <p className="font-sans">Search or select a tag to get started.</p>}
           {detailVisibleFunctions.length > 0 && <div className="h-screen" />}
         </div>
       </div>
