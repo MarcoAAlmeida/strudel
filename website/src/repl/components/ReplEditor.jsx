@@ -21,7 +21,7 @@ export default function ReplEditor(Props) {
       <div className="flex flex-col grow overflow-hidden">
         {/* <MainPanel context={context} isEmbedded={isEmbedded} className="hidden sm:block" /> */}
         <MainPanel context={context} isEmbedded={isEmbedded} />
-        <div className="flex overflow-hidden">
+        <div className="flex overflow-hidden h-full">
           <Code containerRef={containerRef} editorRef={editorRef} init={init} />
           {!isZen && panelPosition === 'right' && <VerticalPanel context={context} />}
         </div>
