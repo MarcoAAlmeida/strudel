@@ -162,7 +162,7 @@ function PanelCloseButton() {
     isPanelOpen && (
       <button
         onClick={() => setIsPanelOpened(false)}
-        className={cx('border-l border-muted px-2 py-0 text-foreground hover:opacity-50')}
+        className={cx('px-2 py-0 text-foreground hover:opacity-50')}
         aria-label="Close Menu"
       >
         <XMarkIcon className="w-6 h-6" />
@@ -171,7 +171,7 @@ function PanelCloseButton() {
   );
 }
 
-export function HorizontalPanel({ context }) {
+export function BottomPanel({ context }) {
   const { isPanelOpen, activeFooter: tab } = useSettings();
   return (
     <PanelNav
@@ -182,7 +182,7 @@ export function HorizontalPanel({ context }) {
     >
       <div className="flex justify-between min-h-10 max-h-10 grid-cols-2 items-center border-t border-muted">
         <PanelCloseButton />
-        <Tabs setTab={setTab} tab={tab} />
+        <Tabs setTab={setTab} tab={tab} className={cx(isPanelOpen && 'border-l border-muted')} />
       </div>
       {isPanelOpen && (
         <div className="w-full h-full overflow-auto border-t border-muted">
@@ -193,7 +193,7 @@ export function HorizontalPanel({ context }) {
   );
 }
 
-export function VerticalPanel({ context }) {
+export function RightPanel({ context }) {
   const settings = useSettings();
   const { activeFooter: tab, isPanelOpen } = settings;
   if (!isPanelOpen) {
@@ -203,8 +203,7 @@ export function VerticalPanel({ context }) {
     <PanelNav
       settings={settings}
       className={cx(
-        //'border-l border-muted shrink-0',
-        'border-0 border-muted shrink-0 h-full overflow-hidden',
+        'border-l border-muted shrink-0 h-full overflow-hidden',
         isPanelOpen
           ? //? `min-w-full max-w-full lg:min-w-[min(600px,100vw)] lg:max-w-[min(600px,80vw)]`
             `min-w-[min(600px,100vw)] max-w-[min(600px,80vw)]`
@@ -217,10 +216,10 @@ export function VerticalPanel({ context }) {
             <LogoButton context={context} />
           </div> */}
           <PanelCloseButton />
-          <Tabs setTab={setTab} tab={tab} />
+          <Tabs setTab={setTab} tab={tab} className="border-l border-muted" />
           {/* <PanelCloseButton /> */}
         </div>
-        <div className="overflow-auto h-full border-l border-muted">
+        <div className="overflow-auto h-full">
           <PanelContent context={context} tab={tab} />
         </div>
       </div>
@@ -301,7 +300,7 @@ function Tabs({ className }) {
   return (
     <div
       className={cx(
-        'px-2 border-l border-muted w-full flex select-none max-w-full h-10 max-h-10 min-h-10 overflow-auto items-center',
+        'px-2 w-full flex select-none max-w-full h-10 max-h-10 min-h-10 overflow-auto items-center',
         className,
       )}
     >
