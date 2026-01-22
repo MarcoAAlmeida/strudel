@@ -166,7 +166,7 @@ export function SoundsTab() {
           );
         })}
         {!soundEntries.length && soundsFilter === 'importSounds' ? (
-          <div className="prose dark:prose-invert min-w-full pt-2 pb-8 px-4">
+          <div className="prose dark:prose-invert min-w-full text-sm">
             <ImportSoundsButton onComplete={() => settingsMap.setKey('soundsFilter', 'user')} />
             <p>
               To import sounds into strudel, they must be contained{' '}
