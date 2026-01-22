@@ -57,6 +57,8 @@ src-tauri/target
 !.vscode/extensions.json
 ### END Visual Studio Code ###
 
+midi_tokenizer/samples/**.txt
+
 
 
 # BEGIN JetBrains -> END JetBrains
