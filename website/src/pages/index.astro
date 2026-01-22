@@ -8,7 +8,7 @@ const baseNoTrailing = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL
 // Get recent articles (limit to 3)
 const recentArticles = (await getCollection('articles'))
   .filter((article) => !article.data.draft)
-  .sort((a, b) => a.slug.localeCompare(b.slug))
+  .sort((a, b) => b.slug.localeCompare(a.slug))
   .slice(0, 3);
 ---
 
