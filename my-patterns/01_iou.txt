@@ -1,0 +1,116 @@
+/* "iou" */
+/**
+Source: iou.mid
+Tempo: 119 BPM
+Time Signature: 4/4
+Quantization: 16 (default)
+Grid: 16 = sixteenth notes, @4 = quarter note, @8 = half note
+Mode: Polyphonic
+Tracks: manually reduced to 4 (original transcription was a mess)
+Converted: 2026-01-22
+**/
+
+setcpm(119/4)
+
+let robo_drums = stack(
+  s("hh!8").bank("dpm48"),
+  s("[bd ~ sd ~]!2").bank("dpm48")
+)
+
+let MESS_UP_FACTOR = 0.007
+
+let drums = stack(
+  s("hh!8").early(rand.range(0, MESS_UP_FACTOR)).bank("dpm48"),
+  s("[bd ~ sd ~]!2").late(rand.range(0, MESS_UP_FACTOR)).bank("dpm48")
+)
+
+// Track 1
+let lead = note(`<
+[~@16]!2
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]!12
+[~@16]!2
+>`)
+  .sound("gm_lead_2_sawtooth").gain(.6).room(0.2)
+
+// Track 2 
+let bass = note(`<
+[a#1 ~@3 a#1 ~@2 a#1 ~ a#1 ~ a#1 a#1 ~ c2 ~]
+[d2 ~@3 d2 ~@2 d2 ~ d2 ~ d2 d2 ~ f2 ~]
+[d2 ~@3 d2 ~ a1 d2 ~ d2 ~ d2 d2 ~ f2 ~]
+[g1 ~@3 g1 ~ d1 g1 ~ g1 ~ g1 g1 ~ a1 ~]>`)
+  .chord("<Am C D F Am E Am E>")
+  .dict('house').anchor(66)
+.sound("gm_synth_bass_2").gain(1).room(0.2)
+
+
+// Track 6
+let pad = note(`<
+[~@16]!4
+[a#2 b2 c3 c#3 d3 d#3 e3 f3 f#3 g3 g#3 a3 a#3 b3 c4 c#4]
+[d4 ~@15]
+[~@16]
+[~@16]
+[a#2 b2 c3 c#3 d3 d#3 e3 f3 f#3 g3 g#3 a3 a#3 b3 c4 c#4]
+[d4 ~@15]
+[~@16]!4
+[a#2 b2 c3 c#3 d3 d#3 e3 f3 f#3 g3 g#3 a3 a#3 b3 c4 c#4]
+[d4 ~@15]
+[~@16]>`).sound("gm_pad_poly").room(0.2)
+
+// Track 7
+let bell = note(`<
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[a6 ~@7 a6 ~@7]
+[a6 ~@3 a6 ~@3 a6 ~@3 a6 ~@3]
+[f6 ~@5 f6 ~@7 g6 ~]
+[a6 ~ a6 ~@3 g6 ~@3 a6 ~@5]
+[a6 ~@7 a6 ~@7]
+[a6 ~@3 a6 ~@3 a6 ~@3 a6 ~@3]
+[f6 ~@5 f6 ~@7 g6 ~]
+[a6 ~ a6 ~@3 g6 ~@3 a6 ~@5]
+[a6 ~@7 a6 ~@7]
+[a6 ~@3 a6 ~@3 a6 ~@3 a6 ~@3]
+[f6 ~@5 f6 ~@7 g6 ~]
+[a6 ~ a6 ~@3 g6 ~@3 a6 ~@5]
+[~@16]
+[~@16]>`)
+  .chord("Am")
+  .voicing()
+  .gain(.4).sound("pulse").room(0.2)
+
+
+let full = stack(drums, lead, bass, pad, bell)
+
+let intro = stack(drums, bass)
+
+samples('shabda/speech:A,E,I,O,U,sometimes,cry')
+
+samples({ rave: 'rave/AREUREADY.wav' }, 'github:tidalcycles/dirt-samples')
+let rave = s("rave")
+
+samples('https://shabda.ndre.gr/speech/sometimes_I_cry.json?gender=f&language=en-US&strudel=1')
+
+arrange(
+  [1, s("woodblock!8")],
+  [1, drums],
+  [1, stack(s("[sometimes ~ I@4]"),drums)],
+  [2, stack(n("[a6 ~@3 a6 ~@3 a6 ~@3 a6 ~@3 a6 ~ a6 ~@3 g6 ~@3 a6 ~@5]")
+            .s("[A E I O U]")
+            .echo(2, 1/6, 2)
+            .gain(.4)
+            .fast(1.2), drums)],
+  [1, drums],
+  [1, stack(s("[sometimes ~ I@4 cry]"),intro)],
+  [1, intro],
+  [24, full]
+
+)

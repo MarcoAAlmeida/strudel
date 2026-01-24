@@ -1,0 +1,9 @@
+1769047599462:convert --input samples/azul.mid --no-polyphony --quantize 8
+1769047618252:convert --input midi_tokenizer/samples/azul.mid --no-polyphony --quantize 8
+1769093903851:convert --input midi_tokenizer/samples/iou.mid --no-polyphony --quantize 8
+1769093957434:convert --input midi_tokenizer/samples/iou.mid --no-polyphony --quantize 16
+1769094029332:convert --input midi_tokenizer/samples/iou.mid --quantize 8
+1769094068660:convert --input midi_tokenizer/samples/iou.mid --quantize 16
+1769096110493:parse --input midi_tokenizer/samples/iou.mid --quantize 16
+1769096123385:parse --input midi_tokenizer/samples/iou.mid
+1769096151727:parse --input midi_tokenizer/samples/iou.mid --output midi_tokenizer/samples/iou.json
