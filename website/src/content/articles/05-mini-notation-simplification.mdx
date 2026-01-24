@@ -1,0 +1,71 @@
+---
+title: 'Mini-Notation Simplification'
+description: 'Techniques for reducing redundancy in MIDI-tokenized Strudel patterns'
+date: '2026-01-22'
+tags: ['documentation', 'mini-notation', 'optimization']
+author: 'Marco A Almeida'
+draft: false
+---
+
+## Mini-Notation Simplification
+
+**AI Agent Prompt:**
+
+When simplifying MIDI-tokenized Strudel patterns, identify repeated sequences and apply mini-notation compression techniques:
+
+1. **Locate identical repeated patterns** within angle bracket blocks (`<...>`)
+2. **Apply replication operator `!`** to eliminate redundancy: `pattern!N` repeats the pattern N times
+3. **Preserve musical timing** - the `!` operator replicates without altering time structure (unlike `*` which speeds up)
+
+**Example from [`iou.txt`](https://github.com/MarcoAAlmeida/strudel/blob/main/midi_tokenizer/samples/iou.txt):**
+
+Before simplification (24 lines):
+```javascript
+let track1 = note(`<
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[~@16]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]
+[~@16]
+[~@16]>`).sound("gm_lead_2_sawtooth").room(0.2)
+```
+
+After simplification (4 lines):
+```javascript
+let track1 = note(`<
+[~@16]!10
+[d5 d5 d5 c5 d4 ~@3 d5 d5 d5 d4 ~ d4 d5 ~]!12
+[~@16]!2
+>`).sound("gm_lead_2_sawtooth").room(0.2)
+```
+
+**Result:** 83% reduction in pattern length with identical audio output.
+
+**References:**
+- [Strudel Mini-Notation Guide](https://strudel.cc/learn/mini-notation/)
+- [First Notes Workshop](https://strudel.cc/workshop/first-notes/)
+- Local: `packages/mini/` - Mini-notation parser implementation
+- Local: `midi_tokenizer/samples/iou.txt` - Full example file
+
+**Key Operators:**
+- `!` - Replicate (doesn't change speed): `"bd!4"` = `"bd bd bd bd"`
+- `*` - Multiply (speeds up): `"bd*4"` = 4 beats in same time
+- `@` - Elongate (extends duration): `"c@3 e"` = c gets 3 units, e gets 1

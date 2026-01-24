@@ -4,16 +4,6 @@
   - **LLM-friendly JSON representation** for analysis and processing
   - **Strudel live coding patterns** for creative musical exploration
 
-## Philosophy: Beyond Traditional Notation
-
-Music notation systems shape how we think about rhythm, harmony, and time. Traditional staff notation emerged from centuries of Western classical practice, optimized for instruments and performance traditions of that era. MIDI, while more flexible, still carries assumptions about quantization and discrete events.
-
-**Strudel's mini-notation offers something different**: a way to think about musical patterns as transformable, composable code. It's not constrained by what fits on a staff or what a pianist can physically play. You can express polyrhythms, algorithmic variations, and temporal manipulations that would be cumbersome or impossible in traditional notation.
-
-**This tool bridges the gap** - converting the discrete, time-stamped world of MIDI into Strudel's pattern language - but the real power comes from thinking beyond what the original MIDI file contains. Use the conversion as a starting point, then explore what's possible when you're not limited by tradition. Triplets, swing, polyrhythms - these aren't special cases requiring workarounds. They're just different ways of slicing time.
-
-The quantization grid isn't a limitation - it's a choice. Pick the grid that makes sense for your rhythm, whether that's 8, 12, 24, or any other division. The code doesn't care about "conventional" time signatures or note values.
-
 ---
 
 ## Quick Start
